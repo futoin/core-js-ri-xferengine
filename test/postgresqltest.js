@@ -6,7 +6,7 @@ const AdvancedCCM = require('futoin-invoker/AdvancedCCM');
 const DBAutoConfig = require('futoin-database/AutoConfig');
 const integration_suite = require('./integrationsuite');
 
-const DB_PORT = process.env.POSTGRESQL_PORT || '5433';
+const DB_PORT = process.env.POSTGRESQL_PORT || '5434';
 
 describe('PostgreSQL', function(){
     
@@ -25,10 +25,8 @@ describe('PostgreSQL', function(){
                     DB_DB: 'postgres',
                 });
                 as.add((as) => {
-                    ccm.db().query(as, 'DROP DATABASE IF EXISTS evtactive');
-                    ccm.db().query(as, 'DROP DATABASE IF EXISTS evthistory');
-                    ccm.db().query(as, 'CREATE DATABASE evtactive');
-                    ccm.db().query(as, 'CREATE DATABASE evthistory');
+                    ccm.db().query(as, 'DROP DATABASE IF EXISTS xfers');
+                    ccm.db().query(as, 'CREATE DATABASE xfers');
                 });
                 as.add((as) => {
                     let res;
@@ -38,10 +36,10 @@ describe('PostgreSQL', function(){
                         [
                             'tool', 'exec', 'flyway', '--',
                             'migrate',
-                            `-url=jdbc:postgresql://127.0.0.1:${DB_PORT}/evtactive`,
+                            `-url=jdbc:postgresql://127.0.0.1:${DB_PORT}/xfers`,
                             '-user=ftntest',
                             '-password=test',
-                            `-locations=filesystem:${__dirname}/../sql/active/postgresql`,
+                            `-locations=filesystem:${__dirname}/../sql/postgresql,filesystem:${__dirname}//node_modules/futoin-eventstream/sql/active/postgresql`,
                         ]
                     );
                     if (res.status) {
@@ -49,22 +47,6 @@ describe('PostgreSQL', function(){
                         as.error('Fail');
                     }
 
-                    res = child_process.spawnSync(
-                        'cid',
-                        [
-                            'tool', 'exec', 'flyway', '--',
-                            'migrate',
-                            `-url=jdbc:postgresql://127.0.0.1:${DB_PORT}/evthistory`,
-                            '-user=ftntest',
-                            '-password=test',
-                            `-locations=filesystem:${__dirname}/../sql/dwh/postgresql`,
-                        ]
-                    );
-                    if (res.status) {
-                        console.log(res.stderr.toString());
-                        as.error('Fail');
-                    }
-                    
                     ccm.close();
                 });
             },
@@ -91,21 +73,14 @@ describe('PostgreSQL', function(){
         as.add(
             (as) => {
                 DBAutoConfig(as, ccm, {
-                    evt: {},
-                    evtdwh: {},
+                    xfer: {},
                 }, {
-                    DB_EVT_TYPE: 'postgresql',
-                    DB_EVT_HOST: '127.0.0.1',
-                    DB_EVT_PORT: DB_PORT,
-                    DB_EVT_USER: 'ftntest',
-                    DB_EVT_DB: 'evtactive',
-                    DB_EVT_PASS: 'test',
-                    DB_EVTDWH_TYPE: 'postgresql',
-                    DB_EVTDWH_HOST: '127.0.0.1',
-                    DB_EVTDWH_PORT: DB_PORT,
-                    DB_EVTDWH_USER: 'ftntest',
-                    DB_EVTDWH_DB: 'evthistory',
-                    DB_EVTDWH_PASS: 'test',
+                    DB_XFER_TYPE: 'postgresql',
+                    DB_XFER_HOST: '127.0.0.1',
+                    DB_XFER_PORT: DB_PORT,
+                    DB_XFER_USER: 'ftntest',
+                    DB_XFER_DB: 'xfers',
+                    DB_XFER_PASS: 'test',
                 });
             },
             (as, err) => {

@@ -29,6 +29,14 @@ class ManageService extends PingService
 
         return impl;
     }
+
+    constructor( _options )
+    {
+        super();
+        void DB_CURRENCY_TABLE;
+        void DB_EXRATE_TABLE;
+        void _defaults;
+    }
 }
 
-module.exports = PollService;
+module.exports = ManageService;

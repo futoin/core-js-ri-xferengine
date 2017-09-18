@@ -6,7 +6,7 @@ const AdvancedCCM = require('futoin-invoker/AdvancedCCM');
 const DBAutoConfig = require('futoin-database/AutoConfig');
 const integration_suite = require('./integrationsuite');
 
-const DB_PORT = process.env.MYSQL_PORT || '3307';
+const DB_PORT = process.env.MYSQL_PORT || '3308';
 
 describe('MySQL', function(){
     
@@ -23,10 +23,8 @@ describe('MySQL', function(){
                     DB_USER: 'ftntest',
                 });
                 as.add((as) => {
-                    ccm.db().query(as, 'DROP DATABASE IF EXISTS evtactive');
-                    ccm.db().query(as, 'DROP DATABASE IF EXISTS evthistory');
-                    ccm.db().query(as, 'CREATE DATABASE evtactive');
-                    ccm.db().query(as, 'CREATE DATABASE evthistory');
+                    ccm.db().query(as, 'DROP DATABASE IF EXISTS xfers');
+                    ccm.db().query(as, 'CREATE DATABASE xfers');
                     ccm.db().query(as, 'SET GLOBAL innodb_flush_log_at_trx_commit=0');
                     ccm.db().query(as, 'SET GLOBAL sync_binlog=0');
                 });
@@ -38,24 +36,9 @@ describe('MySQL', function(){
                         [
                             'tool', 'exec', 'flyway', '--',
                             'migrate',
-                            `-url=jdbc:mysql://127.0.0.1:${DB_PORT}/evtactive`,
+                            `-url=jdbc:mysql://127.0.0.1:${DB_PORT}/xfers`,
                             '-user=ftntest',
-                            `-locations=filesystem:${__dirname}/../sql/active/mysql`,
-                        ]
-                    );
-                    if (res.status) {
-                        console.log(res.stderr.toString());
-                        as.error('Fail');
-                    }
-
-                    res = child_process.spawnSync(
-                        'cid',
-                        [
-                            'tool', 'exec', 'flyway', '--',
-                            'migrate',
-                            `-url=jdbc:mysql://127.0.0.1:${DB_PORT}/evthistory`,
-                            '-user=ftntest',
-                            `-locations=filesystem:${__dirname}/../sql/dwh/mysql`,
+                            `-locations=filesystem:${__dirname}/../sql/mysql,filesystem:${__dirname}/node_modules/futoin-eventstream/sql/active/mysql`,
                         ]
                     );
                     if (res.status) {
@@ -89,19 +72,13 @@ describe('MySQL', function(){
         as.add(
             (as) => {
                 DBAutoConfig(as, ccm, {
-                    evt: {},
-                    evtdwh: {},
+                    xfer: {},
                 }, {
-                    DB_EVT_TYPE: 'mysql',
-                    DB_EVT_HOST: '127.0.0.1',
-                    DB_EVT_PORT: DB_PORT,
-                    DB_EVT_USER: 'ftntest',
-                    DB_EVT_DB: 'evtactive',
-                    DB_EVTDWH_TYPE: 'mysql',
-                    DB_EVTDWH_HOST: '127.0.0.1',
-                    DB_EVTDWH_PORT: DB_PORT,
-                    DB_EVTDWH_USER: 'ftntest',
-                    DB_EVTDWH_DB: 'evthistory',
+                    DB_XFER_TYPE: 'mysql',
+                    DB_XFER_HOST: '127.0.0.1',
+                    DB_XFER_PORT: DB_PORT,
+                    DB_XFER_USER: 'ftntest',
+                    DB_XFER_DB: 'xfers',
                 });
             },
             (as, err) => {

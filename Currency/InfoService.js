@@ -3,7 +3,7 @@
 const _defaults = require( 'lodash/defaults' );
 const PingService = require( 'futoin-executor/PingService' );
 const PingFace = require( 'futoin-invoker/PingFace' );
-const ManageFace = require( './ManageFace' );
+const InfoFace = require( './InfoFace' );
 const { DB_CURRENCY_TABLE, DB_EXRATE_TABLE } = require( '../main' );
 
 /**
@@ -20,13 +20,21 @@ class InfoService extends PingService
      */
     static register( as, executor, options={} )
     {
-        const ifacever = 'futoin.currency.manage:' + ManageFace.LATEST_VERSION;
+        const ifacever = 'futoin.currency.manage:' + InfoFace.LATEST_VERSION;
         const impl = new this( options );
-        const spec_dirs = [ ManageFace.spec(), PingFace.spec( ManageFace.PING_VERSION ) ];
+        const spec_dirs = [ InfoFace.spec(), PingFace.spec( InfoFace.PING_VERSION ) ];
 
         executor.register( as, ifacever, impl, spec_dirs );
 
         return impl;
+    }
+
+    constructor( _options )
+    {
+        super();
+        void DB_CURRENCY_TABLE;
+        void DB_EXRATE_TABLE;
+        void _defaults;
     }
 }
 
