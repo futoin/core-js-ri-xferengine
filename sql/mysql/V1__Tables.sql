@@ -9,20 +9,19 @@ CREATE TABLE currencies (
     dec_places TINYINT UNSIGNED NOT NULL,
     name VARCHAR(64) NOT NULL UNIQUE,
     symbol VARCHAR(3) NOT NULL UNIQUE,
-    enabled TINYINT UNSIGNED NOT NULL,
+    enabled ENUM('N', 'Y') NOT NULL,
     added TIMESTAMP NOT NULL
 )
     ENGINE=InnoDB
     CHARACTER SET 'utf8';
     
 CREATE TABLE exrates (
-    _rate_id MEDIUMINT UNSIGNED NOT NULL auto_increment PRIMARY KEY,
     base_id SMALLINT UNSIGNED NOT NULL,
     foreign_id SMALLINT UNSIGNED NOT NULL,
     rate DECIMAL(24, 12) NOT NULL,
     margin DECIMAL(24, 12) NOT NULL,
     since TIMESTAMP NOT NULL,
-    UNIQUE base_foreign (base_id, foreign_id)
+    PRIMARY KEY (base_id, foreign_id)
 )
     ENGINE=InnoDB
     CHARACTER SET 'utf8';

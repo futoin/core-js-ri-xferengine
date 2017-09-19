@@ -1,10 +1,9 @@
 'use strict';
 
-const _defaults = require( 'lodash/defaults' );
 const PingService = require( 'futoin-executor/PingService' );
 const PingFace = require( 'futoin-invoker/PingFace' );
 const InfoFace = require( './InfoFace' );
-const { DB_CURRENCY_TABLE, DB_EXRATE_TABLE } = require( '../main' );
+const { DB_IFACEVER, DB_CURRENCY_TABLE, DB_EXRATE_TABLE } = require( '../main' );
 
 /**
  * Currency Manage Service
@@ -20,21 +19,59 @@ class InfoService extends PingService
      */
     static register( as, executor, options={} )
     {
-        const ifacever = 'futoin.currency.manage:' + InfoFace.LATEST_VERSION;
+        const ifacever = 'futoin.currency.info:' + InfoFace.LATEST_VERSION;
         const impl = new this( options );
         const spec_dirs = [ InfoFace.spec(), PingFace.spec( InfoFace.PING_VERSION ) ];
 
         executor.register( as, ifacever, impl, spec_dirs );
+        executor.ccm().assertIface( '#db.xfer', DB_IFACEVER );
 
         return impl;
     }
 
-    constructor( _options )
+    listCurrencies( as, reqinfo )
     {
-        super();
-        void DB_CURRENCY_TABLE;
-        void DB_EXRATE_TABLE;
-        void _defaults;
+        const db = reqinfo.executor().ccm().db( 'xfer' );
+
+        db.select( DB_CURRENCY_TABLE )
+            .get( [ 'code', 'dec_places', 'name', 'symbol', 'enabled' ] )
+            .executeAssoc( as );
+
+        as.add( ( as, res ) =>
+        {
+            res.forEach( ( v ) =>
+            {
+                v.dec_places = parseInt( v.dec_places );
+                v.enabled = v.enabled === 'Y';
+            } );
+            reqinfo.result( res );
+        } );
+    }
+
+    getExRate( as, reqinfo )
+    {
+        const p = reqinfo.params();
+        const db = reqinfo.executor().ccm().db( 'xfer' );
+
+        db.select( DB_EXRATE_TABLE )
+            .get( [ 'rate', 'margin' ] )
+            .where( 'base_id',
+                db.select().get( 'id' ).where( 'code', p.base ).where( 'enabled', 'Y' ) )
+            .where( 'foreign_id',
+                db.select().get( 'id' ).where( 'code', p.foreign ).where( 'enabled', 'Y' ) )
+            .executeAssoc( as );
+
+        as.add( ( as, res ) =>
+        {
+            if ( res.length )
+            {
+                reqinfo.result( res[0] );
+            }
+            else
+            {
+                as.error( 'UnknownPair', `${p.base} & ${p.foreign}` );
+            }
+        } );
     }
 }
 
