@@ -39,7 +39,7 @@ describe('PostgreSQL', function(){
                             `-url=jdbc:postgresql://127.0.0.1:${DB_PORT}/xfers`,
                             '-user=ftntest',
                             '-password=test',
-                            `-locations=filesystem:${__dirname}/../sql/postgresql,filesystem:${__dirname}//node_modules/futoin-eventstream/sql/active/postgresql`,
+                            `-locations=filesystem:${__dirname}/../sql/postgresql,filesystem:${__dirname}/../node_modules/futoin-eventstream/sql/active/postgresql`,
                         ]
                     );
                     if (res.status) {

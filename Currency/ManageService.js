@@ -2,8 +2,9 @@
 
 const PingService = require( 'futoin-executor/PingService' );
 const PingFace = require( 'futoin-invoker/PingFace' );
+const DBGenFace = require( 'futoin-eventstream/DBGenFace' );
 const ManageFace = require( './ManageFace' );
-const { DB_IFACEVER, DB_CURRENCY_TABLE, DB_EXRATE_TABLE } = require( '../main' );
+const { DB_IFACEVER, DB_CURRENCY_TABLE, DB_EXRATE_TABLE, EVTGEN_IFACEVER } = require( '../main' );
 
 
 /**
@@ -25,7 +26,15 @@ class ManageService extends PingService
         const spec_dirs = [ ManageFace.spec(), PingFace.spec( ManageFace.PING_VERSION ) ];
 
         executor.register( as, ifacever, impl, spec_dirs );
-        executor.ccm().assertIface( '#db.xfer', DB_IFACEVER );
+
+        const ccm = executor.ccm();
+        ccm.assertIface( '#db.xfer', DB_IFACEVER );
+        ccm.assertIface( 'xfer.evtgen', EVTGEN_IFACEVER );
+
+        if ( !( ccm.iface( 'xfer.evtgen' ) instanceof DBGenFace ) )
+        {
+            as.error( 'InternalError', 'CCM xfet.evtgen must be instance of DBGenFace' );
+        }
 
         return impl;
     }
@@ -35,23 +44,35 @@ class ManageService extends PingService
         const p = reqinfo.params();
         p.enabled = p.enabled ? 'Y' : 'N';
 
-        const db = reqinfo.executor().ccm().db( 'xfer' );
+        const ccm = reqinfo.executor().ccm();
+        const db = ccm.db( 'xfer' );
+        const evtgen = ccm.iface( 'xfer.evtgen' );
         reqinfo.result( true );
 
         // try insert
         as.add(
             ( as ) =>
             {
-                db.insert( DB_CURRENCY_TABLE )
+                const xfer = db.newXfer();
+                xfer.select( DB_CURRENCY_TABLE, { selected: 0 } )
+                    .get( 'id' )
+                    .where( 'code', p.code );
+                xfer.insert( DB_CURRENCY_TABLE )
                     .set( p )
-                    .set( 'added', db.queryBuilder().helpers().now() )
-                    .execute( as );
+                    .set( 'added', xfer.helpers().now() );
+                evtgen.addXferEvent( xfer, 'CURRENCY_NEW', p );
+                xfer.execute( as );
             },
             ( as, err ) =>
             {
                 if ( err === 'Duplicate' )
                 {
-                    as.success( err );
+                    as.error( 'DuplicateNameOrSymbol', `Currency: ${p.code}` );
+                }
+
+                if ( err === 'XferCondition' )
+                {
+                    as.success( 'UPDATE' );
                 }
             }
         );
@@ -60,12 +81,13 @@ class ManageService extends PingService
         as.add(
             ( as, res ) =>
             {
-                if ( res !== 'Duplicate' )
+                if ( res !== 'UPDATE' )
                 {
                     return;
                 }
 
-                db.update( DB_CURRENCY_TABLE )
+                const xfer = db.newXfer();
+                xfer.update( DB_CURRENCY_TABLE, { affected: 1 } )
                     .set( {
                         name: p.name,
                         symbol: p.symbol,
@@ -74,22 +96,23 @@ class ManageService extends PingService
                     .where( {
                         code: p.code,
                         dec_places: p.dec_places,
-                    } )
-                    .execute( as );
+                    } );
+                evtgen.addXferEvent( xfer, 'CURRENCY', p );
+                xfer.execute( as );
 
-                as.add( ( as, res ) =>
-                {
-                    if ( res.affected !== 1 )
-                    {
-                        as.error( 'DecPlaceMismatch', `Currency: ${p.code}` );
-                    }
-                } );
+                as.add( ( as ) =>
+                {} );
             },
             ( as, err ) =>
             {
                 if ( err === 'Duplicate' )
                 {
                     as.error( 'DuplicateNameOrSymbol', `Currency: ${p.code}` );
+                }
+
+                if ( err === 'XferCondition' )
+                {
+                    as.error( 'DecPlaceMismatch', `Currency: ${p.code}` );
                 }
             }
         );
@@ -98,7 +121,9 @@ class ManageService extends PingService
     setExRate( as, reqinfo )
     {
         const p = reqinfo.params();
-        const db = reqinfo.executor().ccm().db( 'xfer' );
+        const ccm = reqinfo.executor().ccm();
+        const db = ccm.db( 'xfer' );
+        const evtgen = ccm.iface( 'xfer.evtgen' );
         reqinfo.result( true );
 
         db.select()
@@ -136,10 +161,12 @@ class ManageService extends PingService
             as.add(
                 ( as ) =>
                 {
-                    db.insert( DB_EXRATE_TABLE )
+                    const xfer = db.newXfer();
+                    xfer.insert( DB_EXRATE_TABLE )
                         .set( pair )
-                        .set( change )
-                        .execute( as );
+                        .set( change );
+                    evtgen.addXferEvent( xfer, 'EXRATE_NEW', p );
+                    xfer.execute( as );
                 },
                 ( as, err ) =>
                 {
@@ -158,18 +185,15 @@ class ManageService extends PingService
                         return;
                     }
 
-                    db.update( DB_EXRATE_TABLE )
+                    const xfer = db.newXfer();
+                    xfer.update( DB_EXRATE_TABLE, { affected: 1 } )
                         .set( change )
-                        .where( pair )
-                        .execute( as );
+                        .where( pair );
+                    evtgen.addXferEvent( xfer, 'EXRATE', p );
+                    xfer.execute( as );
 
-                    as.add( ( as, res ) =>
-                    {
-                        if ( res.affected !== 1 )
-                        {
-                            as.error( 'InternalError', `Failed to set exrate: ${p.code}` );
-                        }
-                    } );
+                    as.add( ( as ) =>
+                    {} );
                 }
             );
         } );

@@ -3,6 +3,9 @@
 const expect = require( 'chai' ).expect;
 
 const Executor = require('futoin-executor/Executor');
+const GenFace = require( 'futoin-eventstream/GenFace' );
+const DBGenFace = require( 'futoin-eventstream/DBGenFace' );
+const DBGenService = require( 'futoin-eventstream/DBGenService' );
 
 module.exports = function(describe, it, vars) {
     let as;
@@ -21,6 +24,8 @@ module.exports = function(describe, it, vars) {
         as.add(
             (as) => {
                 ccm.alias('#db.xfer', '#db.evt');
+                DBGenService.register( as, executor );
+                DBGenFace.register( as, ccm, 'xfer.evtgen', executor );
             },
             (as, err) => {
                 console.log(err);
@@ -97,9 +102,179 @@ module.exports = function(describe, it, vars) {
                         expect(res.rate).to.equal('1.199234');
                         expect(res.margin).to.equal('0.002');
                     });
+                    
+                    currmng.setExRate(as, 'I:EUR', 'I:USD', '1.1992345', '0.004');
+                    currinfo.getExRate(as, 'I:EUR', 'I:USD');
+                    as.add( (as, res) => {
+                        expect(res.rate).to.equal('1.1992345');
+                        expect(res.margin).to.equal('0.004');
+                    });
                 },
                 (as, err) =>
                 {
+                    console.log(err);
+                    console.log(as.state.error_info);
+                    done(as.state.last_exception);
+                }
+            );
+            as.add( (as) => done() );
+            as.execute();
+        });
+        
+        it('should detect errors', function(done) {
+            as.add(
+                (as) =>
+                {
+                    const currmng = ccm.iface('currency.manage');
+                    const currinfo = ccm.iface('currency.info');
+                    
+                    as.add(
+                        (as) => {
+                            as.state.test_name = 'Missing exrate pair';
+                            currinfo.getExRate(as, 'I:EUR', 'I:YEN');
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'UnknownPair' ) {
+                                as.success();
+                            }
+                        }
+                    );
+                    
+                    as.add(
+                        (as) => {
+                            as.state.test_name = 'Missing currency for exrate';
+                            currinfo.getExRate(as, 'I:EUR', 'I:UNKNOWN');
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'UnknownPair' ) {
+                                as.success();
+                            }
+                        }
+                    );
+                    
+                    //---
+                    as.add(
+                        (as) => {
+                            as.state.test_name = 'Dec place mismatch';
+                            currmng.setCurrency(as, 'I:EUR', 3, 'Euro', '€', true);
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'DecPlaceMismatch' ) {
+                                as.success();
+                            }
+                        }
+                    );
+                    
+                    //---
+                    as.add(
+                        (as) => {
+                            as.state.test_name = 'Dup name @ insert';
+                            currmng.setCurrency(as, 'I:EURA', 2, 'Euro', '€a', true);
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'DuplicateNameOrSymbol' ) {
+                                as.success();
+                            }
+                        }
+                    );
+                    
+                    as.add(
+                        (as) => {
+                            as.state.test_name = 'Dup symbol @ insert';
+                            currmng.setCurrency(as, 'I:EURA', 2, 'Euro2', '€', true);
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'DuplicateNameOrSymbol' ) {
+                                as.success();
+                            }
+                        }
+                    );
+
+                    
+                    //---
+                    currmng.setCurrency(as, 'I:EURA', 2, 'EuroB', '€b', true);
+                    
+                    as.add(
+                        (as) => {
+                            as.state.test_name = 'Dup name @ update';
+                            currmng.setCurrency(as, 'I:EURA', 2, 'Euro', '€a', true);
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'DuplicateNameOrSymbol' ) {
+                                as.success();
+                            }
+                        }
+                    );
+                    
+                    as.add(
+                        (as) => {
+                            as.state.test_name = 'Dup symbol @ update';
+                            currmng.setCurrency(as, 'I:EURA', 2, 'Euro2', '€', true);
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'DuplicateNameOrSymbol' ) {
+                                as.success();
+                            }
+                        }
+                    );
+                    
+                    //---
+                    as.add(
+                        (as) => {
+                            as.state.test_name = 'Unknown foreign';
+                            currmng.setExRate(as, 'I:EUR', 'I:UNKNOWN', '1.199234', '0.002');
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'UnknownCurrency' ) {
+                                as.success();
+                            }
+                        }
+                    );
+                    
+                    as.add(
+                        (as) => {
+                            as.state.test_name = 'Unknown base';
+                            currmng.setExRate(as, 'I:UNKNOWN', 'I:USD', '1.199234', '0.002');
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'UnknownCurrency' ) {
+                                as.success();
+                            }
+                        }
+                    );
+                    
+                    //---
+                    as.add(
+                        (as) => {
+                            as.state.test_name = 'DBGenFace';
+                            ccm.unRegister('xfer.evtgen');
+                            const tmpexec = new Executor(ccm);
+                            GenFace.register(as, ccm, 'xfer.evtgen', executor);
+                            ManageService.register(as, tmpexec);
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'InternalError' ) {
+                                expect(as.state.error_info).to.equal(
+                                    'CCM xfet.evtgen must be instance of DBGenFace'
+                                );
+                                as.success();
+                            }
+                        }
+                    );
+                },
+                (as, err) =>
+                {
+                    console.log(`Test name: ${as.state.test_name}`);
                     console.log(err);
                     console.log(as.state.error_info);
                     done(as.state.last_exception);

@@ -10,4 +10,5 @@ module.exports = {
     DB_CURRENCY_TABLE : 'currencies',
     DB_EXRATE_TABLE : 'exrates',
     DB_IFACEVER : 'futoin.db.l2:1.0',
+    EVTGEN_IFACEVER : 'futoin.evt.gen:1.0',
 };

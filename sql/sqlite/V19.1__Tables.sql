@@ -15,8 +15,10 @@ CREATE TABLE currencies (
 CREATE TABLE exrates (
     base_id INTEGER NOT NULL,
     foreign_id INTEGER NOT NULL,
-    rate DECIMAL(24, 12) NOT NULL,
-    margin DECIMAL(24, 12) NOT NULL,
+    -- rate DECIMAL(24, 12) NOT NULL,
+    rate VARCHAR(25) NOT NULL,
+    -- margin DECIMAL(24, 12) NOT NULL,
+    margin VARCHAR(25) NOT NULL,
     since TIMESTAMP NOT NULL,
     CONSTRAINT base_foreign UNIQUE (base_id, foreign_id)
 );

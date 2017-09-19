@@ -38,7 +38,7 @@ describe('MySQL', function(){
                             'migrate',
                             `-url=jdbc:mysql://127.0.0.1:${DB_PORT}/xfers`,
                             '-user=ftntest',
-                            `-locations=filesystem:${__dirname}/../sql/mysql,filesystem:${__dirname}/node_modules/futoin-eventstream/sql/active/mysql`,
+                            `-locations=filesystem:${__dirname}/../sql/mysql,filesystem:${__dirname}/../node_modules/futoin-eventstream/sql/active/mysql`,
                         ]
                     );
                     if (res.status) {
