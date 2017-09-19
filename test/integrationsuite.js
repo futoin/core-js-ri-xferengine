@@ -82,5 +82,31 @@ module.exports = function(describe, it, vars) {
             as.add( (as) => done() );
             as.execute();
         });
+        
+        it('should manage exrates', function(done) {
+            as.add(
+                (as) =>
+                {
+                    const currmng = ccm.iface('currency.manage');
+                    currmng.setExRate(as, 'I:EUR', 'I:USD', '1.199234', '0.002');
+                    currmng.setExRate(as, 'I:USD', 'I:EUR', '0.987654321', '0.003');
+                    
+                    const currinfo = ccm.iface('currency.info');
+                    currinfo.getExRate(as, 'I:EUR', 'I:USD');
+                    as.add( (as, res) => {
+                        expect(res.rate).to.equal('1.199234');
+                        expect(res.margin).to.equal('0.002');
+                    });
+                },
+                (as, err) =>
+                {
+                    console.log(err);
+                    console.log(as.state.error_info);
+                    done(as.state.last_exception);
+                }
+            );
+            as.add( (as) => done() );
+            as.execute();
+        });
     });
 };

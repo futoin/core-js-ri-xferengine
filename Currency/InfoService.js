@@ -56,16 +56,24 @@ class InfoService extends PingService
         db.select( DB_EXRATE_TABLE )
             .get( [ 'rate', 'margin' ] )
             .where( 'base_id',
-                db.select().get( 'id' ).where( 'code', p.base ).where( 'enabled', 'Y' ) )
+                db.select(DB_CURRENCY_TABLE).get( 'id' )
+                    .where( 'code', p.base ).where( 'enabled', 'Y' )
+            )
             .where( 'foreign_id',
-                db.select().get( 'id' ).where( 'code', p.foreign ).where( 'enabled', 'Y' ) )
+                db.select(DB_CURRENCY_TABLE).get( 'id' )
+                    .where( 'code', p.foreign ).where( 'enabled', 'Y' )
+            )
             .executeAssoc( as );
 
         as.add( ( as, res ) =>
         {
             if ( res.length )
             {
-                reqinfo.result( res[0] );
+                res = res[0];
+                reqinfo.result( {
+                    rate: res.rate.replace(/0+$/, ''),
+                    margin: res.margin.replace(/0+$/, ''),
+                } );
             }
             else
             {
