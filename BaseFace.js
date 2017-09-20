@@ -10,21 +10,18 @@ const { FTN19_VERSION, PING_VERSION, specDirs } = require( './main' );
  * 
  * @note Not official API
  */
-class BaseFace extends PingFace
-{
+class BaseFace extends PingFace {
     /**
      * Latest supported FTN17 version
      */
-    static get LATEST_VERSION()
-    {
+    static get LATEST_VERSION() {
         return FTN19_VERSION;
     }
 
     /**
      * Latest supported FTN4 version
      */
-    static get PING_VERSION()
-    {
+    static get PING_VERSION() {
         return PING_VERSION;
     }
 
@@ -39,8 +36,7 @@ class BaseFace extends PingFace
      * @param {object} [options={}] - interface options
      * @param {string} [options.version=1.0] - interface version to use
      */
-    static register( as, ccm, name, endpoint, credentials=null, options={} )
-    {
+    static register( as, ccm, name, endpoint, credentials=null, options={} ) {
         const ifacever = options.version || this.LATEST_VERSION;
 
         _defaults( options, {
@@ -59,8 +55,7 @@ class BaseFace extends PingFace
         );
     }
 
-    static spec()
-    {
+    static spec() {
         return specDirs;
     }
 }

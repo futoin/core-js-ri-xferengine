@@ -8,8 +8,7 @@ const InfoFace = require( './InfoFace' );
  * Keeps local cache of currencies and exchange rates.
  * Listens on related event stream for changes as LIVE component.
  */
-class CacheInfoFace extends InfoFace
-{
+class CacheInfoFace extends InfoFace {
     // TODO
 }
 

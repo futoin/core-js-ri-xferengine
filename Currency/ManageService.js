@@ -10,8 +10,7 @@ const { DB_IFACEVER, DB_CURRENCY_TABLE, DB_EXRATE_TABLE, EVTGEN_IFACEVER } = req
 /**
  * Currency Manage Service
  */
-class ManageService extends PingService
-{
+class ManageService extends PingService {
     /**
      * Register futoin.currency.manage interface with Executor
      * @param {AsyncSteps} as - steps interface
@@ -19,8 +18,7 @@ class ManageService extends PingService
      * @param {object} options - implementation defined options
      * @returns {ManageService} instance
      */
-    static register( as, executor, options={} )
-    {
+    static register( as, executor, options={} ) {
         const ifacever = 'futoin.currency.manage:' + ManageFace.LATEST_VERSION;
         const impl = new this( options );
         const spec_dirs = [ ManageFace.spec(), PingFace.spec( ManageFace.PING_VERSION ) ];
@@ -31,16 +29,14 @@ class ManageService extends PingService
         ccm.assertIface( '#db.xfer', DB_IFACEVER );
         ccm.assertIface( 'xfer.evtgen', EVTGEN_IFACEVER );
 
-        if ( !( ccm.iface( 'xfer.evtgen' ) instanceof DBGenFace ) )
-        {
+        if ( !( ccm.iface( 'xfer.evtgen' ) instanceof DBGenFace ) ) {
             as.error( 'InternalError', 'CCM xfet.evtgen must be instance of DBGenFace' );
         }
 
         return impl;
     }
 
-    setCurrency( as, reqinfo )
-    {
+    setCurrency( as, reqinfo ) {
         const p = reqinfo.params();
         p.enabled = p.enabled ? 'Y' : 'N';
 
@@ -51,8 +47,7 @@ class ManageService extends PingService
 
         // try insert
         as.add(
-            ( as ) =>
-            {
+            ( as ) => {
                 const xfer = db.newXfer();
                 xfer.select( DB_CURRENCY_TABLE, { selected: 0 } )
                     .get( 'id' )
@@ -63,15 +58,12 @@ class ManageService extends PingService
                 evtgen.addXferEvent( xfer, 'CURRENCY_NEW', p );
                 xfer.execute( as );
             },
-            ( as, err ) =>
-            {
-                if ( err === 'Duplicate' )
-                {
+            ( as, err ) => {
+                if ( err === 'Duplicate' ) {
                     as.error( 'DuplicateNameOrSymbol', `Currency: ${p.code}` );
                 }
 
-                if ( err === 'XferCondition' )
-                {
+                if ( err === 'XferCondition' ) {
                     as.success( 'UPDATE' );
                 }
             }
@@ -79,10 +71,8 @@ class ManageService extends PingService
 
         /// update on dup
         as.add(
-            ( as, res ) =>
-            {
-                if ( res !== 'UPDATE' )
-                {
+            ( as, res ) => {
+                if ( res !== 'UPDATE' ) {
                     return;
                 }
 
@@ -100,26 +90,21 @@ class ManageService extends PingService
                 evtgen.addXferEvent( xfer, 'CURRENCY', p );
                 xfer.execute( as );
 
-                as.add( ( as ) =>
-                {} );
+                as.add( ( as ) => {} );
             },
-            ( as, err ) =>
-            {
-                if ( err === 'Duplicate' )
-                {
+            ( as, err ) => {
+                if ( err === 'Duplicate' ) {
                     as.error( 'DuplicateNameOrSymbol', `Currency: ${p.code}` );
                 }
 
-                if ( err === 'XferCondition' )
-                {
+                if ( err === 'XferCondition' ) {
                     as.error( 'DecPlaceMismatch', `Currency: ${p.code}` );
                 }
             }
         );
     }
 
-    setExRate( as, reqinfo )
-    {
+    setExRate( as, reqinfo ) {
         const p = reqinfo.params();
         const ccm = reqinfo.executor().ccm();
         const db = ccm.db( 'xfer' );
@@ -137,17 +122,14 @@ class ManageService extends PingService
             )
             .executeAssoc( as );
 
-        as.add( ( as, res ) =>
-        {
+        as.add( ( as, res ) => {
             const pair = res[0];
 
-            if ( !pair.base_id )
-            {
+            if ( !pair.base_id ) {
                 as.error( 'UnknownCurrency', `Currency: ${p.base}` );
             }
 
-            if ( !pair.foreign_id )
-            {
+            if ( !pair.foreign_id ) {
                 as.error( 'UnknownCurrency', `Currency: ${p.foreign}` );
             }
 
@@ -159,8 +141,7 @@ class ManageService extends PingService
 
             // Try insert
             as.add(
-                ( as ) =>
-                {
+                ( as ) => {
                     const xfer = db.newXfer();
                     xfer.insert( DB_EXRATE_TABLE )
                         .set( pair )
@@ -168,20 +149,16 @@ class ManageService extends PingService
                     evtgen.addXferEvent( xfer, 'EXRATE_NEW', p );
                     xfer.execute( as );
                 },
-                ( as, err ) =>
-                {
-                    if ( err === 'Duplicate' )
-                    {
+                ( as, err ) => {
+                    if ( err === 'Duplicate' ) {
                         as.success( err );
                     }
                 }
             );
             // Update on dup
             as.add(
-                ( as, res ) =>
-                {
-                    if ( res !== 'Duplicate' )
-                    {
+                ( as, res ) => {
+                    if ( res !== 'Duplicate' ) {
                         return;
                     }
 
@@ -192,8 +169,7 @@ class ManageService extends PingService
                     evtgen.addXferEvent( xfer, 'EXRATE', p );
                     xfer.execute( as );
 
-                    as.add( ( as ) =>
-                    {} );
+                    as.add( ( as ) => {} );
                 }
             );
         } );

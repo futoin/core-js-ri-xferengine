@@ -15,8 +15,7 @@ const {
 /**
  * Limits Service
  */
-class LimitsService extends PingService
-{
+class LimitsService extends PingService {
     /**
      * Register futoin.currency.manage interface with Executor
      * @param {AsyncSteps} as - steps interface
@@ -24,8 +23,7 @@ class LimitsService extends PingService
      * @param {object} options - implementation defined options
      * @returns {ManageService} instance
      */
-    static register( as, executor, options={} )
-    {
+    static register( as, executor, options={} ) {
         const ifacename = 'futoin.xfer.limits';
         const ifacever = ifacename + ':' + LimitsFace.LATEST_VERSION;
         const impl = new this( options );
@@ -34,8 +32,7 @@ class LimitsService extends PingService
         executor.register( as, ifacever, impl, spec_dirs );
         executor.ccm().assertIface( '#db.xfer', DB_IFACEVER );
 
-        as.add( ( as ) =>
-        {
+        as.add( ( as ) => {
             const mjr = LimitsFace.LATEST_VERSION.split( '.' )[0];
             impl._iface_info = executor._ifaces[ifacename][mjr];
         } );
@@ -43,30 +40,25 @@ class LimitsService extends PingService
         return impl;
     }
 
-    addLimitGroup( as, reqinfo )
-    {
+    addLimitGroup( as, reqinfo ) {
         const db = reqinfo.executor().ccm().db( 'xfer' );
 
         as.add(
-            ( as ) =>
-            {
+            ( as ) => {
                 db.insert( DB_LIMIT_GROUPS_TABLE )
                     .set( 'group_name', reqinfo.params().group )
                     .execute( as );
                 as.add( ( as ) => reqinfo.result( true ) );
             },
-            ( as, res ) =>
-            {
-                if ( res === 'Duplicate' )
-                {
+            ( as, res ) => {
+                if ( res === 'Duplicate' ) {
                     as.error( 'AlreadyExists' );
                 }
             }
         );
     }
 
-    getLimitGroups( as, reqinfo )
-    {
+    getLimitGroups( as, reqinfo ) {
         const db = reqinfo.executor().ccm().db( 'xfer' );
 
         db.select( DB_LIMIT_GROUPS_TABLE )
@@ -76,8 +68,7 @@ class LimitsService extends PingService
         as.add( ( as, { rows } ) => reqinfo.result( rows.map( v => v[0] ) ) );
     }
 
-    getLimits( as, reqinfo )
-    {
+    getLimits( as, reqinfo ) {
         const p = reqinfo.params();
         const db = reqinfo.executor().ccm().db( 'xfer' );
 
@@ -93,10 +84,8 @@ class LimitsService extends PingService
             } )
             .executeAssoc( as );
 
-        as.add( ( as, rows ) =>
-        {
-            if ( rows.length !== 1 )
-            {
+        as.add( ( as, rows ) => {
+            if ( rows.length !== 1 ) {
                 as.error( 'LimitsNotSet' );
             }
 
@@ -110,8 +99,7 @@ class LimitsService extends PingService
         } );
     }
 
-    setLimits( as, reqinfo )
-    {
+    setLimits( as, reqinfo ) {
         const p = reqinfo.params();
         const db = reqinfo.executor().ccm().db( 'xfer' );
 
@@ -124,10 +112,8 @@ class LimitsService extends PingService
             .where( 'group_name', p.group )
             .execute( as );
 
-        as.add( ( as, { rows } ) =>
-        {
-            if ( rows.length !== 1 )
-            {
+        as.add( ( as, { rows } ) => {
+            if ( rows.length !== 1 ) {
                 as.error( 'UnknownGroup' );
             }
 
@@ -139,10 +125,8 @@ class LimitsService extends PingService
             .where( 'code', p.currency )
             .execute( as );
 
-        as.add( ( as, { rows } ) =>
-        {
-            if ( rows.length !== 1 )
-            {
+        as.add( ( as, { rows } ) => {
+            if ( rows.length !== 1 ) {
                 as.error( 'UnknownCurrency' );
             }
 
@@ -156,18 +140,15 @@ class LimitsService extends PingService
         const lim_risk = p.risk;
         const lim_domain = p.domain;
 
-        if ( !SpecTools.checkType( iface_info, `${lim_domain}LimitValues`, lim_hard ) )
-        {
+        if ( !SpecTools.checkType( iface_info, `${lim_domain}LimitValues`, lim_hard ) ) {
             as.error( 'InvalidRequest', `Hard limits do not match ${lim_domain}LimitValues` );
         }
 
-        if ( lim_check && !SpecTools.checkType( iface_info, `${lim_domain}LimitValues`, lim_check ) )
-        {
+        if ( lim_check && !SpecTools.checkType( iface_info, `${lim_domain}LimitValues`, lim_check ) ) {
             as.error( 'InvalidRequest', `Check limits do not match ${lim_domain}LimitValues` );
         }
 
-        if ( lim_risk && !SpecTools.checkType( iface_info, `${lim_domain}LimitValues`, lim_risk ) )
-        {
+        if ( lim_risk && !SpecTools.checkType( iface_info, `${lim_domain}LimitValues`, lim_risk ) ) {
             as.error( 'InvalidRequest', `Risk limits do not match ${lim_domain}LimitValues` );
         }
 
@@ -182,8 +163,7 @@ class LimitsService extends PingService
         reqinfo.result( true );
 
         as.repeat( 2, ( as, retry ) => as.add(
-            ( as ) =>
-            {
+            ( as ) => {
                 const cond = {
                     lim_id,
                     lim_domain,
@@ -191,16 +171,13 @@ class LimitsService extends PingService
 
                 toset.currency_id = currency_id;
 
-                if ( retry )
-                {
+                if ( retry ) {
                     const xfer = db.newXfer();
                     xfer.update( DB_DOMAIN_LIMITS_TABLE, { affected: 1 } )
                         .set( toset )
                         .where( cond );
                     xfer.execute( as );
-                }
-                else
-                {
+                } else {
                     db.insert( DB_DOMAIN_LIMITS_TABLE )
                         .set( toset )
                         .set( cond )
@@ -209,10 +186,8 @@ class LimitsService extends PingService
 
                 as.add( ( as ) => as.break() );
             },
-            ( as, err ) =>
-            {
-                if ( err === 'Duplicate' )
-                {
+            ( as, err ) => {
+                if ( err === 'Duplicate' ) {
                     as.success();
                 }
             }

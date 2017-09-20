@@ -9,8 +9,7 @@ const { DB_IFACEVER, DB_CURRENCY_TABLE, DB_EXRATE_TABLE } = require( '../main' )
 /**
  * Currency Manage Service
  */
-class InfoService extends PingService
-{
+class InfoService extends PingService {
     /**
      * Register futoin.currency.manage interface with Executor
      * @param {AsyncSteps} as - steps interface
@@ -18,8 +17,7 @@ class InfoService extends PingService
      * @param {object} options - implementation defined options
      * @returns {ManageService} instance
      */
-    static register( as, executor, options={} )
-    {
+    static register( as, executor, options={} ) {
         const ifacever = 'futoin.currency.info:' + InfoFace.LATEST_VERSION;
         const impl = new this( options );
         const spec_dirs = [ InfoFace.spec(), PingFace.spec( InfoFace.PING_VERSION ) ];
@@ -30,18 +28,15 @@ class InfoService extends PingService
         return impl;
     }
 
-    listCurrencies( as, reqinfo )
-    {
+    listCurrencies( as, reqinfo ) {
         const db = reqinfo.executor().ccm().db( 'xfer' );
 
         db.select( DB_CURRENCY_TABLE )
             .get( [ 'code', 'dec_places', 'name', 'symbol', 'enabled' ] )
             .executeAssoc( as );
 
-        as.add( ( as, res ) =>
-        {
-            res.forEach( ( v ) =>
-            {
+        as.add( ( as, res ) => {
+            res.forEach( ( v ) => {
                 v.dec_places = parseInt( v.dec_places );
                 v.enabled = v.enabled === 'Y';
             } );
@@ -49,8 +44,7 @@ class InfoService extends PingService
         } );
     }
 
-    getExRate( as, reqinfo )
-    {
+    getExRate( as, reqinfo ) {
         const p = reqinfo.params();
         const db = reqinfo.executor().ccm().db( 'xfer' );
 
@@ -66,18 +60,14 @@ class InfoService extends PingService
             )
             .executeAssoc( as );
 
-        as.add( ( as, res ) =>
-        {
-            if ( res.length )
-            {
+        as.add( ( as, res ) => {
+            if ( res.length ) {
                 res = res[0];
                 reqinfo.result( {
                     rate: AmountTools.trimZeros( res.rate ),
                     margin: AmountTools.trimZeros( res.margin ),
                 } );
-            }
-            else
-            {
+            } else {
                 as.error( 'UnknownPair', `${p.base} & ${p.foreign}` );
             }
         } );

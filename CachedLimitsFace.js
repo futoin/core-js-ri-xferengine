@@ -7,8 +7,7 @@ const LimitsFace = require( './LimitsFace' );
  * 
  * Keeps local cache of limits and invalidates based on LIVE events.
  */
-class CachedLimitsFace extends LimitsFace
-{
+class CachedLimitsFace extends LimitsFace {
     // TODO
 }
 

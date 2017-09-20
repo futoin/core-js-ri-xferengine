@@ -29,7 +29,7 @@ module.exports = {
         "array-bracket-spacing": ["error", "always"],
         //"array-element-newline": ["error", { "multiline": true, "minItems": 3 }],
         "block-spacing": ["error"],
-        "brace-style": ["error", "allman"],
+        "brace-style": ["error", "1tbs"],
         "no-trailing-spaces": "error",
         "no-unused-vars": [
             "error",
