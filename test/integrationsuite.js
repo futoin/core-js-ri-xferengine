@@ -683,6 +683,146 @@ module.exports = function(describe, it, vars) {
             as.execute();
         } );
         
+        it ('should detect sett limits errors', function(done) {
+            as.add(
+                (as) =>
+                {
+                    const xferlim = ccm.iface('xfer.limits');
+                    
+                    //--
+                    as.add(
+                        (as) => {
+                            xferlim.setLimits(as, 'UnknowGroup', 'Misc', 'I:EUREKA', {
+                                "message_daily_cnt" : 1,
+                                "failure_daily_cnt" : 1,
+                                "limithit_daily_cnt" : 1,
+                                "message_weekly_cnt" : 1,
+                                "failure_weekly_cnt" : 1,
+                                "limithit_weekly_cnt" : 1,
+                                "message_monthly_cnt" : 1,
+                                "failure_monthly_cnt" : 1,
+                                "limithit_monthly_cnt" : 1
+                            }, false, false );
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'UnknownGroup' ) {
+                                as.success();
+                            }
+                        }
+                    );
+                    
+                    //--
+                    as.add(
+                        (as) => {
+                            xferlim.setLimits(as, 'default', 'Misc', 'I:EUREKA', {
+                                "message_daily_cnt" : 1,
+                                "failure_daily_cnt" : 1,
+                                "limithit_daily_cnt" : 1,
+                                "message_weekly_cnt" : 1,
+                                "failure_weekly_cnt" : 1,
+                                "limithit_weekly_cnt" : 1,
+                                "message_monthly_cnt" : 1,
+                                "failure_monthly_cnt" : 1,
+                                "limithit_monthly_cnt" : 1
+                            }, false, false );
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'UnknownCurrency' ) {
+                                as.success();
+                            }
+                        }
+                    );
+                    
+                    //--
+                    as.add(
+                        (as) => {
+                            xferlim.setLimits(as, 'default', 'Misc', 'I:EUR', {
+                                "message_daily_cnt" : 1,
+                                "failure_daily_cnt" : 1,
+                                "limithit_daily_cnt" : 1,
+                                "message_weekly_cnt" : 1,
+                                "failure_weekly_cnt" : 1,
+                                "limithit_weekly_cnt" : 1,
+                                "message_monthly_cnt" : 1,
+                                "failure_monthly_cnt" : 1
+                            }, false, {} );
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'InvalidRequest' ) {
+                                expect(as.state.error_info).to.equal(
+                                    'Hard limits do not match MiscLimitValues'
+                                );
+                                as.success();
+                            }
+                        }
+                    );
+                    
+                    //--
+                    as.add(
+                        (as) => {
+                            xferlim.setLimits(as, 'default', 'Misc', 'I:EUR', {
+                                "message_daily_cnt" : 1,
+                                "failure_daily_cnt" : 1,
+                                "limithit_daily_cnt" : 1,
+                                "message_weekly_cnt" : 1,
+                                "failure_weekly_cnt" : 1,
+                                "limithit_weekly_cnt" : 1,
+                                "message_monthly_cnt" : 1,
+                                "failure_monthly_cnt" : 1,
+                                "limithit_monthly_cnt" : 1
+                            }, {}, false );
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'InvalidRequest' ) {
+                                expect(as.state.error_info).to.equal(
+                                    'Check limits do not match MiscLimitValues'
+                                );
+                                as.success();
+                            }
+                        }
+                    );
+                    
+                    //--
+                    as.add(
+                        (as) => {
+                            xferlim.setLimits(as, 'default', 'Misc', 'I:EUR', {
+                                "message_daily_cnt" : 1,
+                                "failure_daily_cnt" : 1,
+                                "limithit_daily_cnt" : 1,
+                                "message_weekly_cnt" : 1,
+                                "failure_weekly_cnt" : 1,
+                                "limithit_weekly_cnt" : 1,
+                                "message_monthly_cnt" : 1,
+                                "failure_monthly_cnt" : 1,
+                                "limithit_monthly_cnt" : 1
+                            }, false, {} );
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'InvalidRequest' ) {
+                                expect(as.state.error_info).to.equal(
+                                    'Risk limits do not match MiscLimitValues'
+                                );
+                                as.success();
+                            }
+                        }
+                    );
+                },
+                (as, err) =>
+                {
+                    console.log(err);
+                    console.log(as.state.error_info);
+                    done(as.state.last_exception);
+                }
+            );
+            as.add( (as) => done() );
+            as.execute();
+        } );
+        
         it ('should detect get limits errors', function(done) {
             as.add(
                 (as) =>
