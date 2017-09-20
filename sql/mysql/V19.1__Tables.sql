@@ -16,8 +16,8 @@ CREATE TABLE currencies (
     CHARACTER SET 'utf8';
     
 CREATE TABLE exrates (
-    base_id SMALLINT UNSIGNED NOT NULL,
-    foreign_id SMALLINT UNSIGNED NOT NULL,
+    base_id SMALLINT UNSIGNED NOT NULL REFERENCES currencies(id),
+    foreign_id SMALLINT UNSIGNED NOT NULL REFERENCES currencies(id),
     rate DECIMAL(24, 12) NOT NULL,
     margin DECIMAL(24, 12) NOT NULL,
     since TIMESTAMP NOT NULL,
@@ -28,5 +28,31 @@ CREATE TABLE exrates (
 
 
 -- Limits
+CREATE TABLE limit_groups (
+    `id` SMALLINT UNSIGNED NOT NULL auto_increment PRIMARY KEY,
+    `group` VARCHAR(32) NOT NULL UNIQUE
+)
+    ENGINE=InnoDB
+    CHARACTER SET 'utf8';
+
+CREATE TABLE domain_limits (
+    `limit_id` SMALLINT UNSIGNED NOT NULL REFERENCES limit_groups(`id`),
+    `domain` ENUM(
+        'Ratail',
+        'Deposits',
+        'Payments',
+        'Gaming',
+        'Misc',
+        'Personnel'
+    ) NOT NULL,
+    `currency_id` SMALLINT UNSIGNED NOT NULL REFERENCES currencies(id),
+    `hard` BLOB NOT NULL,
+    `check` BLOB NOT NULL,
+    `risk` BLOB NOT NULL,
+    PRIMARY KEY(`limit_id`, `domain`)
+)
+    ENGINE=InnoDB
+    CHARACTER SET 'utf8';
+
 
 -- Xfers

@@ -58,6 +58,24 @@ More detailed concept is in the FTN19 spec.
 
 The concept is described in FutoIn specification: [FTN19: FutoIn Interface - Transaction Engine v1.x](http://specs.futoin.org/final/preview/ftn18_if_xfer_engine-1.html)
 
+## Classes
+
+<dl>
+<dt><a href="#BaseFace">BaseFace</a></dt>
+<dd><p>Base Face with neutral common functionality</p>
+</dd>
+<dt><a href="#CachedLimitsFace">CachedLimitsFace</a></dt>
+<dd><p>Efficient cached LimitsFace with event-based cache invalidation</p>
+<p>Keeps local cache of limits and invalidates based on LIVE events.</p>
+</dd>
+<dt><a href="#LimitsFace">LimitsFace</a></dt>
+<dd><p>Limits Face</p>
+</dd>
+<dt><a href="#LimitsService">LimitsService</a></dt>
+<dd><p>Limits Service</p>
+</dd>
+</dl>
+
 <a name="BaseFace"></a>
 
 ## BaseFace
@@ -99,6 +117,40 @@ CCM registration helper
 | [credentials] | <code>\*</code> | <code></code> | see AdvancedCCM#register |
 | [options] | <code>object</code> | <code>{}</code> | interface options |
 | [options.version] | <code>string</code> | <code>&quot;1.0&quot;</code> | interface version to use |
+
+<a name="CachedLimitsFace"></a>
+
+## CachedLimitsFace
+Efficient cached LimitsFace with event-based cache invalidation
+
+Keeps local cache of limits and invalidates based on LIVE events.
+
+**Kind**: global class  
+<a name="LimitsFace"></a>
+
+## LimitsFace
+Limits Face
+
+**Kind**: global class  
+<a name="LimitsService"></a>
+
+## LimitsService
+Limits Service
+
+**Kind**: global class  
+<a name="LimitsService.register"></a>
+
+### LimitsService.register(as, executor, options) ⇒ <code>ManageService</code>
+Register futoin.currency.manage interface with Executor
+
+**Kind**: static method of [<code>LimitsService</code>](#LimitsService)  
+**Returns**: <code>ManageService</code> - instance  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| as | <code>AsyncSteps</code> | steps interface |
+| executor | <code>Executor</code> | executor instance |
+| options | <code>object</code> | implementation defined options |
 
 
 
