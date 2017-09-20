@@ -26,18 +26,18 @@ CREATE TABLE exrates (
 
 -- Limits
 CREATE TABLE limit_groups (
-    "id" serial NOT NULL PRIMARY KEY,
-    "group" VARCHAR(32) NOT NULL UNIQUE
+    "id" INTEGER NOT NULL PRIMARY KEY autoincrement,
+    "group_name" VARCHAR(32) NOT NULL UNIQUE
 );
 
 CREATE TABLE domain_limits (
-    "limit_id" SMALLINT NOT NULL REFERENCES limit_groups("id"),
-    "domain" VARCHAR(16) NOT NULL,
+    "lim_id" SMALLINT NOT NULL REFERENCES limit_groups("id"),
+    "lim_domain" VARCHAR(16) NOT NULL,
     "currency_id" INTEGER NOT NULL REFERENCES currencies("id"),
-    "hard" TEXT NOT NULL,
-    "check" TEXT NOT NULL,
-    "risk" TEXT NOT NULL,
-    PRIMARY KEY ("limit_id", "domain")
+    "lim_hard" TEXT NOT NULL,
+    "lim_check" TEXT NULL,
+    "lim_risk" TEXT NULL,
+    PRIMARY KEY ("lim_id", "lim_domain")
 );
 
 

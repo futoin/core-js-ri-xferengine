@@ -1,6 +1,6 @@
 'use strict';
 
-const BaseFace = require( '../BaseFace' );
+const BaseFace = require( './BaseFace' );
 
 /**
  * Limits Face

@@ -32,11 +32,11 @@ CREATE TABLE exrates (
 -- Limits
 CREATE TABLE limit_groups (
     "id" serial NOT NULL PRIMARY KEY,
-    "group" VARCHAR(32) NOT NULL UNIQUE
+    "group_name" VARCHAR(32) NOT NULL UNIQUE
 );
 
 CREATE TYPE limit_domain AS ENUM(
-    'Ratail',
+    'Retail',
     'Deposits',
     'Payments',
     'Gaming',
@@ -45,13 +45,13 @@ CREATE TYPE limit_domain AS ENUM(
 );
 
 CREATE TABLE domain_limits (
-    "limit_id" SMALLINT NOT NULL REFERENCES limit_groups("id"),
-    "domain" limit_domain NOT NULL,
+    "lim_id" SMALLINT NOT NULL REFERENCES limit_groups("id"),
+    "lim_domain" limit_domain NOT NULL,
     "currency_id" currency_id NOT NULL REFERENCES currencies("id"),
-    "hard" JSON NOT NULL,
-    "check" JSON NOT NULL,
-    "risk" JSON NOT NULL,
-    PRIMARY KEY ("limit_id", "domain")
+    "lim_hard" JSON NOT NULL,
+    "lim_check" JSON NULL,
+    "lim_risk" JSON NULL,
+    PRIMARY KEY ("lim_id", "lim_domain")
 );
 
 

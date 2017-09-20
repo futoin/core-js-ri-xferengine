@@ -30,15 +30,15 @@ CREATE TABLE exrates (
 -- Limits
 CREATE TABLE limit_groups (
     `id` SMALLINT UNSIGNED NOT NULL auto_increment PRIMARY KEY,
-    `group` VARCHAR(32) NOT NULL UNIQUE
+    `group_name` VARCHAR(32) NOT NULL UNIQUE
 )
     ENGINE=InnoDB
     CHARACTER SET 'utf8';
 
 CREATE TABLE domain_limits (
-    `limit_id` SMALLINT UNSIGNED NOT NULL REFERENCES limit_groups(`id`),
-    `domain` ENUM(
-        'Ratail',
+    `lim_id` SMALLINT UNSIGNED NOT NULL REFERENCES limit_groups(`id`),
+    `lim_domain` ENUM(
+        'Retail',
         'Deposits',
         'Payments',
         'Gaming',
@@ -46,10 +46,10 @@ CREATE TABLE domain_limits (
         'Personnel'
     ) NOT NULL,
     `currency_id` SMALLINT UNSIGNED NOT NULL REFERENCES currencies(id),
-    `hard` BLOB NOT NULL,
-    `check` BLOB NOT NULL,
-    `risk` BLOB NOT NULL,
-    PRIMARY KEY(`limit_id`, `domain`)
+    `lim_hard` BLOB NOT NULL,
+    `lim_check` BLOB NULL,
+    `lim_risk` BLOB NULL,
+    PRIMARY KEY(`lim_id`, `lim_domain`)
 )
     ENGINE=InnoDB
     CHARACTER SET 'utf8';
