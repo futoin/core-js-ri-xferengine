@@ -17,11 +17,11 @@ const {
  */
 class LimitsService extends PingService {
     /**
-     * Register futoin.currency.manage interface with Executor
+     * Register futoin.xfers.limits interface with Executor
      * @param {AsyncSteps} as - steps interface
      * @param {Executor} executor - executor instance
      * @param {object} options - implementation defined options
-     * @returns {ManageService} instance
+     * @returns {LimitsService} instance
      */
     static register( as, executor, options={} ) {
         const ifacename = 'futoin.xfer.limits';

@@ -1,4 +1,8 @@
 
+-- Common
+CREATE TABLE uuid_history (
+    "uuidb64" CHARACTER(22) NOT NULL PRIMARY KEY
+);
 
 -- Currencies
 
@@ -31,13 +35,26 @@ CREATE TABLE limit_groups (
 );
 
 CREATE TABLE domain_limits (
-    "lim_id" SMALLINT NOT NULL REFERENCES limit_groups("id"),
+    "lim_id" INTEGER NOT NULL REFERENCES limit_groups("id"),
     "lim_domain" VARCHAR(16) NOT NULL,
     "currency_id" INTEGER NOT NULL REFERENCES currencies("id"),
     "lim_hard" TEXT NOT NULL,
     "lim_check" TEXT NULL,
     "lim_risk" TEXT NULL,
     PRIMARY KEY ("lim_id", "lim_domain")
+);
+
+-- Accounts
+CREATE TABLE account_holders (
+    "uuidb64" CHARACTER(22) NOT NULL UNIQUE,
+    "ext_id" VARCHAR(128) NOT NULL UNIQUE,
+    "group_id" INTEGER NOT NULL REFERENCES limit_groups(id),
+    "enabled" CHARACTER(1) NOT NULL,
+    "kyc" CHARACTER(1) NOT NULL,
+    "data" TEXT NOT NULL,
+    "internal" TEXT NOT NULL,
+    "created" TIMESTAMP NOT NULL,
+    "updated" TIMESTAMP NOT NULL
 );
 
 

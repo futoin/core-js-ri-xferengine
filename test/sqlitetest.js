@@ -85,6 +85,11 @@ describe('SQLite', function(){
                     DB_XFER_TYPE: 'sqlite',
                     DB_XFER_SOCKET: xfers_db,
                 });
+                as.add( (as) => {
+                    const db = ccm.db('xfer');
+                    db.query(as, 'PRAGMA synchronous = OFF');
+                    db.query(as, 'PRAGMA journal_mode = MEMORY');
+                });
             },
             (as, err) => {
                 console.log(err);

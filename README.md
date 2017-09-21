@@ -61,6 +61,12 @@ The concept is described in FutoIn specification: [FTN19: FutoIn Interface - Tra
 ## Classes
 
 <dl>
+<dt><a href="#AccountsFace">AccountsFace</a></dt>
+<dd><p>Accounts Face</p>
+</dd>
+<dt><a href="#AccountsService">AccountsService</a></dt>
+<dd><p>Accounts Service</p>
+</dd>
 <dt><a href="#BaseFace">BaseFace</a></dt>
 <dd><p>Base Face with neutral common functionality</p>
 </dd>
@@ -74,7 +80,36 @@ The concept is described in FutoIn specification: [FTN19: FutoIn Interface - Tra
 <dt><a href="#LimitsService">LimitsService</a></dt>
 <dd><p>Limits Service</p>
 </dd>
+<dt><a href="#UUIDTool">UUIDTool</a></dt>
+<dd><p>Common tool for UUID generation and use in transactions</p>
+</dd>
 </dl>
+
+<a name="AccountsFace"></a>
+
+## AccountsFace
+Accounts Face
+
+**Kind**: global class  
+<a name="AccountsService"></a>
+
+## AccountsService
+Accounts Service
+
+**Kind**: global class  
+<a name="AccountsService.register"></a>
+
+### AccountsService.register(as, executor, options) ⇒ [<code>AccountsService</code>](#AccountsService)
+Register futoin.xfer.accounts interface with Executor
+
+**Kind**: static method of [<code>AccountsService</code>](#AccountsService)  
+**Returns**: [<code>AccountsService</code>](#AccountsService) - instance  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| as | <code>AsyncSteps</code> | steps interface |
+| executor | <code>Executor</code> | executor instance |
+| options | <code>object</code> | implementation defined options |
 
 <a name="BaseFace"></a>
 
@@ -140,17 +175,68 @@ Limits Service
 **Kind**: global class  
 <a name="LimitsService.register"></a>
 
-### LimitsService.register(as, executor, options) ⇒ <code>ManageService</code>
-Register futoin.currency.manage interface with Executor
+### LimitsService.register(as, executor, options) ⇒ [<code>LimitsService</code>](#LimitsService)
+Register futoin.xfers.limits interface with Executor
 
 **Kind**: static method of [<code>LimitsService</code>](#LimitsService)  
-**Returns**: <code>ManageService</code> - instance  
+**Returns**: [<code>LimitsService</code>](#LimitsService) - instance  
 
 | Param | Type | Description |
 | --- | --- | --- |
 | as | <code>AsyncSteps</code> | steps interface |
 | executor | <code>Executor</code> | executor instance |
 | options | <code>object</code> | implementation defined options |
+
+<a name="UUIDTool"></a>
+
+## UUIDTool
+Common tool for UUID generation and use in transactions
+
+**Kind**: global class  
+
+* [UUIDTool](#UUIDTool)
+    * [.genBin()](#UUIDTool.genBin) ⇒ <code>Buffer</code>
+    * [.genB64()](#UUIDTool.genB64) ⇒ <code>string</code>
+    * [.addXfer(xfer, val)](#UUIDTool.addXfer)
+    * [.genXfer(xfer)](#UUIDTool.genXfer) ⇒ <code>string</code>
+
+<a name="UUIDTool.genBin"></a>
+
+### UUIDTool.genBin() ⇒ <code>Buffer</code>
+Generate UUID v4
+
+**Kind**: static method of [<code>UUIDTool</code>](#UUIDTool)  
+**Returns**: <code>Buffer</code> - buffer of 16 items  
+<a name="UUIDTool.genB64"></a>
+
+### UUIDTool.genB64() ⇒ <code>string</code>
+Generate UUID v4 encoded in Base64 without padding
+
+**Kind**: static method of [<code>UUIDTool</code>](#UUIDTool)  
+**Returns**: <code>string</code> - 22 characters  
+<a name="UUIDTool.addXfer"></a>
+
+### UUIDTool.addXfer(xfer, val)
+Call on xfer to ensure whole history uniqueness (just in case)
+
+**Kind**: static method of [<code>UUIDTool</code>](#UUIDTool)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| xfer | <code>XferBuilder</code> | xfer builder object |
+| val | <code>string</code> | UUID in Base64 format without padding |
+
+<a name="UUIDTool.genXfer"></a>
+
+### UUIDTool.genXfer(xfer) ⇒ <code>string</code>
+Generate UUID v4 in scope of transaction
+
+**Kind**: static method of [<code>UUIDTool</code>](#UUIDTool)  
+**Returns**: <code>string</code> - UUID encoded in Base64 without padding  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| xfer | <code>XferBuilder</code> | xfer builder object |
 
 
 

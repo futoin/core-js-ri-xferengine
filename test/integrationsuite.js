@@ -81,7 +81,7 @@ module.exports = function(describe, it, vars) {
                 {
                     console.log(err);
                     console.log(as.state.error_info);
-                    done(as.state.last_exception);
+                    done(as.state.last_exception || 'Fail');
                 }
             );
             as.add( (as) => done() );
@@ -114,7 +114,7 @@ module.exports = function(describe, it, vars) {
                 {
                     console.log(err);
                     console.log(as.state.error_info);
-                    done(as.state.last_exception);
+                    done(as.state.last_exception || 'Fail');
                 }
             );
             as.add( (as) => done() );
@@ -277,7 +277,7 @@ module.exports = function(describe, it, vars) {
                     console.log(`Test name: ${as.state.test_name}`);
                     console.log(err);
                     console.log(as.state.error_info);
-                    done(as.state.last_exception);
+                    done(as.state.last_exception || 'Fail');
                 }
             );
             as.add( (as) => done() );
@@ -335,7 +335,7 @@ module.exports = function(describe, it, vars) {
                 {
                     console.log(err);
                     console.log(as.state.error_info);
-                    done(as.state.last_exception);
+                    done(as.state.last_exception || 'Fail');
                 }
             );
             as.add( (as) => done() );
@@ -366,7 +366,7 @@ module.exports = function(describe, it, vars) {
                 {
                     console.log(err);
                     console.log(as.state.error_info);
-                    done(as.state.last_exception);
+                    done(as.state.last_exception || 'Fail');
                 }
             );
             as.add( (as) => done() );
@@ -676,7 +676,7 @@ module.exports = function(describe, it, vars) {
                 {
                     console.log(err);
                     console.log(as.state.error_info);
-                    done(as.state.last_exception);
+                    done(as.state.last_exception || 'Fail');
                 }
             );
             as.add( (as) => done() );
@@ -816,7 +816,7 @@ module.exports = function(describe, it, vars) {
                 {
                     console.log(err);
                     console.log(as.state.error_info);
-                    done(as.state.last_exception);
+                    done(as.state.last_exception || 'Fail');
                 }
             );
             as.add( (as) => done() );
@@ -860,11 +860,424 @@ module.exports = function(describe, it, vars) {
                 {
                     console.log(err);
                     console.log(as.state.error_info);
-                    done(as.state.last_exception);
+                    done(as.state.last_exception || 'Fail');
                 }
             );
             as.add( (as) => done() );
             as.execute();
         } );
+    });
+    
+    describe('Accounts', function() {
+        const LimitsFace = require('../LimitsFace');
+        const LimitsService = require('../LimitsService');
+        const CurrencyInfoFace = require('../Currency/InfoFace');
+        const CurrencyInfoService = require('../Currency/InfoService');
+
+        const AccountsFace = require('../AccountsFace');
+        const AccountsService = require('../AccountsService');
+        
+        beforeEach('currency', function() {
+            as.add(
+                (as) => {
+                    CurrencyInfoService.register(as, executor);
+                    CurrencyInfoFace.register(as, ccm, 'currency.info', executor);
+
+                    LimitsService.register(as, executor);
+                    LimitsFace.register(as, ccm, 'xfer.limits', executor);
+
+                    AccountsService.register(as, executor);
+                    AccountsFace.register(as, ccm, 'xfer.accounts', executor);
+                },
+                (as, err) => {
+                    console.log(err);
+                    console.log(as.state.error_info);
+                    console.log(as.state.last_exception);
+                }
+            );
+        });
+        
+        it('should create accounts', function(done) {
+            as.add(
+                (as) => {
+                    const xferacct = ccm.iface('xfer.accounts');
+                    
+                    xferacct.addAccountHolder(
+                        as,
+                        'user1@external.id',
+                        'default',
+                        true,
+                        false,
+                        { usr1: true },
+                        { int1: true }
+                    );
+                    xferacct.addAccountHolder(
+                        as,
+                        'user2@external.id',
+                        'other',
+                        false,
+                        true,
+                        { usr2: true },
+                        { int2: true }
+                    );
+                    as.add( (as, last_id) => {
+                        xferacct.getAccountHolderExt( as, 'user1@external.id' );
+                        as.add( (as, res) => {
+                            expect(res).to.have.property('created');
+                            expect(res).to.have.property('updated');                
+                            expect(res).to.eql({
+                                id: res.id,
+                                ext_id: 'user1@external.id',
+                                group: 'default',
+                                enabled: true,
+                                kyc: false,
+                                data: { usr1: true },
+                                internal: { int1: true },
+                                created: res.created,
+                                updated: res.updated,
+                            });
+                        });
+                        
+                        xferacct.getAccountHolder( as, last_id );
+                        as.add( (as, res) => {
+                            expect(res).to.have.property('created');
+                            expect(res).to.have.property('updated');
+                            expect(res).to.eql({
+                                id: last_id,
+                                ext_id: 'user2@external.id',
+                                group: 'other',
+                                enabled: false,
+                                kyc: true,
+                                data: { usr2: true },
+                                internal: { int2: true },
+                                created: res.created,
+                                updated: res.updated,
+                            });
+                        });
+                    } );
+                },
+                (as, err) => {
+                    console.log(err);
+                    console.log(as.state.error_info);
+                    done(as.state.last_exception || 'Fail');
+                }
+            );
+            as.add( (as) => done() );
+            as.execute();
+        });
+        
+        it('should update accounts', function(done) {
+            as.add(
+                (as) => {
+                    const xferacct = ccm.iface('xfer.accounts');
+                    
+                    xferacct.addAccountHolder(
+                        as,
+                        'user3@external.id',
+                        'default',
+                        true,
+                        true,
+                        {},
+                        {}
+                    );
+                    as.add( (as, last_id) => {
+                        xferacct.updateAccountHolder(
+                            as,
+                            last_id,
+                            'other',
+                            false,
+                            null,
+                            { d: true },
+                            null
+                        );
+                        xferacct.getAccountHolder( as, last_id );
+                        as.add( (as, res) => {
+                            expect(res).to.eql({
+                                id: last_id,
+                                ext_id: 'user3@external.id',
+                                group: 'other',
+                                enabled: false,
+                                kyc: true,
+                                data: { d: true },
+                                internal: {},
+                                created: res.created,
+                                updated: res.updated,
+                            });
+                        });
+                        
+                        xferacct.updateAccountHolder(
+                            as,
+                            last_id,
+                            null,
+                            null,
+                            false,
+                            null,
+                            { i: 1 }
+                        );
+                        xferacct.getAccountHolder( as, last_id );
+                        as.add( (as, res) => {
+                            expect(res).to.eql({
+                                id: last_id,
+                                ext_id: 'user3@external.id',
+                                group: 'other',
+                                enabled: false,
+                                kyc: false,
+                                data: { d: true },
+                                internal: { i: 1 },
+                                created: res.created,
+                                updated: res.updated,
+                            });
+                        });
+                    } );
+                    
+                    xferacct.addAccountHolder(
+                        as,
+                        'user4@external.id',
+                        'default',
+                        false,
+                        false,
+                        {},
+                        {}
+                    );
+                    as.add( (as, last_id) => {
+                        xferacct.updateAccountHolder(
+                            as,
+                            last_id,
+                            'other',
+                            null,
+                            true,
+                            { d: true },
+                            null
+                        );
+                        xferacct.getAccountHolder( as, last_id );
+                        as.add( (as, res) => {
+                            expect(res).to.eql({
+                                id: last_id,
+                                ext_id: 'user4@external.id',
+                                group: 'other',
+                                enabled: false,
+                                kyc: true,
+                                data: { d: true },
+                                internal: {},
+                                created: res.created,
+                                updated: res.updated,
+                            });
+                        });
+                        
+                        xferacct.updateAccountHolder(
+                            as,
+                            last_id,
+                            null,
+                            true,
+                            null,
+                            null,
+                            { i: 1 }
+                        );
+                        xferacct.getAccountHolder( as, last_id );
+                        as.add( (as, res) => {
+                            expect(res).to.eql({
+                                id: last_id,
+                                ext_id: 'user4@external.id',
+                                group: 'other',
+                                enabled: true,
+                                kyc: true,
+                                data: { d: true },
+                                internal: { i: 1 },
+                                created: res.created,
+                                updated: res.updated,
+                            });
+                        });
+                    } );
+                },
+                (as, err) => {
+                    console.log(err);
+                    console.log(as.state.error_info);
+                    done(as.state.last_exception || 'Fail');
+                }
+            );
+            as.add( (as) => done() );
+            as.execute();
+        });
+        
+        it('should create accounts in time', function(done) {
+            as.add(
+                (as) => {
+                    const xferacct = ccm.iface('xfer.accounts');
+                    const p = as.parallel();
+                    
+                    for ( let i = 0; i < 100; ++i ) {
+                        p.add( (as) => {
+                            xferacct.addAccountHolder(
+                                as,
+                                `spi${i}@external.id`,
+                                'default',
+                                !!(i%2),
+                                !!((i+1)%2),
+                                { pub: i },
+                                { int: i, bafsafasfa: 'asdsadsasdfa' }
+                            );
+                        });
+                    }
+                },
+                (as, err) => {
+                    console.log(err);
+                    console.log(as.state.error_info);
+                    done(as.state.last_exception || 'Fail');
+                }
+            );
+            as.add( (as) => done() );
+            as.execute();
+        });
+        
+        it('should detect errors', function(done) {
+            as.add(
+                (as) => {
+                    const xferacct = ccm.iface('xfer.accounts');
+                    
+                    as.add(
+                        (as) => {
+                            as.state.test_name = 'UnknownLimitGroup on add';
+                            xferacct.addAccountHolder(
+                                as,
+                                'errortest@example.org',
+                                'UnknownGroup',
+                                false, false, {}, {}
+                            );
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'UnknownLimitGroup' ) {
+                                as.success();
+                            }
+                        }
+                    );
+                    
+                    as.add(
+                        (as) => {
+                            as.state.test_name = 'DuplicateExtID on add';
+                            xferacct.addAccountHolder(
+                                as,
+                                'dup@example.org',
+                                'default',
+                                false, false, {}, {}
+                            );
+                             xferacct.addAccountHolder(
+                                as,
+                                'dup@example.org',
+                                'default',
+                                false, false, {}, {}
+                            );
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'DuplicateExtID' ) {
+                                as.success();
+                            }
+                        }
+                    );
+                    
+                    
+                    as.add(
+                        (as) => {
+                            as.state.test_name = 'UnknownLimitGroup on update';
+                            xferacct.addAccountHolder(
+                                as,
+                                'updateerrtest@example.org',
+                                'default',
+                                false, false, {}, {}
+                            );
+                            as.add( (as, last_id) => {
+                                xferacct.updateAccountHolder(
+                                    as,
+                                    last_id,
+                                    'UnknownGroup'
+                                );
+                            });
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'UnknownLimitGroup' ) {
+                                as.success();
+                            }
+                        }
+                    );
+                    
+                    
+                    as.add(
+                        (as) => {
+                            as.state.test_name = 'UnknownAccountHolder on update';
+                            xferacct.updateAccountHolder(
+                                as,
+                                '1234567890123456789012',
+                                'default'
+                            );
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'UnknownAccountHolder' ) {
+                                as.success();
+                            }
+                        }
+                    );
+                    
+                    as.add(
+                        (as) => {
+                            as.state.test_name = 'UnknownAccountHolder on get';
+                            xferacct.getAccountHolder(
+                                as,
+                                '1234567890123456789012'
+                            );
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'UnknownAccountHolder' ) {
+                                as.success();
+                            }
+                        }
+                    );
+                    
+                    as.add(
+                        (as) => {
+                            as.state.test_name = 'UnknownAccountHolder on getext';
+                            xferacct.getAccountHolderExt(
+                                as,
+                                'unknown@example.org'
+                            );
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'UnknownAccountHolder' ) {
+                                as.success();
+                            }
+                        }
+                    );
+                    
+                    as.add(
+                        (as) => {
+                            as.state.test_name = 'NotImplemented on merge';
+                            xferacct.mergeAccountHolders(
+                                as,
+                                '1234567890123456789012',
+                                '1234567890123456789012'
+                            );
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'NotImplemented' ) {
+                                as.success();
+                            }
+                        }
+                    );
+                },
+                (as, err) => {
+                    console.log(as.state.test_name);
+                    console.log(err);
+                    console.log(as.state.error_info);
+                    done(as.state.last_exception || 'Fail');
+                }
+            );
+            as.add( (as) => done() );
+            as.execute();
+        });
     });
 };

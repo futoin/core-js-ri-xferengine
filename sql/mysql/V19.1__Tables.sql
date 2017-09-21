@@ -1,6 +1,13 @@
 
 SET GLOBAL innodb_file_per_table=1;
 
+-- Common
+CREATE TABLE uuid_history (
+    `_id` BIGINT NOT NULL auto_increment PRIMARY KEY,
+    `uuidb64` CHARACTER(22) NOT NULL UNIQUE
+)
+    ENGINE=InnoDB
+    CHARACTER SET 'utf8';
 -- Currencies
 
 CREATE TABLE currencies (
@@ -54,5 +61,20 @@ CREATE TABLE domain_limits (
     ENGINE=InnoDB
     CHARACTER SET 'utf8';
 
+-- Accounts
+CREATE TABLE account_holders (
+    `_id` INT UNSIGNED NOT NULL auto_increment PRIMARY KEY,
+    `uuidb64` CHARACTER(22) NOT NULL UNIQUE,
+    `ext_id` VARCHAR(128) NOT NULL UNIQUE,
+    `group_id` SMALLINT UNSIGNED NOT NULL REFERENCES limit_groups(id),
+    `enabled` ENUM('N', 'Y') NOT NULL,
+    `kyc` ENUM('N', 'Y') NOT NULL,
+    `data` TEXT NOT NULL,
+    `internal` TEXT NOT NULL,
+    `created` TIMESTAMP NOT NULL,
+    `updated` TIMESTAMP NOT NULL
+)
+    ENGINE=InnoDB
+    CHARACTER SET 'utf8';
 
 -- Xfers

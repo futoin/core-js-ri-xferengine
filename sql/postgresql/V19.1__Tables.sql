@@ -1,8 +1,16 @@
 
+-- Common
+CREATE TYPE enabled_enum AS ENUM('N', 'Y');
+
+-- Yes, PostgreSQL does have UUID type
+CREATE TABLE uuid_history (
+    "uuidb64" CHARACTER(22) NOT NULL PRIMARY KEY
+);
+
+
 -- Currencies
 
 CREATE DOMAIN currency_code AS VARCHAR(10); 
-CREATE TYPE currency_enabled AS ENUM('N', 'Y');
 CREATE DOMAIN currency_dec_places AS SMALLINT
     CHECK( VALUE >= 0 AND VALUE <= 12 );
 CREATE DOMAIN currency_id AS INT;
@@ -13,7 +21,7 @@ CREATE TABLE currencies (
     "dec_places" currency_dec_places NOT NULL,
     "name" VARCHAR(64) NOT NULL UNIQUE,
     "symbol" VARCHAR(3) NOT NULL UNIQUE,
-    "enabled" currency_enabled NOT NULL,
+    "enabled" enabled_enum NOT NULL,
     "added" TIMESTAMP NOT NULL
 );
 
@@ -54,5 +62,18 @@ CREATE TABLE domain_limits (
     PRIMARY KEY ("lim_id", "lim_domain")
 );
 
+
+-- Accounts
+CREATE TABLE account_holders (
+    "uuidb64" CHARACTER(22) NOT NULL UNIQUE,
+    "ext_id" VARCHAR(128) NOT NULL UNIQUE,
+    "group_id" SMALLINT NOT NULL REFERENCES limit_groups(id),
+    "enabled" enabled_enum NOT NULL,
+    "kyc" enabled_enum NOT NULL,
+    "data" JSON NOT NULL,
+    "internal" JSON NOT NULL,
+    "created" TIMESTAMP NOT NULL,
+    "updated" TIMESTAMP NOT NULL
+);
 
 -- Xfers
