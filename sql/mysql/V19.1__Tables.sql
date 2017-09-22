@@ -77,4 +77,28 @@ CREATE TABLE account_holders (
     ENGINE=InnoDB
     CHARACTER SET 'utf8';
 
+CREATE TABLE accounts (
+    `_id` INT UNSIGNED NOT NULL auto_increment PRIMARY KEY,
+    `uuidb64` CHARACTER(22) NOT NULL UNIQUE,
+    `holder` CHARACTER(22) NOT NULL REFERENCES account_holders(uuidb64),
+    `currency_id` SMALLINT UNSIGNED NOT NULL REFERENCES currencies(id),
+    `created` TIMESTAMP NOT NULL,
+    `updated` TIMESTAMP NOT NULL,
+    `balance` DECIMAL(22, 0) NOT NULL,
+    `reserved` DECIMAL(22, 0) NOT NULL,
+    `enabled` ENUM('N', 'Y') NOT NULL,
+    `acct_type` ENUM(
+        'System',
+        'External',
+        'Transit',
+        'Bonus'
+    ) NOT NULL,
+    `acct_alias` VARCHAR(20) NOT NULL,
+    `rel_uuid64` CHARACTER(22) NULL REFERENCES accounts(uuidb64),
+    `ext_acct_id` VARCHAR(64) NULL,
+    UNIQUE `holder_alias` (`holder`, `acct_alias`)
+)
+    ENGINE=InnoDB
+    CHARACTER SET 'utf8';
+
 -- Xfers

@@ -58,4 +58,21 @@ CREATE TABLE account_holders (
 );
 
 
+CREATE TABLE accounts (
+    "uuidb64" CHARACTER(22) NOT NULL PRIMARY KEY,
+    "holder" CHARACTER(22) NOT NULL REFERENCES account_holders(uuidb64),
+    "currency_id" INTEGER NOT NULL REFERENCES currencies(id),
+    "created" TIMESTAMP NOT NULL,
+    "updated" TIMESTAMP NOT NULL,
+    "balance" DECIMAL(22, 0) NOT NULL,
+    "reserved" DECIMAL(22, 0) NOT NULL,
+    "enabled" CHARACTER(1) NOT NULL,
+    "acct_type" VARCHAR(8) NOT NULL,
+    "acct_alias" VARCHAR(20) NOT NULL,
+    "rel_uuid64" CHARACTER(22) NULL REFERENCES accounts(uuidb64),
+    "ext_acct_id" VARCHAR(64) NULL,
+    CONSTRAINT "holder_alias" UNIQUE ("holder", "acct_alias")
+);
+
+
 -- Xfers

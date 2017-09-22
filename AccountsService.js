@@ -5,9 +5,12 @@ const PingFace = require( 'futoin-invoker/PingFace' );
 
 const AccountsFace = require( './AccountsFace' );
 const UUIDTool = require( './UUIDTool' );
+const AmountTools = require( './AmountTools' );
 const {
     DB_IFACEVER,
     DB_ACCOUNT_HOLDERS_TABLE,
+    DB_ACCOUNTS_TABLE,
+    DB_CURRENCY_TABLE,
     DB_LIMIT_GROUPS_TABLE,
 } = require( './main' );
 
@@ -40,8 +43,7 @@ class AccountsService extends PingService {
         as.add(
             ( as ) => {
                 const p = reqinfo.params();
-                const ccm = reqinfo.executor().ccm();
-                const db = ccm.db( 'xfer' );
+                const db = reqinfo.executor().ccm().db( 'xfer' );
 
                 const xfer = db.newXfer();
                 const now = xfer.helpers().now();
@@ -85,8 +87,7 @@ class AccountsService extends PingService {
         as.add(
             ( as ) => {
                 const p = reqinfo.params();
-                const ccm = reqinfo.executor().ccm();
-                const db = ccm.db( 'xfer' );
+                const db = reqinfo.executor().ccm().db( 'xfer' );
 
                 const xfer = db.newXfer();
                 let sq;
@@ -140,8 +141,7 @@ class AccountsService extends PingService {
     }
 
     _getAccountHolderCommon( as, reqinfo, field, value ) {
-        const ccm = reqinfo.executor().ccm();
-        const db = ccm.db( 'xfer' );
+        const db = reqinfo.executor().ccm().db( 'xfer' );
 
         const q = db.select( DB_ACCOUNT_HOLDERS_TABLE )
             .innerJoin( DB_LIMIT_GROUPS_TABLE,
@@ -191,19 +191,159 @@ class AccountsService extends PingService {
 
     //=============
 
-    addAccount( as, _reqinfo ) {
-        as.error( 'NotImplemented' );
+    addAccount( as, reqinfo ) {
+        as.add(
+            ( as ) => {
+                const p = reqinfo.params();
+                const db = reqinfo.executor().ccm().db( 'xfer' );
+
+                //---
+                db.select( DB_ACCOUNT_HOLDERS_TABLE )
+                    .get( 'uuidb64' )
+                    .where( 'uuidb64', p.holder )
+                    .execute( as );
+                as.add( ( as, { rows } ) => {
+                    if ( rows.length !== 1 ) {
+                        as.error( 'UnknownHolderID' );
+                    }
+                } );
+
+                //---
+                const xfer = db.newXfer();
+                const now = xfer.helpers().now();
+                const uuidb64 = UUIDTool.genXfer( xfer );
+
+                const cq = xfer.select( DB_CURRENCY_TABLE, { selected: 1 } )
+                    .get( 'id' )
+                    .where( 'code', p.currency );
+
+
+                const iq = xfer.insert( DB_ACCOUNTS_TABLE );
+                iq.set( {
+                    uuidb64,
+                    holder: p.holder,
+                    currency_id: iq.backref( cq, 'id' ),
+                    created: now,
+                    updated: now,
+                    balance: '0',
+                    reserved: '0',
+                    enabled: p.enabled ? 'Y' : 'N',
+                    acct_type: p.type,
+                    acct_alias: p.alias,
+                    rel_uuid64: p.rel_id,
+                    ext_acct_id: p.ext_id,
+                } );
+                xfer.execute( as );
+
+                as.add( ( as ) => reqinfo.result( uuidb64 ) );
+            },
+            ( as, err ) => {
+                if ( err === 'XferCondition' ) {
+                    as.error( 'UnknownCurrency' );
+                }
+            }
+        );
     }
 
-    updateAccount( as, _reqinfo ) {
-        as.error( 'NotImplemented' );
+    updateAccount( as, reqinfo ) {
+        const p = reqinfo.params();
+        const db = reqinfo.executor().ccm().db( 'xfer' );
+
+        const q = db.update( DB_ACCOUNTS_TABLE );
+        q.set( 'updated', q.helpers().now() );
+        q.where( 'uuidb64', p.id );
+
+        if ( p.alias !== null ) {
+            q.set( 'acct_alias', p.alias );
+        }
+
+        if ( p.enabled !== null ) {
+            q.set( 'enabled', p.enabled ? 'Y' : 'N' );
+        }
+
+        q.execute( as );
+
+        as.add( ( as, { affected } ) => {
+            if ( affected !== 1 ) {
+                as.error( 'UnknownAccountID' );
+            }
+
+            reqinfo.result( true );
+        } );
     }
 
-    listAccounts( as, _reqinfo ) {
-        as.error( 'NotImplemented' );
+    _accountInfo( raw, helpers ) {
+        return {
+            id: raw.uuidb64,
+            type: raw.acct_type,
+            currency: raw.code,
+            alias: raw.acct_alias,
+            enabled: ( raw.enabled === 'Y' ),
+            ext_id: raw.ext_acct_id,
+            rel_id: raw.rel_uuid64,
+            balance: AmountTools.fromStorage( raw.balance, raw.dec_places ),
+            reserved: AmountTools.fromStorage( raw.reserved, raw.dec_places ),
+            created: helpers.nativeDate( raw.created ).format(),
+            updated: helpers.nativeDate( raw.updated ).format(),
+        };
     }
 
-    convAccount( as, _reqinfo ) {
+    getAccount( as, reqinfo ) {
+        const id = reqinfo.params().id;
+        const db = reqinfo.executor().ccm().db( 'xfer' );
+
+        const q = db.select( [ DB_ACCOUNTS_TABLE, 'A' ], { result: true } )
+            .leftJoin( [ DB_CURRENCY_TABLE, 'C' ],
+                'C.id = A.currency_id' )
+            .get( [ 'A.*', 'C.code', 'C.dec_places' ] )
+            .where( 'A.uuidb64', id );
+        q.executeAssoc( as );
+
+        const helpers = q.helpers();
+
+        as.add( ( as, rows ) => {
+            if ( rows.length !== 1 ) {
+                as.error( 'UnknownAccountID' );
+            }
+
+            reqinfo.result( this._accountInfo( rows[0], helpers ) );
+        } );
+    }
+
+    listAccounts( as, reqinfo ) {
+        as.add(
+            ( as ) => {
+                const holder = reqinfo.params().holder;
+                const db = reqinfo.executor().ccm().db( 'xfer' );
+
+                const xfer = db.newXfer();
+                const helpers = xfer.helpers();
+                xfer.select( DB_ACCOUNT_HOLDERS_TABLE,
+                    { selected: 1 } )
+                    .get( 'uuidb64' )
+                    .where( 'uuidb64', holder );
+                xfer.select( [ DB_ACCOUNTS_TABLE, 'A' ], { result: true } )
+                    .leftJoin( [ DB_CURRENCY_TABLE, 'C' ],
+                        'C.id = A.currency_id' )
+                    .get( [ 'A.*', 'C.code', 'C.dec_places' ] )
+                    .where( 'holder', holder );
+                xfer.executeAssoc( as );
+
+                as.add( ( as, results ) => {
+                    const res = results[0].rows.map(
+                        v => this._accountInfo( v, helpers ) );
+                    reqinfo.result( res );
+                } );
+            },
+            ( as, err ) => {
+                if ( err === 'XferCondition' ) {
+                    as.error( 'UnknownHolderID' );
+                }
+            }
+        );
+    }
+
+    convertAccount( as, _reqinfo ) {
         as.error( 'NotImplemented' );
     }
 }

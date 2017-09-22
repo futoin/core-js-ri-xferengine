@@ -897,7 +897,7 @@ module.exports = function(describe, it, vars) {
             );
         });
         
-        it('should create accounts', function(done) {
+        it('should create account holders', function(done) {
             as.add(
                 (as) => {
                     const xferacct = ccm.iface('xfer.accounts');
@@ -924,7 +924,8 @@ module.exports = function(describe, it, vars) {
                         xferacct.getAccountHolderExt( as, 'user1@external.id' );
                         as.add( (as, res) => {
                             expect(res).to.have.property('created');
-                            expect(res).to.have.property('updated');                
+                            expect(res).to.have.property('updated');
+                            expect(res.created).to.equal(res.updated);
                             expect(res).to.eql({
                                 id: res.id,
                                 ext_id: 'user1@external.id',
@@ -942,6 +943,7 @@ module.exports = function(describe, it, vars) {
                         as.add( (as, res) => {
                             expect(res).to.have.property('created');
                             expect(res).to.have.property('updated');
+                            expect(res.created).to.equal(res.updated);
                             expect(res).to.eql({
                                 id: last_id,
                                 ext_id: 'user2@external.id',
@@ -966,7 +968,7 @@ module.exports = function(describe, it, vars) {
             as.execute();
         });
         
-        it('should update accounts', function(done) {
+        it('should update account holders', function(done) {
             as.add(
                 (as) => {
                     const xferacct = ccm.iface('xfer.accounts');
@@ -1040,6 +1042,11 @@ module.exports = function(describe, it, vars) {
                         {}
                     );
                     as.add( (as, last_id) => {
+                        ccm.db('xfer')
+                            .update('account_holders')
+                            .set('updated', '2010-10-10')
+                            .where('uuidb64', last_id)
+                            .execute(as);
                         xferacct.updateAccountHolder(
                             as,
                             last_id,
@@ -1051,6 +1058,7 @@ module.exports = function(describe, it, vars) {
                         );
                         xferacct.getAccountHolder( as, last_id );
                         as.add( (as, res) => {
+                            expect(res.updated.substr(0,4)).not.equal('2010');
                             expect(res).to.eql({
                                 id: last_id,
                                 ext_id: 'user4@external.id',
@@ -1075,6 +1083,7 @@ module.exports = function(describe, it, vars) {
                         );
                         xferacct.getAccountHolder( as, last_id );
                         as.add( (as, res) => {
+                            //expect(res.created).not.equal(res.updated);
                             expect(res).to.eql({
                                 id: last_id,
                                 ext_id: 'user4@external.id',
@@ -1099,7 +1108,7 @@ module.exports = function(describe, it, vars) {
             as.execute();
         });
         
-        it('should create accounts in time', function(done) {
+        it('should create account holders in time', function(done) {
             as.add(
                 (as) => {
                     const xferacct = ccm.iface('xfer.accounts');
@@ -1129,7 +1138,7 @@ module.exports = function(describe, it, vars) {
             as.execute();
         });
         
-        it('should detect errors', function(done) {
+        it('should detect account holder errors', function(done) {
             as.add(
                 (as) => {
                     const xferacct = ccm.iface('xfer.accounts');
@@ -1278,6 +1287,254 @@ module.exports = function(describe, it, vars) {
             );
             as.add( (as) => done() );
             as.execute();
+        });
+        
+        it('should create accounts', function(done) {
+            as.add(
+                (as) => {
+                    const xferacct = ccm.iface('xfer.accounts');
+                    
+                    xferacct.addAccountHolder(
+                        as,
+                        'SYSTEM',
+                        'default',
+                        true,
+                        true,
+                        {},
+                        {}
+                    );
+                    
+                    as.add( (as, holder) => {
+                        xferacct.addAccount(
+                            as,
+                            holder,
+                            'System',
+                            'I:EUR',
+                            'Source'
+                        );
+                        xferacct.addAccount(
+                            as,
+                            holder,
+                            'System',
+                            'I:EUR',
+                            'Sync'
+                        );
+                        
+                        xferacct.listAccounts(as, holder);
+                        
+                        as.add( (as, res) => {
+                            expect(res).to.be.lengthOf(2);
+                            xferacct.getAccount(as, res[0].id);
+                            xferacct.getAccount(as, res[1].id);
+                        });
+                    });
+                },
+                (as, err) => {
+                    console.log(err);
+                    console.log(as.state.error_info);
+                    done(as.state.last_exception || 'Fail');
+                }
+            );
+            as.add( (as) => done() );
+            as.execute();
+        });
+        
+        it('should update accounts', function(done) {
+            as.add(
+                (as) => {
+                    const xferacct = ccm.iface('xfer.accounts');
+                    
+                    xferacct.addAccountHolder(
+                        as,
+                        'EXTSVC',
+                        'default',
+                        true,
+                        true,
+                        {},
+                        {}
+                    );
+                    
+                    as.add( (as, holder) => {
+                        xferacct.addAccount(
+                            as,
+                            holder,
+                            'External',
+                            'I:EUR',
+                            'Buffer'
+                        );
+                        
+                        as.add( (as, last_id) => {
+                            xferacct.updateAccount(
+                                as,
+                                last_id,
+                                'Buffer2',
+                                false
+                            );
+                            as.add( (as, res) => expect(res).to.be.true );
+                        
+                            xferacct.listAccounts(as, holder);
+                            
+                            as.add( (as, res) => {
+                                expect(res).to.be.lengthOf(1);
+                                xferacct.getAccount(as, res[0].id);
+                                as.add( (as, res) => expect(res).to.eql({
+                                    id: last_id,
+                                    type: 'External',
+                                    currency: 'I:EUR',
+                                    alias: 'Buffer2',
+                                    enabled: false,
+                                    ext_id: null,
+                                    rel_id: null,
+                                    balance: '0.00',
+                                    reserved: '0.00',
+                                    created: res.created,
+                                    updated: res.updated,
+                                }) );
+                            });
+                        });
+                    });
+                },
+                (as, err) => {
+                    console.log(err);
+                    console.log(as.state.error_info);
+                    done(as.state.last_exception || 'Fail');
+                }
+            );
+            as.add( (as) => done() );
+            as.execute();
+        });
+        
+        it('should detect account errors', function(done) {
+            as.add(
+                (as) => {
+                    const xferacct = ccm.iface('xfer.accounts');
+                    
+                    as.add(
+                        (as) => {
+                            as.state.test_name = 'UnknownHolderID on add';
+                            xferacct.addAccount(
+                                as,
+                                '1234567890123456789012',
+                                'External',
+                                'I:EUR',
+                                'Buffer'
+                            );
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'UnknownHolderID' ) {
+                                as.success();
+                            }
+                        }
+                    );
+                    
+                    as.add(
+                        (as) => {
+                            as.state.test_name = 'UnknownCurrency on add';
+                    
+                            xferacct.addAccountHolder(
+                                as,
+                                'INVCURR',
+                                'default',
+                                true,
+                                true,
+                                {},
+                                {}
+                            );
+                    
+                            as.add( (as, holder) => {
+                                xferacct.addAccount(
+                                    as,
+                                    holder,
+                                    'External',
+                                    'I:MISS',
+                                    'Buffer'
+                                );
+                            });
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'UnknownCurrency' ) {
+                                as.success();
+                            }
+                        }
+                    );
+                    
+                    as.add(
+                        (as) => {
+                            as.state.test_name = 'UnknownAccountID on update';
+                            xferacct.updateAccount(
+                                as,
+                                '1234567890123456789012',
+                                'Alias',
+                                false
+                            );
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'UnknownAccountID' ) {
+                                as.success();
+                            }
+                        }
+                    );
+                    
+                    as.add(
+                        (as) => {
+                            as.state.test_name = 'UnknownAccountID on get';
+                            xferacct.getAccount(
+                                as,
+                                '1234567890123456789012'
+                            );
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'UnknownAccountID' ) {
+                                as.success();
+                            }
+                        }
+                    );
+                    
+                    as.add(
+                        (as) => {
+                            as.state.test_name = 'UnknownHolderID on list';
+                            xferacct.listAccounts(
+                                as,
+                                '1234567890123456789012'
+                            );
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'UnknownHolderID' ) {
+                                as.success();
+                            }
+                        }
+                    );
+                    
+                    as.add(
+                        (as) => {
+                            as.state.test_name = 'NotImplemented on convert';
+                            xferacct.convertAccount(
+                                as,
+                                '1234567890123456789012',
+                                'I:MISS'
+                            );
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'NotImplemented' ) {
+                                as.success();
+                            }
+                        }
+                    );
+                },
+                (as, err) => {
+                    console.log(err);
+                    console.log(as.state.error_info);
+                    done(as.state.last_exception || 'Fail');
+                }
+            );
+            as.add( (as) => done() );
+            as.execute();            
         });
     });
 };
