@@ -100,5 +100,179 @@ CREATE TABLE accounts (
 )
     ENGINE=InnoDB
     CHARACTER SET 'utf8';
+    
+-- Account limit stats
 
+CREATE TABLE limit_retail_stats (
+    `_id` INT UNSIGNED NOT NULL auto_increment PRIMARY KEY,
+    `holder` CHARACTER(22) NOT NULL UNIQUE REFERENCES account_holders(uuidb64),
+    `currency_id` SMALLINT UNSIGNED NOT NULL REFERENCES currencies(id),
+    `stats_date` DATE NOT NULL,
+    `retail_daily_amt` DECIMAL(22, 0) NOT NULL DEFAULT '0',
+    `retail_daily_cnt` MEDIUMINT UNSIGNED NOT NULL DEFAULT 0,
+    `retail_weekly_amt` DECIMAL(22, 0) NOT NULL DEFAULT '0',
+    `retail_weekly_cnt` MEDIUMINT UNSIGNED NOT NULL DEFAULT 0,
+    `retail_monthly_amt` DECIMAL(22, 0) NOT NULL DEFAULT '0',
+    `retail_monthly_cnt` MEDIUMINT UNSIGNED NOT NULL DEFAULT 0
+)
+    ENGINE=InnoDB
+    CHARACTER SET 'utf8';
+
+CREATE TABLE limit_deposits_stats (
+    `_id` INT UNSIGNED NOT NULL auto_increment PRIMARY KEY,
+    `holder` CHARACTER(22) NOT NULL UNIQUE REFERENCES account_holders(uuidb64),
+    `currency_id` SMALLINT UNSIGNED NOT NULL REFERENCES currencies(id),
+    `stats_date` DATE NOT NULL,
+    `deposit_daily_amt` DECIMAL(22, 0) NOT NULL DEFAULT '0',
+    `deposit_daily_cnt` MEDIUMINT UNSIGNED NOT NULL DEFAULT 0,
+    `withdrawal_daily_amt` DECIMAL(22, 0) NOT NULL DEFAULT '0',
+    `withdrawal_daily_cnt` MEDIUMINT UNSIGNED NOT NULL DEFAULT 0,
+    `deposit_weekly_amt` DECIMAL(22, 0) NOT NULL DEFAULT '0',
+    `deposit_weekly_cnt` MEDIUMINT UNSIGNED NOT NULL DEFAULT 0,
+    `withdrawal_weekly_amt` DECIMAL(22, 0) NOT NULL DEFAULT '0',
+    `withdrawal_weekly_cnt` MEDIUMINT UNSIGNED NOT NULL DEFAULT 0,
+    `deposit_monthly_amt` DECIMAL(22, 0) NOT NULL DEFAULT '0',
+    `deposit_monthly_cnt` MEDIUMINT UNSIGNED NOT NULL DEFAULT 0,
+    `withdrawal_monthly_amt` DECIMAL(22, 0) NOT NULL DEFAULT '0',
+    `withdrawal_monthly_cnt` MEDIUMINT UNSIGNED NOT NULL DEFAULT 0
+)
+    ENGINE=InnoDB
+    CHARACTER SET 'utf8';
+    
+CREATE TABLE limit_payments_stats (
+    `_id` INT UNSIGNED NOT NULL auto_increment PRIMARY KEY,
+    `holder` CHARACTER(22) NOT NULL UNIQUE REFERENCES account_holders(uuidb64),
+    `currency_id` SMALLINT UNSIGNED NOT NULL REFERENCES currencies(id),
+    `stats_date` DATE NOT NULL,
+    `outbound_daily_amt` DECIMAL(22, 0) NOT NULL DEFAULT '0',
+    `outbound_daily_cnt` MEDIUMINT UNSIGNED NOT NULL DEFAULT 0,
+    `inbound_daily_amt` DECIMAL(22, 0) NOT NULL DEFAULT '0',
+    `inbound_daily_cnt` MEDIUMINT UNSIGNED NOT NULL DEFAULT 0,
+    `outbound_weekly_amt` DECIMAL(22, 0) NOT NULL DEFAULT '0',
+    `outbound_weekly_cnt` MEDIUMINT UNSIGNED NOT NULL DEFAULT 0,
+    `inbound_weekly_amt` DECIMAL(22, 0) NOT NULL DEFAULT '0',
+    `inbound_weekly_cnt` MEDIUMINT UNSIGNED NOT NULL DEFAULT 0,
+    `outbound_monthly_amt` DECIMAL(22, 0) NOT NULL DEFAULT '0',
+    `outbound_monthly_cnt` MEDIUMINT UNSIGNED NOT NULL DEFAULT 0,
+    `inbound_monthly_amt` DECIMAL(22, 0) NOT NULL DEFAULT '0',
+    `inbound_monthly_cnt` MEDIUMINT UNSIGNED NOT NULL DEFAULT 0
+)
+    ENGINE=InnoDB
+    CHARACTER SET 'utf8';
+
+CREATE TABLE limit_gaming_stats (
+    `_id` INT UNSIGNED NOT NULL auto_increment PRIMARY KEY,
+    `holder` CHARACTER(22) NOT NULL UNIQUE REFERENCES account_holders(uuidb64),
+    `currency_id` SMALLINT UNSIGNED NOT NULL REFERENCES currencies(id),
+    `stats_date` DATE NOT NULL,
+    `bet_daily_amt` DECIMAL(22, 0) NOT NULL DEFAULT '0',
+    `bet_daily_cnt` MEDIUMINT UNSIGNED NOT NULL DEFAULT 0,
+    `win_daily_amt` DECIMAL(22, 0) NOT NULL DEFAULT '0',
+    `win_daily_cnt` MEDIUMINT UNSIGNED NOT NULL DEFAULT 0,
+    `profit_daily_delta` DECIMAL(22, 0) NOT NULL DEFAULT '0',
+    `bet_weekly_amt` DECIMAL(22, 0) NOT NULL DEFAULT '0',
+    `bet_weekly_cnt` MEDIUMINT UNSIGNED NOT NULL DEFAULT 0,
+    `win_weekly_amt` DECIMAL(22, 0) NOT NULL DEFAULT '0',
+    `win_weekly_cnt` MEDIUMINT UNSIGNED NOT NULL DEFAULT 0,
+    `profit_weekly_delta` DECIMAL(22, 0) NOT NULL DEFAULT '0',
+    `bet_monthly_amt` DECIMAL(22, 0) NOT NULL DEFAULT '0',
+    `bet_monthly_cnt` MEDIUMINT UNSIGNED NOT NULL DEFAULT 0,
+    `win_monthly_amt` DECIMAL(22, 0) NOT NULL DEFAULT '0',
+    `win_monthly_cnt` MEDIUMINT UNSIGNED NOT NULL DEFAULT 0,
+    `profit_monthly_delta` DECIMAL(22, 0) NOT NULL DEFAULT '0'
+)
+    ENGINE=InnoDB
+    CHARACTER SET 'utf8';
+
+CREATE TABLE limit_misc_stats (
+    `_id` INT UNSIGNED NOT NULL auto_increment PRIMARY KEY,
+    `holder` CHARACTER(22) NOT NULL UNIQUE REFERENCES account_holders(uuidb64),
+    `currency_id` SMALLINT UNSIGNED NOT NULL REFERENCES currencies(id),
+    `stats_date` DATE NOT NULL,
+    `message_daily_cnt` MEDIUMINT UNSIGNED NOT NULL DEFAULT 0,
+    `failure_daily_cnt` MEDIUMINT UNSIGNED NOT NULL DEFAULT 0,
+    `limithit_daily_cnt` MEDIUMINT UNSIGNED NOT NULL DEFAULT 0,
+    `message_weekly_cnt` MEDIUMINT UNSIGNED NOT NULL DEFAULT 0,
+    `failure_weekly_cnt` MEDIUMINT UNSIGNED NOT NULL DEFAULT 0,
+    `limithit_weekly_cnt` MEDIUMINT UNSIGNED NOT NULL DEFAULT 0,
+    `message_monthly_cnt` MEDIUMINT UNSIGNED NOT NULL DEFAULT 0,
+    `failure_monthly_cnt` MEDIUMINT UNSIGNED NOT NULL DEFAULT 0,
+    `limithit_monthly_cnt` MEDIUMINT UNSIGNED NOT NULL DEFAULT 0
+)
+    ENGINE=InnoDB
+    CHARACTER SET 'utf8';
+
+CREATE TABLE limit_personnel_stats (
+    `_id` INT UNSIGNED NOT NULL auto_increment PRIMARY KEY,
+    `holder` CHARACTER(22) NOT NULL UNIQUE REFERENCES account_holders(uuidb64),
+    `currency_id` SMALLINT UNSIGNED NOT NULL REFERENCES currencies(id),
+    `stats_date` DATE NOT NULL,
+    `message_daily_cnt` MEDIUMINT UNSIGNED NOT NULL DEFAULT 0,
+    `manual_daily_amt` DECIMAL(22, 0) NOT NULL DEFAULT '0',
+    `manual_daily_cnt` MEDIUMINT UNSIGNED NOT NULL DEFAULT 0,
+    `message_weekly_cnt` MEDIUMINT UNSIGNED NOT NULL DEFAULT 0,
+    `manual_weekly_amt` DECIMAL(22, 0) NOT NULL DEFAULT '0',
+    `manual_weekly_cnt` MEDIUMINT UNSIGNED NOT NULL DEFAULT 0,
+    `message_monthly_cnt` MEDIUMINT UNSIGNED NOT NULL DEFAULT 0,
+    `manual_monthly_amt` DECIMAL(22, 0) NOT NULL DEFAULT '0',
+    `manual_monthly_cnt` MEDIUMINT UNSIGNED NOT NULL DEFAULT 0
+)
+    ENGINE=InnoDB
+    CHARACTER SET 'utf8';
+
+    
 -- Xfers
+
+CREATE TABLE xfers (
+    `_id` BIGINT UNSIGNED NOT NULL auto_increment PRIMARY KEY,
+    `uuidb64` CHARACTER(22) NOT NULL UNIQUE,
+    `src` CHARACTER(22) NOT NULL REFERENCES accounts(uuidb64),
+    `src_currency_id` SMALLINT UNSIGNED NOT NULL REFERENCES currencies(id),
+    `src_amount` DECIMAL(22, 0) NOT NULL,
+    `dst` CHARACTER(22) NOT NULL REFERENCES accounts(uuidb64),
+    `dst_currency_id` SMALLINT UNSIGNED NOT NULL REFERENCES currencies(id),
+    `dst_amount` DECIMAL(22, 0) NOT NULL,
+    `src2dst_rate` DECIMAL(24, 12) NOT NULL,
+    `created` TIMESTAMP NOT NULL,
+    `updated` TIMESTAMP NOT NULL,
+    `xfer_type` ENUM(
+        -- Deposits
+        'Deposit',
+        'Withdrawal',
+        'CancelWithdrawal',
+        -- Retail
+        'Purchase',
+        'CancelPurchase',
+        'Refund',
+        'PreAuth',
+        'ClearAuth',
+        -- Gaming
+        'Bet',
+        'CancelBet',
+        'Win',
+        -- Bonus
+        'Bonus',
+        'ReleaseBonus',
+        'CancelBonus',
+        --
+        'Fee',
+        'Settle',
+        'Generic'
+    ) NOT NULL,
+    `xfer_status` ENUM(
+        'WaitRisk',
+        'WaitUser',
+        'WaitExternal',
+        'WaitComplete',
+        'Done',
+        'Canceled',
+        'Rejected'
+    ) NOT NULL,
+    `fee_id` CHARACTER(22) NULL REFERENCES xfers(uuidb64),
+    `cancel_id` CHARACTER(22) NULL REFERENCES xfers(uuidb64),
+    -- Should be "real ext id : rel_account_id" - in that order
+    `ext_id` VARCHAR(128) NULL UNIQUE,
+    `misc_data` TEXT NULL
+)
+    ENGINE=InnoDB
+    CHARACTER SET 'utf8';

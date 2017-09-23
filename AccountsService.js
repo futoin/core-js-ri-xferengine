@@ -12,13 +12,19 @@ const {
     DB_ACCOUNT_HOLDERS_TABLE,
     DB_ACCOUNTS_TABLE,
     DB_CURRENCY_TABLE,
+    DB_DOMAIN_LIMITS_TABLE,
     DB_LIMIT_GROUPS_TABLE,
+    limitStatsTable,
 } = require( './main' );
 
 const SYM_GET_AH_ID = Symbol( 'getAccountHolder' );
 const SYM_GET_AH_EXTID = Symbol( 'getAccountHolderExt' );
 const SYM_GET_ACCOUNT = Symbol( 'getAccount' );
 const SYM_LIST_ACCOUNTS = Symbol( 'listAccounts' );
+const SYM_GET_LIMIT_STATS = Symbol( 'getLimitStats1' );
+
+const LIMIT_FIELD_AMT_RE = /_(daily|weekly|monthly)_(amt|delta)/;
+const LIMIT_FIELD_CNT_RE = /_(daily|weekly|monthly)_cnt/;
 
 /**
  * Accounts Service
@@ -359,6 +365,231 @@ class AccountsService extends PingService {
 
     convertAccount( as, _reqinfo ) {
         as.error( 'NotImplemented' );
+    }
+
+    //=============
+
+    _limitStats( row ) {
+        const stats = {};
+
+        for ( let [ k, v ] of Object.entries( row ) ) {
+            if ( LIMIT_FIELD_CNT_RE.test( k ) ) {
+                stats[k] = v;
+            } else if ( LIMIT_FIELD_AMT_RE.test( k ) ) {
+                stats[k] = AmountTools.fromStorage( v, row.dec_places );
+            }
+        }
+
+        return {
+            currency: row.code,
+            stats,
+        };
+    }
+
+    getLimitStats( as, reqinfo ) {
+        const p = reqinfo.params();
+        const holder = p.holder;
+        const domain = p.domain;
+
+        const db = reqinfo.executor().ccm().db( 'xfer' );
+        const qb = db.queryBuilder();
+        const table = limitStatsTable( domain );
+
+        // TODO: system timezone
+        const today = moment().utc().format( 'YYYY-MM-DD' );
+
+        as.add(
+            ( as ) => {
+                db
+                    .getPrepared( SYM_GET_LIMIT_STATS, ( db ) => {
+                        const xfer = db.newXfer();
+                        const ph_holder = xfer.param( 'holder' );
+                        xfer.select( DB_ACCOUNT_HOLDERS_TABLE,
+                            { selected: 1 } )
+                            .get( 'uuidb64' )
+                            .where( 'uuidb64', ph_holder );
+                        xfer.select( [ xfer.param( 'table' ), 'S' ],
+                            { result: true } )
+                            .leftJoin( [ DB_CURRENCY_TABLE, 'C' ],
+                                'C.id = S.currency_id' )
+                            .get( [ 'S.*', 'C.code', 'C.dec_places' ] )
+                            .where( 'holder', ph_holder );
+                        return xfer.prepare();
+                    } )
+                    .executeAssoc( as, {
+                        holder,
+                        table : qb.expr( table ),
+                    } );
+            },
+            ( as, err ) => {
+                if ( err === 'XferCondition' ) {
+                    as.error( 'UnknownHolderID' );
+                }
+            }
+        );
+        as.add(
+            ( as, res ) => {
+                const row = res[0].rows[0];
+
+                if ( row &&
+                     ( moment.utc( row.stats_date ).isSameOrAfter( today ) )
+                ) {
+                    reqinfo.result( this._limitStats( row ) );
+                    return;
+                }
+
+                if ( !row ) {
+                    const sel_currency_id = db
+                        .select( [ DB_ACCOUNT_HOLDERS_TABLE, 'A' ] )
+                        .innerJoin( [ DB_DOMAIN_LIMITS_TABLE, 'L' ],
+                            'L.lim_id = A.group_id' )
+                        .get( 'L.currency_id' )
+                        .where( {
+                            'A.uuidb64': holder,
+                            'L.lim_domain' : domain,
+                        } );
+
+                    const xfer = db.newXfer();
+                    xfer.insert( table )
+                        .set( {
+                            holder,
+                            currency_id: sel_currency_id,
+                            stats_date: today,
+                        } );
+                    xfer.select( [ table, 'S' ],
+                        { selected: 1,
+                            result: true } )
+                        .leftJoin( [ DB_CURRENCY_TABLE, 'C' ],
+                            'C.id = S.currency_id' )
+                        .get( [ 'S.*', 'C.code', 'C.dec_places' ] )
+                        .where( 'holder', holder );
+
+                    xfer.executeAssoc( as );
+
+                    as.add( ( as, res ) => {
+                        // For manual testing of race condition
+                        //as.error('Duplicate');
+                        reqinfo.result( this._limitStats( res[0].rows[0] ) );
+                    } );
+                } else {
+                    as.success( 'Update', row );
+                }
+            },
+            ( as, err ) => {
+                if ( err === 'Duplicate' ) {
+                    as.success( 'Select' );
+                }
+            }
+        );
+        as.add( ( as, action, row ) => {
+            if ( action === 'Select' ) {
+                db.select( [ table, 'S' ] )
+                    .leftJoin( [ DB_CURRENCY_TABLE, 'C' ],
+                        'C.id = S.currency_id' )
+                    .get( [ 'S.*', 'C.code', 'C.dec_places' ] )
+                    .where( 'holder', holder )
+                    .executeAssoc( as );
+                as.add( ( as, rows ) => {
+                    reqinfo.result( this._limitStats( rows[0] ) );
+                } );
+            } else if ( action == 'Update' ) {
+                const stats_date = moment.utc( row.stats_date );
+                const week_start = moment.utc( today ).startOf( 'week' );
+                const month_start = moment.utc( today ).startOf( 'month' );
+
+                // ---
+                const stats = { stats_date: today };
+                let full_reset = true;
+
+                for ( let k in row ) {
+                    if ( k.indexOf( '_daily_' ) > 0 ) {
+                        stats[k] = '0';
+                    }
+                }
+
+                if ( stats_date.isBefore( week_start ) ) {
+                    for ( let k in row ) {
+                        if ( k.indexOf( '_weekly_' ) > 0 ) {
+                            stats[k] = '0';
+                        }
+                    }
+                } else {
+                    full_reset = false;
+                }
+
+                if ( stats_date.isBefore( month_start ) ) {
+                    for ( let k in row ) {
+                        if ( k.indexOf( '_monthly_' ) > 0 ) {
+                            stats[k] = '0';
+                        }
+                    }
+                } else {
+                    full_reset = false;
+                }
+                // ---
+
+                as.add(
+                    ( as ) => {
+                        // TODO: update currency for stats on mismatch
+                        const sel_currency_id = db
+                            .select( [ DB_ACCOUNT_HOLDERS_TABLE, 'A' ] )
+                            .innerJoin( [ DB_DOMAIN_LIMITS_TABLE, 'L' ],
+                                'L.lim_id = A.group_id' )
+                            .get( 'L.currency_id' )
+                            .where( {
+                                'A.uuidb64': holder,
+                                'L.lim_domain' : domain,
+                            } );
+
+                        const xfer = db.newXfer();
+                        const uq = xfer.update( table, { affected: 1 } )
+                            .set( stats )
+                            .where( {
+                                holder,
+                                stats_date: row.stats_date,
+                            } );
+
+                        if ( full_reset ) {
+                            uq.set( 'currency_id', sel_currency_id );
+                        } else {
+                            uq.where( 'currency_id', sel_currency_id );
+                        }
+
+                        xfer.select( [ table, 'S' ],
+                            { selected: 1,
+                                result: true } )
+                            .leftJoin( [ DB_CURRENCY_TABLE, 'C' ],
+                                'C.id = S.currency_id' )
+                            .get( [ 'S.*', 'C.code', 'C.dec_places' ] )
+                            .where( 'holder', holder );
+
+                        xfer.executeAssoc( as );
+
+                        as.add( ( as, res ) => {
+                            reqinfo.result( this._limitStats( res[0].rows[0] ) );
+                        } );
+                    },
+                    ( as, err ) => {
+                        if ( err === 'XferCondition' ) {
+                            if ( as.state[ SYM_GET_LIMIT_STATS ] ) {
+                                as.error(
+                                    'InternalError',
+                                    'Stats reset failure (currency mismatch?)'
+                                );
+                            } else {
+                                as.state[ SYM_GET_LIMIT_STATS ] = true;
+                                as.success( true );
+                            }
+                        }
+                    }
+                );
+                as.add( ( as, retry ) => {
+                    if ( retry ) {
+                        this.getLimitStats( as, reqinfo );
+                    }
+                } );
+            }
+        } );
     }
 }
 

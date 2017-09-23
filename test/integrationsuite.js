@@ -1,6 +1,7 @@
 'use strict';
 
 const expect = require( 'chai' ).expect;
+const moment = require( 'moment' );
 
 const Executor = require('futoin-executor/Executor');
 const GenFace = require( 'futoin-eventstream/GenFace' );
@@ -1535,6 +1536,386 @@ module.exports = function(describe, it, vars) {
             );
             as.add( (as) => done() );
             as.execute();            
+        });
+        
+        it('should get account holder limit stats', function(done) {
+            as.add(
+                ( as ) => {
+                    const xferacct = ccm.iface('xfer.accounts');
+                    
+                    xferacct.addAccountHolder(
+                        as,
+                        'LimitsTest@example.com',
+                        'default',
+                        true, true,
+                        {}, {} );
+                },
+                (as, err) => {
+                    console.log(err);
+                    console.log(as.state.error_info);
+                    done(as.state.last_exception || 'Fail');
+                }
+            );
+            as.add(
+                (as, holder) => {
+                    const xferacct = ccm.iface('xfer.accounts');
+                    const db = ccm.db('xfer');
+                    
+                    // Insert + select
+                    //---
+                    const retail_val = {
+                        currency: 'I:EUR',
+                        stats:
+                        {
+                            retail_daily_amt: '0.00',
+                            retail_daily_cnt: 0,
+                            retail_weekly_amt: '0.00',
+                            retail_weekly_cnt: 0,
+                            retail_monthly_amt: '0.00',
+                            retail_monthly_cnt: 0,
+                        }
+                    }
+                    
+                    xferacct.getLimitStats( as, holder, 'Retail' );
+                    
+                    as.add( (as, res) => {
+                        expect(res).to.eql(retail_val);
+                    });
+                    
+                                                            
+                    xferacct.getLimitStats( as, holder, 'Retail' );
+                    
+                    as.add( (as, res) => {
+                        expect(res).to.eql(retail_val);
+                    });
+                    //---
+                    
+                    // just select
+                    //---
+                    db.insert('limit_deposits_stats').set({
+                        holder,
+                        currency_id: 1,
+                        stats_date: moment.utc().format('YYYY-MM-DD'),
+                        deposit_daily_amt: '123',
+                        deposit_daily_cnt: 2,
+                        withdrawal_daily_amt: '345',
+                        withdrawal_daily_cnt: 4,
+                        deposit_weekly_amt: '567',
+                        deposit_weekly_cnt: 6,
+                        withdrawal_weekly_amt: '789',
+                        withdrawal_weekly_cnt: 8,
+                        deposit_monthly_amt: '901',
+                        deposit_monthly_cnt: 10,
+                        withdrawal_monthly_amt: '1134',
+                        withdrawal_monthly_cnt: 12,
+                    }).execute(as);
+                    xferacct.getLimitStats( as, holder, 'Deposits' );
+                    
+                    as.add( (as, res) => {
+                        expect(res).to.eql({
+                            currency: 'I:EUR',
+                            stats:
+                            {
+                                deposit_daily_amt: '1.23',
+                                deposit_daily_cnt: 2,
+                                withdrawal_daily_amt: '3.45',
+                                withdrawal_daily_cnt: 4,
+                                deposit_weekly_amt: '5.67',
+                                deposit_weekly_cnt: 6,
+                                withdrawal_weekly_amt: '7.89',
+                                withdrawal_weekly_cnt: 8,
+                                deposit_monthly_amt: '9.01',
+                                deposit_monthly_cnt: 10,
+                                withdrawal_monthly_amt: '11.34',
+                                withdrawal_monthly_cnt: 12, } });
+                    });
+                    
+                    // select + reset day
+                    //---
+                     db.insert('limit_payments_stats').set({
+                        holder,
+                        currency_id: 1,
+                        stats_date: moment.utc().subtract(1, 'days').format('YYYY-MM-DD'),
+                        outbound_daily_amt: '123',
+                        outbound_daily_cnt: 2,
+                        inbound_daily_amt: '345',
+                        inbound_daily_cnt: 3,
+                        outbound_weekly_amt: '456',
+                        outbound_weekly_cnt: 5,
+                        inbound_weekly_amt: '678',
+                        inbound_weekly_cnt: 9,
+                        outbound_monthly_amt: '1211',
+                        outbound_monthly_cnt: 13,
+                        inbound_monthly_amt: '1456',
+                        inbound_monthly_cnt: 15,
+                    }).execute(as);
+                    
+                    xferacct.getLimitStats( as, holder, 'Payments' );
+                    as.add( (as, res) => {
+                        expect(res).to.eql({
+                            currency: 'I:EUR',
+                            stats:
+                            {
+                                outbound_daily_amt: '0.00',
+                                outbound_daily_cnt: 0,
+                                inbound_daily_amt: '0.00',
+                                inbound_daily_cnt: 0,
+                                outbound_weekly_amt: '4.56',
+                                outbound_weekly_cnt: 5,
+                                inbound_weekly_amt: '6.78',
+                                inbound_weekly_cnt: 9,
+                                outbound_monthly_amt: '12.11',
+                                outbound_monthly_cnt: 13,
+                                inbound_monthly_amt: '14.56',
+                                inbound_monthly_cnt: 15,
+                            } });
+                    });
+                    
+                    // select + reset week
+                    //---
+                    db.insert('limit_gaming_stats').set({
+                        holder,
+                        currency_id: 1,
+                        stats_date: moment.utc().subtract(1, 'weeks').format('YYYY-MM-DD'),
+                        bet_daily_amt: '123',
+                        bet_daily_cnt: 2,
+                        win_daily_amt: '345',
+                        win_daily_cnt: 4,
+                        profit_daily_delta: '567',
+                        bet_weekly_amt: '678',
+                        bet_weekly_cnt: 7,
+                        win_weekly_amt: '890',
+                        win_weekly_cnt: 9,
+                        profit_weekly_delta: '1011',
+                        bet_monthly_amt: '1112',
+                        bet_monthly_cnt: 12,
+                        win_monthly_amt: '1314',
+                        win_monthly_cnt: 13,
+                        profit_monthly_delta: '1415',
+                    }).execute(as);
+                    
+                    xferacct.getLimitStats( as, holder, 'Gaming' );
+                    as.add( (as, res) => {
+                        expect(res).to.eql({
+                            currency: 'I:EUR',
+                            stats:
+                            {
+                                bet_daily_amt: '0.00',
+                                bet_daily_cnt: 0,
+                                win_daily_amt: '0.00',
+                                win_daily_cnt: 0,
+                                profit_daily_delta: '0.00',
+                                bet_weekly_amt: '0.00',
+                                bet_weekly_cnt: 0,
+                                win_weekly_amt: '0.00',
+                                win_weekly_cnt: 0,
+                                profit_weekly_delta: '0.00',
+                                bet_monthly_amt: '11.12',
+                                bet_monthly_cnt: 12,
+                                win_monthly_amt: '13.14',
+                                win_monthly_cnt: 13,
+                                profit_monthly_delta: '14.15',
+                            }
+                        });
+                    });
+                    
+                    // select + reset month
+                    //---
+                    db.insert('limit_misc_stats').set({
+                        holder,
+                        currency_id: 1,
+                        stats_date: moment.utc().subtract(1, 'month').format('YYYY-MM-DD'),
+                        message_daily_cnt: 1,
+                        failure_daily_cnt: 2,
+                        limithit_daily_cnt: 3,
+                        message_weekly_cnt: 4,
+                        failure_weekly_cnt: 5,
+                        limithit_weekly_cnt: 6,
+                        message_monthly_cnt: 7,
+                        failure_monthly_cnt: 8,
+                        limithit_monthly_cnt: 9,
+                    }).execute(as);
+                    
+                    xferacct.getLimitStats( as, holder, 'Misc' );
+                    as.add( (as, res) => {
+                        expect(res).to.eql({
+                            currency: 'I:EUR',
+                            stats:
+                            {
+                                message_daily_cnt: 0,
+                                failure_daily_cnt: 0,
+                                limithit_daily_cnt: 0,
+                                message_weekly_cnt: 0,
+                                failure_weekly_cnt: 0,
+                                limithit_weekly_cnt: 0,
+                                message_monthly_cnt: 0,
+                                failure_monthly_cnt: 0,
+                                limithit_monthly_cnt: 0,
+                            },
+                        });
+                    });
+                    
+                    //---
+                    xferacct.getLimitStats( as, holder, 'Personnel' );
+                },
+                (as, err) => {
+                    console.log(err);
+                    console.log(as.state.error_info);
+                    done(as.state.last_exception || 'Fail');
+                }
+            );
+            as.add( (as) => done() );
+            as.execute();
+        } );
+        
+        it('should update stats currency on full reset', function(done) {
+            as.add(
+                (as) => {
+                    const xferacct = ccm.iface('xfer.accounts');
+            
+                    xferacct.addAccountHolder(
+                        as,
+                        'CurrencyMismatchUpdate@example.com',
+                        'default',
+                        true, true,
+                        {}, {} );
+                    
+                    as.add( (as, holder) => {
+                        ccm.db('xfer').insert('limit_retail_stats').set({
+                            holder,
+                            currency_id: 2,
+                            stats_date: moment.utc().subtract(1, 'month').format('YYYY-MM-DD'),
+                        }).execute(as);
+                        
+                        xferacct.getLimitStats(
+                            as,
+                            holder,
+                            'Retail'
+                        );
+                    } );
+                },
+                (as, err) => {
+                    console.log(as.state.test_name);
+                    console.log(err);
+                    console.log(as.state.error_info);
+                    done(as.state.last_exception || 'Fail');
+                }
+            );
+            as.add( (as) => done() );
+            as.execute();  
+        });
+        
+        it('should workaround insert duplicate', function(done) {
+            as.add(
+                (as) => {
+                    const xferacct = ccm.iface('xfer.accounts');
+                    const impl = executor._impls['futoin.xfer.accounts']['1'];
+                    const orig_f = impl.getLimitStats;
+                    
+                    impl.getLimitStats = function(as, reqinfo) {
+                        const orig_res = reqinfo.result;
+                        let first = true;
+                        reqinfo.result = function( res ) {
+                            if (first) {
+                                first = false;
+                                throw new Error('Duplicate');
+                            }
+                            
+                            orig_res.apply( this, [ res ] );
+                        };
+                        orig_f.apply(this, [as, reqinfo]);
+                    };
+            
+                    xferacct.addAccountHolder(
+                        as,
+                        'InsertRace@example.com',
+                        'default',
+                        true, true,
+                        {}, {} );
+                    
+                    as.add( (as, holder) => {
+                        xferacct.getLimitStats(
+                            as,
+                            holder,
+                            'Retail'
+                        );
+                    } );
+                },
+                (as, err) => {
+                    console.log(as.state.test_name);
+                    console.log(err);
+                    console.log(as.state.error_info);
+                    done(as.state.last_exception || 'Fail');
+                }
+            );
+            as.add( (as) => done() );
+            as.execute();  
+        });
+        
+        it('should get account holder limit stats', function(done) {
+            as.add(
+                (as) => {
+                    const xferacct = ccm.iface('xfer.accounts');
+                    
+                    as.add(
+                        (as) => {
+                            as.state.test_name = 'UnknownHolderID';
+                            xferacct.getLimitStats(
+                                as,
+                                '1234567890123456789012',
+                                'Retail'
+                            );
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'UnknownHolderID' ) {
+                                as.success();
+                            }
+                        }
+                    );
+                    
+                    as.add(
+                        (as) => {
+                            as.state.test_name = 'InternalError on currency mismatch';
+                         
+                            xferacct.addAccountHolder(
+                                as,
+                                'CurrencyMismatch@example.com',
+                                'default',
+                                true, true,
+                                {}, {} );
+                            
+                            as.add( (as, holder) => {
+                                ccm.db('xfer').insert('limit_retail_stats').set({
+                                    holder,
+                                    currency_id: 2,
+                                    stats_date: moment.utc().subtract(1, 'day').format('YYYY-MM-DD'),
+                                }).execute(as);
+                                xferacct.getLimitStats(
+                                    as,
+                                    holder,
+                                    'Retail'
+                                );
+                                as.add( (as, res) => console.log(res) );
+                            } );
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'InternalError' ) {
+                                as.success();
+                            }
+                        }
+                    );
+                },
+                (as, err) => {
+                    console.log(as.state.test_name);
+                    console.log(err);
+                    console.log(as.state.error_info);
+                    done(as.state.last_exception || 'Fail');
+                }
+            );
+            as.add( (as) => done() );
+            as.execute();  
         });
     });
 };

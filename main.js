@@ -14,6 +14,7 @@ module.exports = {
     DB_DOMAIN_LIMITS_TABLE : 'domain_limits',
     DB_ACCOUNT_HOLDERS_TABLE : 'account_holders',
     DB_ACCOUNTS_TABLE : 'accounts',
+    limitStatsTable: ( domain ) => `limit_${domain.toLowerCase()}_stats`,
 
     DB_IFACEVER : 'futoin.db.l2:1.0',
     EVTGEN_IFACEVER : 'futoin.evt.gen:1.0',
