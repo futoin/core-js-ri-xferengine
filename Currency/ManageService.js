@@ -136,7 +136,7 @@ class ManageService extends PingService {
             const change = {
                 rate: p.rate,
                 margin: p.margin,
-                since: db.queryBuilder().helpers().now(),
+                since: db.helpers().now(),
             };
 
             // Try insert
