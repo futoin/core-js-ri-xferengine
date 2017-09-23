@@ -2,6 +2,7 @@
 
 const PingService = require( 'futoin-executor/PingService' );
 const PingFace = require( 'futoin-invoker/PingFace' );
+const moment = require( 'moment' );
 
 const AccountsFace = require( './AccountsFace' );
 const UUIDTool = require( './UUIDTool' );
@@ -13,6 +14,11 @@ const {
     DB_CURRENCY_TABLE,
     DB_LIMIT_GROUPS_TABLE,
 } = require( './main' );
+
+const SYM_GET_AH_ID = Symbol( 'getAccountHolder' );
+const SYM_GET_AH_EXTID = Symbol( 'getAccountHolderExt' );
+const SYM_GET_ACCOUNT = Symbol( 'getAccount' );
+const SYM_LIST_ACCOUNTS = Symbol( 'listAccounts' );
 
 /**
  * Accounts Service
@@ -140,26 +146,25 @@ class AccountsService extends PingService {
         );
     }
 
-    _getAccountHolderCommon( as, reqinfo, field, value ) {
+    _getAccountHolderCommon( as, reqinfo, sym, field, value ) {
         const db = reqinfo.executor().ccm().db( 'xfer' );
 
-        const q = db.select( DB_ACCOUNT_HOLDERS_TABLE )
-            .innerJoin( DB_LIMIT_GROUPS_TABLE,
-                `${DB_LIMIT_GROUPS_TABLE}.id = group_id` )
-            .get( [
-                'uuidb64',
-                'ext_id', 'group_name', 'enabled', 'kyc', 'data', 'internal',
-                'created', 'updated',
-            ] )
-            .where( field, value );
-        q.executeAssoc( as );
+        db
+            .getPrepared( sym, ( db ) => {
+                const qb = db.select( [ DB_ACCOUNT_HOLDERS_TABLE, 'A' ] )
+                    .innerJoin( DB_LIMIT_GROUPS_TABLE,
+                        `${DB_LIMIT_GROUPS_TABLE}.id = group_id` )
+                    .get( [ 'A.*', 'group_name' ] );
+                qb.where( field, qb.param( 'value' ) );
+                return qb.prepare();
+            } )
+            .executeAssoc( as, { value } );
 
         as.add( ( as, rows ) => {
             if ( rows.length !== 1 ) {
                 as.error( 'UnknownAccountHolder' );
             }
 
-            const helpers = q.helpers();
             const r = rows[0];
 
             reqinfo.result( {
@@ -170,18 +175,22 @@ class AccountsService extends PingService {
                 kyc: r.kyc === 'Y',
                 data: JSON.parse( r.data ),
                 internal: JSON.parse( r.internal ),
-                created: helpers.nativeDate( r.created ).format(),
-                updated: helpers.nativeDate( r.updated ).format(),
+                created: moment.utc( r.created ).format(),
+                updated: moment.utc( r.updated ).format(),
             } );
         } );
     }
 
     getAccountHolder( as, reqinfo ) {
-        this._getAccountHolderCommon( as, reqinfo, 'uuidb64', reqinfo.params().id );
+        this._getAccountHolderCommon( as, reqinfo,
+            SYM_GET_AH_ID, 'uuidb64',
+            reqinfo.params().id );
     }
 
     getAccountHolderExt( as, reqinfo ) {
-        this._getAccountHolderCommon( as, reqinfo, 'ext_id', reqinfo.params().ext_id );
+        this._getAccountHolderCommon( as, reqinfo,
+            SYM_GET_AH_EXTID,
+            'ext_id', reqinfo.params().ext_id );
     }
 
     mergeAccountHolders( as, _reqinfo ) {
@@ -272,7 +281,7 @@ class AccountsService extends PingService {
         } );
     }
 
-    _accountInfo( raw, helpers ) {
+    _accountInfo( raw ) {
         return {
             id: raw.uuidb64,
             type: raw.acct_type,
@@ -283,55 +292,60 @@ class AccountsService extends PingService {
             rel_id: raw.rel_uuid64,
             balance: AmountTools.fromStorage( raw.balance, raw.dec_places ),
             reserved: AmountTools.fromStorage( raw.reserved, raw.dec_places ),
-            created: helpers.nativeDate( raw.created ).format(),
-            updated: helpers.nativeDate( raw.updated ).format(),
+            created: moment.utc( raw.created ).format(),
+            updated: moment.utc( raw.updated ).format(),
         };
     }
 
     getAccount( as, reqinfo ) {
-        const id = reqinfo.params().id;
         const db = reqinfo.executor().ccm().db( 'xfer' );
 
-        const q = db.select( [ DB_ACCOUNTS_TABLE, 'A' ], { result: true } )
-            .leftJoin( [ DB_CURRENCY_TABLE, 'C' ],
-                'C.id = A.currency_id' )
-            .get( [ 'A.*', 'C.code', 'C.dec_places' ] )
-            .where( 'A.uuidb64', id );
-        q.executeAssoc( as );
-
-        const helpers = q.helpers();
+        db
+            .getPrepared( SYM_GET_ACCOUNT, ( db ) => {
+                const qb = db.select( [ DB_ACCOUNTS_TABLE, 'A' ] )
+                    .leftJoin( [ DB_CURRENCY_TABLE, 'C' ],
+                        'C.id = A.currency_id' )
+                    .get( [ 'A.*', 'C.code', 'C.dec_places' ] );
+                qb.where( 'A.uuidb64', qb.param( 'id' ) );
+                return qb.prepare();
+            } )
+            .executeAssoc( as, reqinfo.params() );
 
         as.add( ( as, rows ) => {
             if ( rows.length !== 1 ) {
                 as.error( 'UnknownAccountID' );
             }
 
-            reqinfo.result( this._accountInfo( rows[0], helpers ) );
+            reqinfo.result( this._accountInfo( rows[0] ) );
         } );
     }
 
     listAccounts( as, reqinfo ) {
         as.add(
             ( as ) => {
-                const holder = reqinfo.params().holder;
                 const db = reqinfo.executor().ccm().db( 'xfer' );
 
-                const xfer = db.newXfer();
-                const helpers = xfer.helpers();
-                xfer.select( DB_ACCOUNT_HOLDERS_TABLE,
-                    { selected: 1 } )
-                    .get( 'uuidb64' )
-                    .where( 'uuidb64', holder );
-                xfer.select( [ DB_ACCOUNTS_TABLE, 'A' ], { result: true } )
-                    .leftJoin( [ DB_CURRENCY_TABLE, 'C' ],
-                        'C.id = A.currency_id' )
-                    .get( [ 'A.*', 'C.code', 'C.dec_places' ] )
-                    .where( 'holder', holder );
-                xfer.executeAssoc( as );
+                db
+                    .getPrepared( SYM_LIST_ACCOUNTS, ( db ) => {
+                        const xfer = db.newXfer();
+                        const ph_holder = xfer.param( 'holder' );
+                        xfer.select( DB_ACCOUNT_HOLDERS_TABLE,
+                            { selected: 1 } )
+                            .get( 'uuidb64' )
+                            .where( 'uuidb64', ph_holder );
+                        xfer.select( [ DB_ACCOUNTS_TABLE, 'A' ],
+                            { result: true } )
+                            .leftJoin( [ DB_CURRENCY_TABLE, 'C' ],
+                                'C.id = A.currency_id' )
+                            .get( [ 'A.*', 'C.code', 'C.dec_places' ] )
+                            .where( 'holder', ph_holder );
+                        return xfer.prepare();
+                    } )
+                    .executeAssoc( as, reqinfo.params() );
 
                 as.add( ( as, results ) => {
                     const res = results[0].rows.map(
-                        v => this._accountInfo( v, helpers ) );
+                        v => this._accountInfo( v ) );
                     reqinfo.result( res );
                 } );
             },

@@ -6,6 +6,9 @@ const InfoFace = require( './InfoFace' );
 const AmountTools = require( '../AmountTools' );
 const { DB_IFACEVER, DB_CURRENCY_TABLE, DB_EXRATE_TABLE } = require( '../main' );
 
+const SYM_LIST = Symbol( 'listCurrencies' );
+const SYM_GETRATE = Symbol( 'getExRate' );
+
 /**
  * Currency Manage Service
  */
@@ -31,9 +34,12 @@ class InfoService extends PingService {
     listCurrencies( as, reqinfo ) {
         const db = reqinfo.executor().ccm().db( 'xfer' );
 
-        db.select( DB_CURRENCY_TABLE )
-            .get( [ 'code', 'dec_places', 'name', 'symbol', 'enabled' ] )
-            .executeAssoc( as );
+        const pq = db.getPrepared( SYM_LIST, () =>
+            db.select( DB_CURRENCY_TABLE )
+                .get( [ 'code', 'dec_places', 'name', 'symbol', 'enabled' ] )
+                .prepare()
+        );
+        pq.executeAssoc( as );
 
         as.add( ( as, res ) => {
             res.forEach( ( v ) => {
@@ -48,17 +54,23 @@ class InfoService extends PingService {
         const p = reqinfo.params();
         const db = reqinfo.executor().ccm().db( 'xfer' );
 
-        db.select( DB_EXRATE_TABLE )
-            .get( [ 'rate', 'margin' ] )
-            .where( 'base_id',
-                db.select( DB_CURRENCY_TABLE ).get( 'id' )
-                    .where( 'code', p.base ).where( 'enabled', 'Y' )
-            )
-            .where( 'foreign_id',
-                db.select( DB_CURRENCY_TABLE ).get( 'id' )
-                    .where( 'code', p.foreign ).where( 'enabled', 'Y' )
-            )
-            .executeAssoc( as );
+        db
+            .getPrepared( SYM_GETRATE, ( db ) => {
+                const qb = db.select( DB_EXRATE_TABLE );
+                qb.get( [ 'rate', 'margin' ] )
+                    .where( 'base_id',
+                        db.select( DB_CURRENCY_TABLE ).get( 'id' )
+                            .where( 'code', qb.param( 'base' ) )
+                            .where( 'enabled', 'Y' )
+                    )
+                    .where( 'foreign_id',
+                        db.select( DB_CURRENCY_TABLE ).get( 'id' )
+                            .where( 'code', qb.param( 'foreign' ) )
+                            .where( 'enabled', 'Y' )
+                    );
+                return qb.prepare();
+            } )
+            .executeAssoc( as, p );
 
         as.add( ( as, res ) => {
             if ( res.length ) {

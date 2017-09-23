@@ -12,6 +12,9 @@ const {
     DB_CURRENCY_TABLE,
 } = require( './main' );
 
+const SYM_GETLIMGRP = Symbol( 'getLimitGroups' );
+const SYM_GETLIMITS = Symbol( 'getLimits' );
+
 /**
  * Limits Service
  */
@@ -61,9 +64,13 @@ class LimitsService extends PingService {
     getLimitGroups( as, reqinfo ) {
         const db = reqinfo.executor().ccm().db( 'xfer' );
 
-        db.select( DB_LIMIT_GROUPS_TABLE )
-            .get( 'group_name' )
-            .order( 'id' )
+        db
+            .getPrepared( SYM_GETLIMGRP, ( db ) =>
+                db.select( DB_LIMIT_GROUPS_TABLE )
+                    .get( 'group_name' )
+                    .order( 'id' )
+                    .prepare()
+            )
             .execute( as );
         as.add( ( as, { rows } ) => reqinfo.result( rows.map( v => v[0] ) ) );
     }
@@ -72,17 +79,23 @@ class LimitsService extends PingService {
         const p = reqinfo.params();
         const db = reqinfo.executor().ccm().db( 'xfer' );
 
-        db.select( DB_LIMIT_GROUPS_TABLE )
-            .innerJoin( DB_DOMAIN_LIMITS_TABLE,
-                `lim_id = ${DB_LIMIT_GROUPS_TABLE}.id` )
-            .innerJoin( DB_CURRENCY_TABLE,
-                `currency_id = ${DB_CURRENCY_TABLE}.id` )
-            .get( [ 'code', 'lim_hard', 'lim_check', 'lim_risk' ] )
-            .where( {
-                group_name: p.group,
-                lim_domain: p.domain,
+        db
+            .getPrepared( SYM_GETLIMITS, ( db ) => {
+                const qb = db.select( DB_LIMIT_GROUPS_TABLE )
+                    .innerJoin( DB_DOMAIN_LIMITS_TABLE,
+                        `lim_id = ${DB_LIMIT_GROUPS_TABLE}.id` )
+                    .innerJoin( DB_CURRENCY_TABLE,
+                        `currency_id = ${DB_CURRENCY_TABLE}.id` )
+                    .get( [ 'code', 'lim_hard', 'lim_check', 'lim_risk' ] );
+
+                qb.where( {
+                    group_name: qb.param( 'group' ),
+                    lim_domain: qb.param( 'domain' ),
+                } );
+
+                return qb.prepare();
             } )
-            .executeAssoc( as );
+            .executeAssoc( as, p );
 
         as.add( ( as, rows ) => {
             if ( rows.length !== 1 ) {
