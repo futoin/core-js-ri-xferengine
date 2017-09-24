@@ -14,7 +14,7 @@ module.exports = function( grunt ) {
         istanbul_check_coverage: {},
         jsdoc2md: {
             README: {
-                src: [ '*.js', 'lib/**/*.js' ],
+                src: [ '*.js', 'Currency/*.js' ],
                 dest: "README.md",
                 options: { template: fs.readFileSync( 'misc/README.hbs', 'utf8' ) },
             },

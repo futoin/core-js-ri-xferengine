@@ -3,17 +3,17 @@
 const BaseFace = require( './BaseFace' );
 
 /**
- * Limits Face
+ * Deposits Face
  */
-class LimitsFace extends BaseFace {
+class DepositsFace extends BaseFace {
     static get IFACE_NAME() {
-        return 'futoin.xfer.limits';
+        return 'futoin.xfer.deposits';
     }
     
     /**
      * CCM registration helper
      * 
-     * @function LimitsFace.register
+     * @function DepositsFace.register
      * @param {AsyncSteps} as - steps interface
      * @param {AdvancedCCM} ccm - CCM instance
      * @param {string} name - CCM registration name
@@ -24,4 +24,4 @@ class LimitsFace extends BaseFace {
      */
 }
 
-module.exports = LimitsFace;
+module.exports = DepositsFace;

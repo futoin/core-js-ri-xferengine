@@ -1,39 +1,17 @@
 'use strict';
 
-const PingService = require( 'futoin-executor/PingService' );
-const PingFace = require( 'futoin-invoker/PingFace' );
-const DBGenFace = require( 'futoin-eventstream/DBGenFace' );
+const BaseService = require( '../BaseService' );
 const ManageFace = require( './ManageFace' );
-const { DB_IFACEVER, DB_CURRENCY_TABLE, DB_EXRATE_TABLE, EVTGEN_IFACEVER } = require( '../main' );
+const { DB_CURRENCY_TABLE, DB_EXRATE_TABLE } = require( '../main' );
 
 
 /**
  * Currency Manage Service
+ * @alias CurrencyManageService
  */
-class ManageService extends PingService {
-    /**
-     * Register futoin.currency.manage interface with Executor
-     * @param {AsyncSteps} as - steps interface
-     * @param {Executor} executor - executor instance
-     * @param {object} options - implementation defined options
-     * @returns {ManageService} instance
-     */
-    static register( as, executor, options={} ) {
-        const ifacever = 'futoin.currency.manage:' + ManageFace.LATEST_VERSION;
-        const impl = new this( options );
-        const spec_dirs = [ ManageFace.spec(), PingFace.spec( ManageFace.PING_VERSION ) ];
-
-        executor.register( as, ifacever, impl, spec_dirs );
-
-        const ccm = executor.ccm();
-        ccm.assertIface( '#db.xfer', DB_IFACEVER );
-        ccm.assertIface( 'xfer.evtgen', EVTGEN_IFACEVER );
-
-        if ( !( ccm.iface( 'xfer.evtgen' ) instanceof DBGenFace ) ) {
-            as.error( 'InternalError', 'CCM xfet.evtgen must be instance of DBGenFace' );
-        }
-
-        return impl;
+class ManageService extends BaseService {
+    static get IFACE_IMPL() {
+        return ManageFace;
     }
 
     setCurrency( as, reqinfo ) {
@@ -174,6 +152,16 @@ class ManageService extends PingService {
             );
         } );
     }
+
+    /**
+     * Register futoin.currency.manage interface with Executor
+     * 
+     * @function CurrencyManageService.register
+     * @param {AsyncSteps} as - steps interface
+     * @param {Executor} executor - executor instance
+     * @param {object} options - implementation defined options
+     * @returns {ManageService} instance
+     */
 }
 
 module.exports = ManageService;

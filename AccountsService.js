@@ -1,14 +1,12 @@
 'use strict';
 
-const PingService = require( 'futoin-executor/PingService' );
-const PingFace = require( 'futoin-invoker/PingFace' );
+const BaseService = require( './BaseService' );
 const moment = require( 'moment' );
 
 const AccountsFace = require( './AccountsFace' );
 const UUIDTool = require( './UUIDTool' );
 const AmountTools = require( './AmountTools' );
 const {
-    DB_IFACEVER,
     DB_ACCOUNT_HOLDERS_TABLE,
     DB_ACCOUNTS_TABLE,
     DB_CURRENCY_TABLE,
@@ -29,24 +27,9 @@ const LIMIT_FIELD_CNT_RE = /_(daily|weekly|monthly)_cnt/;
 /**
  * Accounts Service
  */
-class AccountsService extends PingService {
-    /**
-     * Register futoin.xfer.accounts interface with Executor
-     * @param {AsyncSteps} as - steps interface
-     * @param {Executor} executor - executor instance
-     * @param {object} options - implementation defined options
-     * @returns {AccountsService} instance
-     */
-    static register( as, executor, options={} ) {
-        const ifacename = 'futoin.xfer.accounts';
-        const ifacever = ifacename + ':' + AccountsFace.LATEST_VERSION;
-        const impl = new this( options );
-        const spec_dirs = [ AccountsFace.spec(), PingFace.spec( AccountsFace.PING_VERSION ) ];
-
-        executor.register( as, ifacever, impl, spec_dirs );
-        executor.ccm().assertIface( '#db.xfer', DB_IFACEVER );
-
-        return impl;
+class AccountsService extends BaseService {
+    static get IFACE_IMPL() {
+        return AccountsFace;
     }
 
     //=============
@@ -591,6 +574,17 @@ class AccountsService extends PingService {
             }
         } );
     }
+
+
+    /**
+     * Register futoin.xfer.accounts interface with Executor
+     * 
+     * @function AccountsService.register
+     * @param {AsyncSteps} as - steps interface
+     * @param {Executor} executor - executor instance
+     * @param {object} options - implementation defined options
+     * @returns {AccountsService} instance
+     */
 }
 
 module.exports = AccountsService;

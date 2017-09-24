@@ -1,34 +1,20 @@
 'use strict';
 
-const PingService = require( 'futoin-executor/PingService' );
-const PingFace = require( 'futoin-invoker/PingFace' );
+const BaseService = require( '../BaseService' );
 const InfoFace = require( './InfoFace' );
 const AmountTools = require( '../AmountTools' );
-const { DB_IFACEVER, DB_CURRENCY_TABLE, DB_EXRATE_TABLE } = require( '../main' );
+const { DB_CURRENCY_TABLE, DB_EXRATE_TABLE } = require( '../main' );
 
 const SYM_LIST = Symbol( 'listCurrencies' );
 const SYM_GETRATE = Symbol( 'getExRate' );
 
 /**
  * Currency Manage Service
+ * @alias CurrencyInfoService
  */
-class InfoService extends PingService {
-    /**
-     * Register futoin.currency.manage interface with Executor
-     * @param {AsyncSteps} as - steps interface
-     * @param {Executor} executor - executor instance
-     * @param {object} options - implementation defined options
-     * @returns {ManageService} instance
-     */
-    static register( as, executor, options={} ) {
-        const ifacever = 'futoin.currency.info:' + InfoFace.LATEST_VERSION;
-        const impl = new this( options );
-        const spec_dirs = [ InfoFace.spec(), PingFace.spec( InfoFace.PING_VERSION ) ];
-
-        executor.register( as, ifacever, impl, spec_dirs );
-        executor.ccm().assertIface( '#db.xfer', DB_IFACEVER );
-
-        return impl;
+class InfoService extends BaseService {
+    static get IFACE_IMPL() {
+        return InfoFace;
     }
 
     listCurrencies( as, reqinfo ) {
@@ -84,6 +70,16 @@ class InfoService extends PingService {
             }
         } );
     }
+
+    /**
+     * Register futoin.currency.manage interface with Executor
+     * 
+     * @function CurrencyInfoService.register
+     * @param {AsyncSteps} as - steps interface
+     * @param {Executor} executor - executor instance
+     * @param {object} options - implementation defined options
+     * @returns {ManageService} instance
+     */
 }
 
 module.exports = InfoService;

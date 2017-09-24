@@ -1,12 +1,9 @@
 'use strict';
 
-const PingService = require( 'futoin-executor/PingService' );
-const PingFace = require( 'futoin-invoker/PingFace' );
-const SpecTools = require( 'futoin-invoker/SpecTools' );
+const BaseService = require( './BaseService' );
 
 const LimitsFace = require( './LimitsFace' );
 const {
-    DB_IFACEVER,
     DB_LIMIT_GROUPS_TABLE,
     DB_DOMAIN_LIMITS_TABLE,
     DB_CURRENCY_TABLE,
@@ -18,29 +15,9 @@ const SYM_GETLIMITS = Symbol( 'getLimits' );
 /**
  * Limits Service
  */
-class LimitsService extends PingService {
-    /**
-     * Register futoin.xfers.limits interface with Executor
-     * @param {AsyncSteps} as - steps interface
-     * @param {Executor} executor - executor instance
-     * @param {object} options - implementation defined options
-     * @returns {LimitsService} instance
-     */
-    static register( as, executor, options={} ) {
-        const ifacename = 'futoin.xfer.limits';
-        const ifacever = ifacename + ':' + LimitsFace.LATEST_VERSION;
-        const impl = new this( options );
-        const spec_dirs = [ LimitsFace.spec(), PingFace.spec( LimitsFace.PING_VERSION ) ];
-
-        executor.register( as, ifacever, impl, spec_dirs );
-        executor.ccm().assertIface( '#db.xfer', DB_IFACEVER );
-
-        as.add( ( as ) => {
-            const mjr = LimitsFace.LATEST_VERSION.split( '.' )[0];
-            impl._iface_info = executor._ifaces[ifacename][mjr];
-        } );
-
-        return impl;
+class LimitsService extends BaseService {
+    static get IFACE_IMPL() {
+        return LimitsFace;
     }
 
     addLimitGroup( as, reqinfo ) {
@@ -147,21 +124,20 @@ class LimitsService extends PingService {
         } );
         //---
 
-        const iface_info = this._iface_info;
         const lim_hard = p.hard;
         const lim_check = p.check;
         const lim_risk = p.risk;
         const lim_domain = p.domain;
 
-        if ( !SpecTools.checkType( iface_info, `${lim_domain}LimitValues`, lim_hard ) ) {
+        if ( !this._checkType( `${lim_domain}LimitValues`, lim_hard ) ) {
             as.error( 'InvalidRequest', `Hard limits do not match ${lim_domain}LimitValues` );
         }
 
-        if ( lim_check && !SpecTools.checkType( iface_info, `${lim_domain}LimitValues`, lim_check ) ) {
+        if ( lim_check && !this._checkType( `${lim_domain}LimitValues`, lim_check ) ) {
             as.error( 'InvalidRequest', `Check limits do not match ${lim_domain}LimitValues` );
         }
 
-        if ( lim_risk && !SpecTools.checkType( iface_info, `${lim_domain}LimitValues`, lim_risk ) ) {
+        if ( lim_risk && !this._checkType( `${lim_domain}LimitValues`, lim_risk ) ) {
             as.error( 'InvalidRequest', `Risk limits do not match ${lim_domain}LimitValues` );
         }
 
@@ -206,6 +182,16 @@ class LimitsService extends PingService {
             }
         ) );
     }
+
+    /**
+     * Register futoin.xfers.limits interface with Executor
+     * 
+     * @function LimitsService.register
+     * @param {AsyncSteps} as - steps interface
+     * @param {Executor} executor - executor instance
+     * @param {object} options - implementation defined options
+     * @returns {LimitsService} instance
+     */
 }
 
 module.exports = LimitsService;

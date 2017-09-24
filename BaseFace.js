@@ -2,11 +2,12 @@
 
 const _defaults = require( 'lodash/defaults' );
 const PingFace = require( 'futoin-invoker/PingFace' );
+
 const { FTN19_VERSION, PING_VERSION, specDirs } = require( './main' );
 
 
 /**
- * Base Face with neutral common functionality
+ * Base Face with neutral common registration functionality
  * 
  * @note Not official API
  */
@@ -24,6 +25,12 @@ class BaseFace extends PingFace {
     static get PING_VERSION() {
         return PING_VERSION;
     }
+
+    /**
+     * Interface name - to be overridden
+     * @property {string}
+     * @alias BaseFace.IFACE_NAME
+     */
 
     /**
      * CCM registration helper
