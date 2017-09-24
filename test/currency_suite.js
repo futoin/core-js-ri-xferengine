@@ -60,6 +60,13 @@ module.exports = function(describe, it, vars) {
                             { code: 'I:YEN', dec_places: 0, name: 'Disabled Yen', symbol: '-', enabled: false },
                         ]);
                     });
+                    
+                    currinfo.getCurrency(as, 'I:EUR');
+                    as.add( (as, currency) => {
+                        expect(currency).to.eql(
+                            { code: 'I:EUR', dec_places: 2, name: 'Euro', symbol: '€', enabled: true }
+                        );
+                    });
                 },
                 (as, err) =>
                 {
@@ -111,6 +118,19 @@ module.exports = function(describe, it, vars) {
                 {
                     const currmng = ccm.iface('currency.manage');
                     const currinfo = ccm.iface('currency.info');
+                    
+                    as.add(
+                        (as) => {
+                            as.state.test_name = 'Missing currency';
+                            currinfo.getCurrency(as, 'I:MISS');
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'UnknownCurrency' ) {
+                                as.success();
+                            }
+                        }
+                    );
                     
                     as.add(
                         (as) => {

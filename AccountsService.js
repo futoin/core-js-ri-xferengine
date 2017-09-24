@@ -21,8 +21,8 @@ const SYM_GET_ACCOUNT = Symbol( 'getAccount' );
 const SYM_LIST_ACCOUNTS = Symbol( 'listAccounts' );
 const SYM_GET_LIMIT_STATS = Symbol( 'getLimitStats1' );
 
-const LIMIT_FIELD_AMT_RE = /_(daily|weekly|monthly)_(amt|delta)/;
-const LIMIT_FIELD_CNT_RE = /_(daily|weekly|monthly)_cnt/;
+const LIMIT_FIELD_AMT_RE = /_amt$/;
+const LIMIT_FIELD_CNT_RE = /_cnt$/;
 
 /**
  * Accounts Service

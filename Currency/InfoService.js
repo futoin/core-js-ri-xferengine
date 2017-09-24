@@ -6,6 +6,7 @@ const AmountTools = require( '../AmountTools' );
 const { DB_CURRENCY_TABLE, DB_EXRATE_TABLE } = require( '../main' );
 
 const SYM_LIST = Symbol( 'listCurrencies' );
+const SYM_GET = Symbol( 'getCurrency' );
 const SYM_GETRATE = Symbol( 'getExRate' );
 
 /**
@@ -33,6 +34,29 @@ class InfoService extends BaseService {
                 v.enabled = v.enabled === 'Y';
             } );
             reqinfo.result( res );
+        } );
+    }
+
+    getCurrency( as, reqinfo ) {
+        const db = reqinfo.executor().ccm().db( 'xfer' );
+
+        const pq = db.getPrepared( SYM_GET, () => {
+            const qb = db.select( DB_CURRENCY_TABLE )
+                .get( [ 'code', 'dec_places', 'name', 'symbol', 'enabled' ] );
+            qb.where( 'code', qb.param( 'code' ) );
+            return qb.prepare();
+        } );
+        pq.executeAssoc( as, { code: reqinfo.params().code } );
+
+        as.add( ( as, res ) => {
+            if ( res.length !== 1 ) {
+                as.error( 'UnknownCurrency' );
+            }
+
+            const row = res[0];
+            row.dec_places = parseInt( row.dec_places );
+            row.enabled = ( row.enabled === 'Y' );
+            reqinfo.result( row );
         } );
     }
 

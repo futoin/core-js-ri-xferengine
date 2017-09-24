@@ -169,17 +169,17 @@ CREATE TABLE limit_gaming_stats (
     `bet_daily_cnt` MEDIUMINT UNSIGNED NOT NULL DEFAULT 0,
     `win_daily_amt` DECIMAL(22, 0) NOT NULL DEFAULT '0',
     `win_daily_cnt` MEDIUMINT UNSIGNED NOT NULL DEFAULT 0,
-    `profit_daily_delta` DECIMAL(22, 0) NOT NULL DEFAULT '0',
+    `profit_daily_amt` DECIMAL(22, 0) NOT NULL DEFAULT '0',
     `bet_weekly_amt` DECIMAL(22, 0) NOT NULL DEFAULT '0',
     `bet_weekly_cnt` MEDIUMINT UNSIGNED NOT NULL DEFAULT 0,
     `win_weekly_amt` DECIMAL(22, 0) NOT NULL DEFAULT '0',
     `win_weekly_cnt` MEDIUMINT UNSIGNED NOT NULL DEFAULT 0,
-    `profit_weekly_delta` DECIMAL(22, 0) NOT NULL DEFAULT '0',
+    `profit_weekly_amt` DECIMAL(22, 0) NOT NULL DEFAULT '0',
     `bet_monthly_amt` DECIMAL(22, 0) NOT NULL DEFAULT '0',
     `bet_monthly_cnt` MEDIUMINT UNSIGNED NOT NULL DEFAULT 0,
     `win_monthly_amt` DECIMAL(22, 0) NOT NULL DEFAULT '0',
     `win_monthly_cnt` MEDIUMINT UNSIGNED NOT NULL DEFAULT 0,
-    `profit_monthly_delta` DECIMAL(22, 0) NOT NULL DEFAULT '0'
+    `profit_monthly_amt` DECIMAL(22, 0) NOT NULL DEFAULT '0'
 )
     ENGINE=InnoDB
     CHARACTER SET 'utf8';

@@ -840,17 +840,17 @@ module.exports = function(describe, it, vars) {
                         bet_daily_cnt: 2,
                         win_daily_amt: '345',
                         win_daily_cnt: 4,
-                        profit_daily_delta: '567',
+                        profit_daily_amt: '567',
                         bet_weekly_amt: '678',
                         bet_weekly_cnt: 7,
                         win_weekly_amt: '890',
                         win_weekly_cnt: 9,
-                        profit_weekly_delta: '1011',
+                        profit_weekly_amt: '1011',
                         bet_monthly_amt: '1112',
                         bet_monthly_cnt: 12,
                         win_monthly_amt: '1314',
                         win_monthly_cnt: 13,
-                        profit_monthly_delta: '1415',
+                        profit_monthly_amt: '1415',
                     }).execute(as);
                     
                     xferacct.getLimitStats( as, holder, 'Gaming' );
@@ -863,17 +863,17 @@ module.exports = function(describe, it, vars) {
                                 bet_daily_cnt: 0,
                                 win_daily_amt: '0.00',
                                 win_daily_cnt: 0,
-                                profit_daily_delta: '0.00',
+                                profit_daily_amt: '0.00',
                                 bet_weekly_amt: '0.00',
                                 bet_weekly_cnt: 0,
                                 win_weekly_amt: '0.00',
                                 win_weekly_cnt: 0,
-                                profit_weekly_delta: '0.00',
+                                profit_weekly_amt: '0.00',
                                 bet_monthly_amt: '11.12',
                                 bet_monthly_cnt: 12,
                                 win_monthly_amt: '13.14',
                                 win_monthly_cnt: 13,
-                                profit_monthly_delta: '14.15',
+                                profit_monthly_amt: '14.15',
                             }
                         });
                     });
