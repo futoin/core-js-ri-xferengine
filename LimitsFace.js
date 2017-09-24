@@ -9,7 +9,7 @@ class LimitsFace extends BaseFace {
     static get IFACE_NAME() {
         return 'futoin.xfer.limits';
     }
-    
+
     /**
      * CCM registration helper
      * 

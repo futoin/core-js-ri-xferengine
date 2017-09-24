@@ -28,6 +28,15 @@ module.exports = function(describe, it, vars) {
         const AccountsFace = require('../AccountsFace');
         const AccountsService = require('../AccountsService');
         
+        const MOCK_TODAY = '2017-09-23';
+        
+        class MockAccountsService extends AccountsService {
+            _today() {
+                // TODO: system timezone
+                return moment().utc().format( MOCK_TODAY );
+            }
+        }
+        
         beforeEach('currency', function() {
             as.add(
                 (as) => {
@@ -37,7 +46,7 @@ module.exports = function(describe, it, vars) {
                     LimitsService.register(as, executor);
                     LimitsFace.register(as, ccm, 'xfer.limits', executor);
 
-                    AccountsService.register(as, executor);
+                    MockAccountsService.register(as, executor);
                     AccountsFace.register(as, ccm, 'xfer.accounts', executor);
                 },
                 (as, err) => {
@@ -745,7 +754,7 @@ module.exports = function(describe, it, vars) {
                     db.insert('limit_deposits_stats').set({
                         holder,
                         currency_id: 1,
-                        stats_date: moment.utc().format('YYYY-MM-DD'),
+                        stats_date: moment.utc(MOCK_TODAY).format('YYYY-MM-DD'),
                         deposit_daily_amt: '123',
                         deposit_daily_cnt: 2,
                         withdrawal_daily_amt: '345',
@@ -785,7 +794,7 @@ module.exports = function(describe, it, vars) {
                      db.insert('limit_payments_stats').set({
                         holder,
                         currency_id: 1,
-                        stats_date: moment.utc().subtract(1, 'days').format('YYYY-MM-DD'),
+                        stats_date: moment.utc(MOCK_TODAY).subtract(1, 'days').format('YYYY-MM-DD'),
                         outbound_daily_amt: '123',
                         outbound_daily_cnt: 2,
                         inbound_daily_amt: '345',
@@ -826,7 +835,7 @@ module.exports = function(describe, it, vars) {
                     db.insert('limit_gaming_stats').set({
                         holder,
                         currency_id: 1,
-                        stats_date: moment.utc().subtract(1, 'weeks').format('YYYY-MM-DD'),
+                        stats_date: moment.utc(MOCK_TODAY).subtract(1, 'weeks').format('YYYY-MM-DD'),
                         bet_daily_amt: '123',
                         bet_daily_cnt: 2,
                         win_daily_amt: '345',
@@ -874,7 +883,7 @@ module.exports = function(describe, it, vars) {
                     db.insert('limit_misc_stats').set({
                         holder,
                         currency_id: 1,
-                        stats_date: moment.utc().subtract(1, 'month').format('YYYY-MM-DD'),
+                        stats_date: moment.utc(MOCK_TODAY).subtract(1, 'month').format('YYYY-MM-DD'),
                         message_daily_cnt: 1,
                         failure_daily_cnt: 2,
                         limithit_daily_cnt: 3,
@@ -934,7 +943,7 @@ module.exports = function(describe, it, vars) {
                         ccm.db('xfer').insert('limit_retail_stats').set({
                             holder,
                             currency_id: 2,
-                            stats_date: moment.utc().subtract(1, 'month').format('YYYY-MM-DD'),
+                            stats_date: moment.utc(MOCK_TODAY).subtract(1, 'month').format('YYYY-MM-DD'),
                         }).execute(as);
                         
                         xferacct.getLimitStats(
@@ -1039,7 +1048,7 @@ module.exports = function(describe, it, vars) {
                                 ccm.db('xfer').insert('limit_retail_stats').set({
                                     holder,
                                     currency_id: 2,
-                                    stats_date: moment.utc().subtract(1, 'day').format('YYYY-MM-DD'),
+                                    stats_date: moment.utc(MOCK_TODAY).subtract(1, 'day').format('YYYY-MM-DD'),
                                 }).execute(as);
                                 xferacct.getLimitStats(
                                     as,

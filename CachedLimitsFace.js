@@ -9,7 +9,7 @@ const LimitsFace = require( './LimitsFace' );
  */
 class CachedLimitsFace extends LimitsFace {
     // TODO
-    
+
     /**
      * CCM registration helper
      * 

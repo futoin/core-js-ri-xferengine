@@ -369,6 +369,11 @@ class AccountsService extends BaseService {
         };
     }
 
+    _today() {
+        // TODO: system timezone
+        return moment().utc().format( 'YYYY-MM-DD' );
+    }
+
     getLimitStats( as, reqinfo ) {
         const p = reqinfo.params();
         const holder = p.holder;
@@ -378,8 +383,7 @@ class AccountsService extends BaseService {
         const qb = db.queryBuilder();
         const table = limitStatsTable( domain );
 
-        // TODO: system timezone
-        const today = moment().utc().format( 'YYYY-MM-DD' );
+        const today = this._today();
 
         as.add(
             ( as ) => {

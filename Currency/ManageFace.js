@@ -10,7 +10,7 @@ class ManageFace extends BaseFace {
     static get IFACE_NAME() {
         return 'futoin.currency.manage';
     }
-    
+
     /**
      * CCM registration helper
      * 

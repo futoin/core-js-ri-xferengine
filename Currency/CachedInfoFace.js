@@ -12,8 +12,8 @@ const InfoFace = require( './InfoFace' );
  */
 class CacheInfoFace extends InfoFace {
     // TODO
-    
-    
+
+
     /**
      * CCM registration helper
      * 

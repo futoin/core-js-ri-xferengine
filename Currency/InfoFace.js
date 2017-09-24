@@ -12,7 +12,7 @@ class InfoFace extends BaseFace {
     }
 
     // TODO: client-side caching + listening on event stream for updates
-    
+
     /**
      * CCM registration helper
      * 

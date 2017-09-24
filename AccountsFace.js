@@ -9,7 +9,7 @@ class AccountsFace extends BaseFace {
     static get IFACE_NAME() {
         return 'futoin.xfer.accounts';
     }
-    
+
     /**
      * CCM registration helper
      * 
