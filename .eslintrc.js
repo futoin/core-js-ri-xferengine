@@ -44,7 +44,7 @@ module.exports = {
         "no-useless-escape": "error",
         // "object-curly-newline": ["error", { "multiline": true }],
         "object-curly-spacing": ["error", "always"],
-        "object-property-newline": "error",
+        //"object-property-newline": "error",
         "one-var": ["error", "never"],
         "padded-blocks": ["error", "never"],
         "padding-line-between-statements": [

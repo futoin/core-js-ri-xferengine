@@ -56,27 +56,89 @@ class AmountTools {
         return res.plus( margin ).toString();
     }
 
-    static convAmount( amt, rate, dec_places ) {
+    static backRate( rate ) {
+        BigNumber.config( RATE_PRECISSION );
+        const res = new BigNumber( '1', 10 );
+        return res.dividedBy( rate ).toString();
+    }
+
+    static convAmount( amt, rate, dec_places, round_up=false ) {
+        if ( round_up ) {
+            BigNumber.config( dec_places, BigNumber.ROUND_UP );
+        } else {
+            BigNumber.config( dec_places, BigNumber.ROUND_DOWN );
+        }
+
         const res = new BigNumber( amt, 10 );
         return res.times( rate ).toFixed( dec_places );
     }
 
-    static convLimits( limits, rate, dec_places ) {
+    static isAmountField( field ) {
+        return LIMIT_FIELD_AMT_RE.test( field );
+    }
+
+    static convLimits( limits, rate, dec_places, round_up=false ) {
         const res = Object.assign( {}, limits );
 
         for ( let [ k, v ] of Object.entries( res ) ) {
-            if ( LIMIT_FIELD_AMT_RE.test( k ) ) {
-                res[k] = this.convAmount( v, rate, dec_places );
+            if ( this.isAmountField( k ) ) {
+                res[k] = this.convAmount( v, rate, dec_places, round_up );
             }
         }
 
         return res;
     }
 
-    static backRate( rate ) {
-        BigNumber.config( RATE_PRECISSION );
-        const res = new BigNumber( '1', 10 );
-        return res.dividedBy( rate ).toString();
+    static prepNewStats( stats, deltas ) {
+        const res = Object.assign( {}, deltas );
+
+        for ( let [ field, dv ] of Object.entries( deltas ) ) {
+            const sv = stats[ field ];
+
+            if ( sv === undefined ) {
+                continue;
+            }
+
+            if ( this.isAmountField( field ) ) {
+                dv = new BigNumber( dv, 10 );
+                res[ field ] = dv.plus( sv ).toString();
+            } else {
+                res[ field ] += sv;
+            }
+        }
+
+        return res;
+    }
+
+    static checkStatsLimit( stats, limits ) {
+        for ( let [ field, sv ] of Object.entries( stats ) ) {
+            const lv = limits[field];
+
+            if ( lv === undefined ) {
+                continue;
+            }
+
+            if ( this.isAmountField( field ) ) {
+                sv = new BigNumber( sv, 10 );
+
+                if ( sv.greaterThan( lv ) ) {
+                    return false;
+                }
+            } else if ( sv > lv ) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    static checkMinLimit( field, val, limit ) {
+        if ( this.isAmountField( field ) ) {
+            val = new BigNumber( val, 10 );
+            return val.greaterThanOrEqualTo( limit, 10 );
+        }
+
+        return ( val >= limit );
     }
 }
 

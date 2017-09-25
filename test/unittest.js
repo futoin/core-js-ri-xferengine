@@ -44,11 +44,13 @@ describe('AmountTools', function() {
         expect(AmountTools.convAmount('1.00', '1.00', 1)).to.equal('1.0');
         expect(AmountTools.convAmount('1.00', '1.00', 2)).to.equal('1.00');
         expect(AmountTools.convAmount('1.50', '1.50', 2)).to.equal('2.25');
-        expect(AmountTools.convAmount('12345.67', '12.3456789', 2)).to.equal('152415.68');
+        expect(AmountTools.convAmount('12345.67', '12.3456789', 2, true)).to.equal('152415.68');
+        expect(AmountTools.convAmount('12345.67', '12.3456789', 2, false)).to.equal('152415.67');
         
-        // TODO: revise
-        expect(AmountTools.convAmount('1.50', '1.50', 1)).to.equal('2.3');
-        expect(AmountTools.convAmount('1.50', '0.15', 2)).to.equal('0.23');
+        expect(AmountTools.convAmount('1.50', '1.50', 1, true)).to.equal('2.3');
+        expect(AmountTools.convAmount('1.50', '1.50', 1, false)).to.equal('2.2');
+        expect(AmountTools.convAmount('1.50', '0.15', 2, true)).to.equal('0.23');
+        expect(AmountTools.convAmount('1.50', '0.15', 2, false)).to.equal('0.22');
         
     });
     
@@ -58,11 +60,23 @@ describe('AmountTools', function() {
             'sdadsds_cnd' : 234,
             'sdsdsds_amt' : '1.3',
             'sdsdsdsa_amt' : '1.32',
-        }, '1.23', 3)).to.eql({
+        }, '1.23', 3, true)).to.eql({
             'some_value' : '123',
             'sdadsds_cnd' : 234,
             'sdsdsds_amt' : '1.599',
             'sdsdsdsa_amt' : '1.624',            
+        });
+        
+        expect(AmountTools.convLimits({
+            'some_value' : '123',
+            'sdadsds_cnd' : 234,
+            'sdsdsds_amt' : '1.3',
+            'sdsdsdsa_amt' : '1.32',
+        }, '1.23', 3, false)).to.eql({
+            'some_value' : '123',
+            'sdadsds_cnd' : 234,
+            'sdsdsds_amt' : '1.599',
+            'sdsdsdsa_amt' : '1.623',            
         });
     });
     
@@ -70,6 +84,110 @@ describe('AmountTools', function() {
         expect(AmountTools.backRate('1.00')).to.equal('1');
         expect(AmountTools.backRate('1.23')).to.equal('0.813008130081');
         expect(AmountTools.backRate('0.777')).to.equal('1.287001287001');
+    });
+    
+    it('should prepare stats', function() {
+        expect(AmountTools.prepNewStats({
+            'only_in_stats1_amt' : '12.34',
+            'only_in_stats2_amt' : '23.45',
+            'both1_amt' : '2.34',
+            'both2_amt' : '3.45',
+            'only_in_stats1_cnt' : 1,
+            'only_in_stats2_cnt' : 2,
+            'both1_cnt' : 3,
+            'both2_cnt' : 4,
+        }, {
+            'both1_amt' : '1.01',
+            'both2_amt' : '2.02',
+            'only_in_delta1_amt' : '12.34',
+            'only_in_delta2_amt' : '23.45',
+            'both1_cnt' : 10,
+            'both2_cnt' : 20,
+            'only_in_delta1_cnt' : 30,
+            'only_in_delta2_cnt' : 40,
+        })).to.eql({
+            'both1_amt' : '3.35',
+            'both2_amt' : '5.47',
+            'only_in_delta1_amt' : '12.34',
+            'only_in_delta2_amt' : '23.45',
+            'both1_cnt' : 13,
+            'both2_cnt' : 24,
+            'only_in_delta1_cnt' : 30,
+            'only_in_delta2_cnt' : 40,
+        });
+    });
+    
+    it('should checks stats against limits', function() {
+        expect(AmountTools.checkStatsLimit({
+            'only_in_stats1_amt' : '12.34',
+            'only_in_stats2_amt' : '23.45',
+            'both1_amt' : '0.99',
+            'both2_amt' : '3.45',
+            'only_in_stats1_cnt' : 1,
+            'only_in_stats2_cnt' : 2,
+            'both1_cnt' : 1,
+            'both2_cnt' : 4,
+        }, {
+            'both1_amt' : '1.01',
+            'both2_amt' : '3.45',
+            'only_in_limits1_amt' : '12.34',
+            'only_in_limits2_amt' : '23.45',
+            'both1_cnt' : 3,
+            'both2_cnt' : 4,
+            'only_in_limits1_cnt' : 30,
+            'only_in_limits2_cnt' : 40,
+        })).to.equal(true);
+        
+        expect(AmountTools.checkStatsLimit({
+            'only_in_stats1_amt' : '12.34',
+            'only_in_stats2_amt' : '23.45',
+            'both1_amt' : '0.99',
+            'both2_amt' : '3.45',
+            'only_in_stats1_cnt' : 1,
+            'only_in_stats2_cnt' : 2,
+            'both1_cnt' : 4,
+            'both2_cnt' : 4,
+        }, {
+            'both1_amt' : '1.01',
+            'both2_amt' : '3.45',
+            'only_in_limits1_amt' : '12.34',
+            'only_in_limits2_amt' : '23.45',
+            'both1_cnt' : 3,
+            'both2_cnt' : 4,
+            'only_in_limits1_cnt' : 30,
+            'only_in_limits2_cnt' : 40,
+        })).to.equal(false);
+        
+        expect(AmountTools.checkStatsLimit({
+            'only_in_stats1_amt' : '12.34',
+            'only_in_stats2_amt' : '23.45',
+            'both1_amt' : '1.02',
+            'both2_amt' : '3.45',
+            'only_in_stats1_cnt' : 1,
+            'only_in_stats2_cnt' : 2,
+            'both1_cnt' : 1,
+            'both2_cnt' : 4,
+        }, {
+            'both1_amt' : '1.01',
+            'both2_amt' : '3.45',
+            'only_in_limits1_amt' : '12.34',
+            'only_in_limits2_amt' : '23.45',
+            'both1_cnt' : 3,
+            'both2_cnt' : 4,
+            'only_in_limits1_cnt' : 30,
+            'only_in_limits2_cnt' : 40,
+        })).to.equal(false);
+    });
+
+    it('should checks min limit', function() {
+        expect(AmountTools.checkMinLimit('field_amt', '21', '3')).to.eql(true);
+        expect(AmountTools.checkMinLimit('field_amt', '3.34', '3.33')).to.eql(true);
+        expect(AmountTools.checkMinLimit('field_amt', '3.33', '3.33')).to.eql(true);
+        expect(AmountTools.checkMinLimit('field_amt', '3.32', '3.33')).to.eql(false);
+        expect(AmountTools.checkMinLimit('field_amt', '2', '3')).to.eql(false);
+        
+        expect(AmountTools.checkMinLimit('field_cnt', 21, 3)).to.eql(true);
+        expect(AmountTools.checkMinLimit('field_cnt', 2, 3)).to.eql(false);
     });
     
     it('should process misc', function() {
