@@ -1,6 +1,7 @@
 'use strict';
 
 const BigNumber = require( 'bignumber.js' );
+const { ROUND_UP, ROUND_DOWN, ROUND_HALF_UP } = BigNumber;
 
 const MAX_DIGITS = 22;
 const RATE_PRECISSION = 12;
@@ -20,7 +21,6 @@ const PLACES_TO_DIV = [
     100000000000,
     1000000000000,
 ];
-const LIMIT_FIELD_AMT_RE = /_amt$/;
 
 class AmountTools {
     static get MAX_DIGITS() {
@@ -36,37 +36,40 @@ class AmountTools {
     }
 
     static fromStorage( amt, places ) {
-        BigNumber.config( places );
+        BigNumber.config( places, ROUND_DOWN );
         const res = new BigNumber( amt, 10 );
         return res.dividedBy( PLACES_TO_DIV[places] ).toFixed( places );
     }
 
     static toStorage( amt, places ) {
+        BigNumber.config( places, ROUND_DOWN );
         const res = new BigNumber( amt, 10 );
         return res.times( PLACES_TO_DIV[places] ).toFixed( 0 );
     }
 
     static sellRate( rate, margin ) {
+        BigNumber.config( RATE_PRECISSION, ROUND_HALF_UP );
         const res = new BigNumber( rate, 10 );
         return res.minus( margin ).toString();
     }
 
     static buyRate( rate, margin ) {
+        BigNumber.config( RATE_PRECISSION, ROUND_HALF_UP );
         const res = new BigNumber( rate, 10 );
         return res.plus( margin ).toString();
     }
 
     static backRate( rate ) {
-        BigNumber.config( RATE_PRECISSION );
+        BigNumber.config( RATE_PRECISSION, ROUND_HALF_UP );
         const res = new BigNumber( '1', 10 );
         return res.dividedBy( rate ).toString();
     }
 
     static convAmount( amt, rate, dec_places, round_up=false ) {
         if ( round_up ) {
-            BigNumber.config( dec_places, BigNumber.ROUND_UP );
+            BigNumber.config( dec_places, ROUND_UP );
         } else {
-            BigNumber.config( dec_places, BigNumber.ROUND_DOWN );
+            BigNumber.config( dec_places, ROUND_DOWN );
         }
 
         const res = new BigNumber( amt, 10 );
@@ -74,11 +77,11 @@ class AmountTools {
     }
 
     static isAmountField( field ) {
-        return LIMIT_FIELD_AMT_RE.test( field );
+        return field.endsWith( '_amt' );
     }
 
-    static convLimits( limits, rate, dec_places, round_up=false ) {
-        const res = Object.assign( {}, limits );
+    static convAllAmounts( amounts, rate, dec_places, round_up=false ) {
+        const res = Object.assign( {}, amounts );
 
         for ( let [ k, v ] of Object.entries( res ) ) {
             if ( this.isAmountField( k ) ) {
@@ -121,7 +124,11 @@ class AmountTools {
             if ( this.isAmountField( field ) ) {
                 sv = new BigNumber( sv, 10 );
 
-                if ( sv.greaterThan( lv ) ) {
+                if ( field.endsWith( '_min_amt' ) ) {
+                    if ( sv.lessThan( lv ) ) {
+                        return false;
+                    }
+                } else if ( sv.greaterThan( lv ) ) {
                     return false;
                 }
             } else if ( sv > lv ) {
@@ -130,15 +137,6 @@ class AmountTools {
         }
 
         return true;
-    }
-
-    static checkMinLimit( field, val, limit ) {
-        if ( this.isAmountField( field ) ) {
-            val = new BigNumber( val, 10 );
-            return val.greaterThanOrEqualTo( limit, 10 );
-        }
-
-        return ( val >= limit );
     }
 }
 

@@ -21,9 +21,6 @@ const SYM_GET_ACCOUNT = Symbol( 'getAccount' );
 const SYM_LIST_ACCOUNTS = Symbol( 'listAccounts' );
 const SYM_GET_LIMIT_STATS = Symbol( 'getLimitStats1' );
 
-const LIMIT_FIELD_AMT_RE = /_amt$/;
-const LIMIT_FIELD_CNT_RE = /_cnt$/;
-
 /**
  * Accounts Service
  */
@@ -356,9 +353,9 @@ class AccountsService extends BaseService {
         const stats = {};
 
         for ( let [ k, v ] of Object.entries( row ) ) {
-            if ( LIMIT_FIELD_CNT_RE.test( k ) ) {
+            if ( k.endsWith( '_cnt' ) ) {
                 stats[k] = v;
-            } else if ( LIMIT_FIELD_AMT_RE.test( k ) ) {
+            } else if ( AmountTools.isAmountField( k ) ) {
                 stats[k] = AmountTools.fromStorage( v, row.dec_places );
             }
         }

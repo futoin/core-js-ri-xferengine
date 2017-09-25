@@ -29,7 +29,7 @@ describe('AmountTools', function() {
         expect(AmountTools.toStorage('12345678', 8)).to.equal('1234567800000000');
         
         // TODO: revise
-        expect(AmountTools.toStorage('123456.75', 1)).to.equal('1234568');
+        expect(AmountTools.toStorage('123456.75', 1)).to.equal('1234567');
         expect(AmountTools.toStorage('123456.74', 1)).to.equal('1234567');
     });
     
@@ -54,8 +54,8 @@ describe('AmountTools', function() {
         
     });
     
-    it('should convert limits', function() {
-        expect(AmountTools.convLimits({
+    it('should find & convert amount fields', function() {
+        expect(AmountTools.convAllAmounts({
             'some_value' : '123',
             'sdadsds_cnd' : 234,
             'sdsdsds_amt' : '1.3',
@@ -67,7 +67,7 @@ describe('AmountTools', function() {
             'sdsdsdsa_amt' : '1.624',            
         });
         
-        expect(AmountTools.convLimits({
+        expect(AmountTools.convAllAmounts({
             'some_value' : '123',
             'sdadsds_cnd' : 234,
             'sdsdsds_amt' : '1.3',
@@ -180,14 +180,29 @@ describe('AmountTools', function() {
     });
 
     it('should checks min limit', function() {
-        expect(AmountTools.checkMinLimit('field_amt', '21', '3')).to.eql(true);
-        expect(AmountTools.checkMinLimit('field_amt', '3.34', '3.33')).to.eql(true);
-        expect(AmountTools.checkMinLimit('field_amt', '3.33', '3.33')).to.eql(true);
-        expect(AmountTools.checkMinLimit('field_amt', '3.32', '3.33')).to.eql(false);
-        expect(AmountTools.checkMinLimit('field_amt', '2', '3')).to.eql(false);
+        expect(AmountTools.checkStatsLimit({
+            'check_min_amt' : '12.34',
+        }, {
+            'check_min_amt' : '1.01',
+        })).to.equal(true);
         
-        expect(AmountTools.checkMinLimit('field_cnt', 21, 3)).to.eql(true);
-        expect(AmountTools.checkMinLimit('field_cnt', 2, 3)).to.eql(false);
+        expect(AmountTools.checkStatsLimit({
+            'check_min_amt' : '1.01',
+        }, {
+            'check_min_amt' : '1.01',
+        })).to.equal(true);
+        
+        expect(AmountTools.checkStatsLimit({
+            'check_min_amt' : '1.00',
+        }, {
+            'check_min_amt' : '1.01',
+        })).to.equal(false);
+        
+        expect(AmountTools.checkStatsLimit({
+            'check_min_amt' : '0.99',
+        }, {
+            'check_min_amt' : '1.01',
+        })).to.equal(false);
     });
     
     it('should process misc', function() {
