@@ -1,6 +1,7 @@
 'use strict';
 
 const AmountTools = require( './AmountTools' );
+const moment = require( 'moment' );
 
 const {
     limitStatsTable,
@@ -128,6 +129,97 @@ class XferTools {
         }, extra );
 
         this._processLimits( as, dbxfer, holder, currency, deltas );
+    }
+
+    _cancelStats( as, dbxfer, holder, date, delta_currency, deltas ) {
+        const ccm = this._ccm;
+        const acctface = ccm.iface( 'xfer.accounts' );
+        const currface = ccm.iface( 'currency.info' );
+        const domain = this._domain;
+
+        let currency;
+        let currency_info;
+
+        // Limits statistics
+        acctface.getLimitStats( as, holder, domain );
+        as.add( ( as, res ) => {
+            currency = res.currency;
+
+            currface.getCurrency( as, currency );
+            as.add( ( as, res ) => {
+                currency_info = res;
+
+                if ( currency !== delta_currency ) {
+                    // expect stats limits in "base currency"
+                    currface.getExRate( as, currency, delta_currency );
+
+                    as.add( ( as, { rate } ) => {
+                        rate = AmountTools.backRate( rate );
+                        // round up amounts
+                        deltas = AmountTools.convAllAmounts(
+                            deltas, rate, currency_info.dec_places, true );
+                    } );
+                }
+            } );
+        } );
+
+        // 
+        as.add( ( as ) => {
+            const dec_places = currency_info.dec_places;
+
+            date = moment.utc( date );
+            const now = moment.utc();
+            const do_daily = date.format( 'YYYY-MM-DD' ) === now.format( 'YYYY-MM-DD' );
+            const do_weekly = now.startOf( 'week' ).isSameOrBefore( date );
+            const do_monthly = now.startOf( 'month' ).isSameOrBefore( date );
+
+            if ( !do_daily && !do_weekly && !do_monthly ) {
+                return;
+            }
+
+            const lq = dbxfer.update( limitStatsTable( domain ) );
+            lq.where( { holder } );
+
+            const q_zero = lq.escape( 0 );
+
+            for ( let [ k, dv ] of Object.entries( deltas ) ) {
+                if ( !do_daily && ( k.indexOf( '_daily_' ) > 0 ) ) {
+                    continue;
+                }
+
+                if ( !do_weekly && ( k.indexOf( '_weekly_' ) > 0 ) ) {
+                    continue;
+                }
+
+                if ( !do_monthly && ( k.indexOf( '_monthly_' ) > 0 ) ) {
+                    continue;
+                }
+
+                if ( AmountTools.isAmountField( k ) ) {
+                    dv = AmountTools.toStorage( dv, dec_places );
+                }
+
+                // Next value based on ACTUAL transactional data !
+                const val = `${k} - ${lq.escape( dv )}`;
+                lq.set( k, lq.expr( val ) );
+
+                // Double check in database based on ACTUAL data
+                lq.where( `(${val}) >= ${q_zero}` );
+            }
+        } );
+    }
+
+    addStatsCancel( as, dbxfer, holder, date, currency, amount, prefix, extra={} ) {
+        let deltas = Object.assign( {
+            [`${prefix}_daily_amt`] : amount,
+            [`${prefix}_daily_cnt`] : 1,
+            [`${prefix}_weekly_amt`] : amount,
+            [`${prefix}_weekly_cnt`] : 1,
+            [`${prefix}_monthly_amt`] : amount,
+            [`${prefix}_monthly_cnt`] : 1,
+        }, extra );
+
+        this._cancelStats( as, dbxfer, holder, date, currency, deltas );
     }
 }
 

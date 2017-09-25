@@ -372,6 +372,7 @@ module.exports = function(describe, it, vars) {
                         "outbound_min_amt" : "0"
                     }, false, false );
                     
+                    // try over limit
                     //---
                     as.add(
                         (as) => {
@@ -386,6 +387,7 @@ module.exports = function(describe, it, vars) {
                         }
                     );
                     
+                    // try limit
                     //---
                     const xfer4 = db.newXfer();
                     xt.addLimitProcessing( as, xfer4, holder, 'I:EUR', '1.00', 'inbound' );
@@ -396,6 +398,53 @@ module.exports = function(describe, it, vars) {
                     } );
                     as.add( (as) => xfer4.execute( as ) );
                     
+                    
+                    // try over limit
+                    //---
+                    as.add(
+                        (as) => {
+                            const xfer3 = db.newXfer();
+                            xt.addLimitProcessing( as, xfer3, holder, 'I:EUR', '0.01', 'inbound' );
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if (err === 'LimitReject') {
+                                as.success();
+                            }
+                        }
+                    );
+                    
+                    // cancel stats
+                    //---
+                    const xfer5 = db.newXfer();
+                    xt.addStatsCancel( as, xfer5, holder, moment.utc(), 'I:EUR', '1.00', 'inbound' );
+                    as.add( (as) => xfer5.execute( as ) );                                            
+                    
+                    // try limit again
+                    //---
+                    const xfer6 = db.newXfer();
+                    xt.addLimitProcessing( as, xfer6, holder, 'I:EUR', '1.00', 'inbound' );
+                    
+                    as.add( (as, { do_risk, do_check } ) => {
+                        expect(do_risk).to.equal(false);
+                        expect(do_check).to.equal(false);
+                    } );
+                    as.add( (as) => xfer6.execute( as ) );
+                    
+                    // cancel stats
+                    //---
+                    {
+                        const xfer = db.newXfer();
+                        xt.addStatsCancel( as, xfer, holder,
+                                           moment.utc().startOf('month').subtract(1, 'day'),
+                                           'I:EUR', '1.00', 'inbound' );
+                        xt.addStatsCancel( as, xfer, holder,
+                                           moment.utc().startOf('week').subtract(1, 'day'),
+                                           'I:EUR', '1.00', 'inbound' );
+                        xt.addStatsCancel( as, xfer, holder,
+                                           moment.utc().subtract(1, 'day'),
+                                           'I:EUR', '1.00', 'inbound' );
+                    }
                 },
                 (as, err) =>
                 {
