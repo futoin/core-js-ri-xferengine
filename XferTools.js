@@ -210,13 +210,15 @@ class XferTools {
     }
 
     addStatsCancel( as, dbxfer, holder, date, currency, amount, prefix, extra={} ) {
+        // cancel must be accounted as transaction for security reasons
+        // cnt - (-1) = cnt + 1
         let deltas = Object.assign( {
             [`${prefix}_daily_amt`] : amount,
-            [`${prefix}_daily_cnt`] : 1,
+            [`${prefix}_daily_cnt`] : -1,
             [`${prefix}_weekly_amt`] : amount,
-            [`${prefix}_weekly_cnt`] : 1,
+            [`${prefix}_weekly_cnt`] : -1,
             [`${prefix}_monthly_amt`] : amount,
-            [`${prefix}_monthly_cnt`] : 1,
+            [`${prefix}_monthly_cnt`] : -1,
         }, extra );
 
         this._cancelStats( as, dbxfer, holder, date, currency, deltas );

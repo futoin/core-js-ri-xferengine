@@ -358,17 +358,17 @@ module.exports = function(describe, it, vars) {
                     const xferlim = ccm.iface('xfer.limits');
                     xferlim.setLimits(as, 'XferTools', 'Payments', 'I:EUR', {
                         "outbound_daily_amt" : "1.02",
-                        "outbound_daily_cnt" : 2,
+                        "outbound_daily_cnt" : 3,
                         "inbound_daily_amt" : "1.02",
-                        "inbound_daily_cnt" : 2,
+                        "inbound_daily_cnt" : 3,
                         "outbound_weekly_amt" : "10.0",
-                        "outbound_weekly_cnt" : 2,
+                        "outbound_weekly_cnt" : 3,
                         "inbound_weekly_amt" : "10.0",
-                        "inbound_weekly_cnt" : 2,
+                        "inbound_weekly_cnt" : 3,
                         "outbound_monthly_amt" : "10.0",
-                        "outbound_monthly_cnt" : 2,
+                        "outbound_monthly_cnt" : 3,
                         "inbound_monthly_amt" : "10.0",
-                        "inbound_monthly_cnt" : 2,
+                        "inbound_monthly_cnt" : 3,
                         "outbound_min_amt" : "0"
                     }, false, false );
                     
@@ -430,6 +430,15 @@ module.exports = function(describe, it, vars) {
                         expect(do_check).to.equal(false);
                     } );
                     as.add( (as) => xfer6.execute( as ) );
+                    
+                    // Check cnt statistics
+                    //---
+                    db.select('limit_payments_stats').where({holder}).executeAssoc(as);
+                    as.add( (as, rows) => {
+                        // xfer + cancel + xfer
+                        expect(rows[0].inbound_daily_cnt).to.eql(3);
+                    });
+
                     
                     // cancel stats
                     //---
