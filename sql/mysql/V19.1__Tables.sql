@@ -94,12 +94,23 @@ CREATE TABLE accounts (
         'Bonus'
     ) NOT NULL,
     `acct_alias` VARCHAR(20) NOT NULL,
+    `overdraft` DECIMAL(22, 0) NULL,
     `rel_uuid64` CHARACTER(22) NULL REFERENCES accounts(uuidb64),
     `ext_acct_id` VARCHAR(64) NULL,
     UNIQUE `holder_alias` (`holder`, `acct_alias`)
 )
     ENGINE=InnoDB
     CHARACTER SET 'utf8';
+
+CREATE VIEW v_enabled_accounts AS
+    SELECT A.uuidb64, A.holder, A.currency_id, A.balance,
+           A.reserved, A.acct_type, A.rel_uuid64, A.ext_acct_id,
+           COALESCE( A.overdraft, '0' ),
+           C.code AS currency, C.dec_places
+      FROM accounts A
+      JOIN account_holders H ON (H.uuidb64 = A.holder)
+      JOIN currencies C ON (C.id = A.currency_id)
+    WHERE A.enabled = 'Y' AND H.enabled AND C.enabled = 'Y';
     
 -- Account limit stats
 
@@ -223,7 +234,7 @@ CREATE TABLE limit_personnel_stats (
     
 -- Xfers
 
-CREATE TABLE xfers (
+CREATE TABLE active_xfers (
     `_id` BIGINT UNSIGNED NOT NULL auto_increment PRIMARY KEY,
     `uuidb64` CHARACTER(22) NOT NULL UNIQUE,
     `src` CHARACTER(22) NOT NULL REFERENCES accounts(uuidb64),
@@ -232,7 +243,6 @@ CREATE TABLE xfers (
     `dst` CHARACTER(22) NOT NULL REFERENCES accounts(uuidb64),
     `dst_currency_id` SMALLINT UNSIGNED NOT NULL REFERENCES currencies(id),
     `dst_amount` DECIMAL(22, 0) NOT NULL,
-    `src2dst_rate` DECIMAL(24, 12) NOT NULL,
     `created` TIMESTAMP NOT NULL,
     `updated` TIMESTAMP NOT NULL,
     `xfer_type` ENUM(
@@ -260,16 +270,14 @@ CREATE TABLE xfers (
         'Generic'
     ) NOT NULL,
     `xfer_status` ENUM(
-        'WaitRisk',
         'WaitUser',
         'WaitExternal',
-        'WaitComplete',
         'Done',
         'Canceled',
         'Rejected'
     ) NOT NULL,
-    `fee_id` CHARACTER(22) NULL REFERENCES xfers(uuidb64),
-    `cancel_id` CHARACTER(22) NULL REFERENCES xfers(uuidb64),
+    `fee_id` CHARACTER(22) NULL REFERENCES active_xfers(uuidb64),
+    `cancel_id` CHARACTER(22) NULL REFERENCES active_xfers(uuidb64),
     -- Should be "real ext id : rel_account_id" - in that order
     `ext_id` VARCHAR(128) NULL UNIQUE,
     `misc_data` TEXT NULL

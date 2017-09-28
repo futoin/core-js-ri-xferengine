@@ -138,6 +138,19 @@ class AmountTools {
 
         return true;
     }
+
+    static checkXferAmount( amt, { balance, reserved, overdraft } ) {
+        amt = new BigNumber( amt, 10 );
+
+        if ( amt.lessThanOrEqualTo( 0 ) ) {
+            return false;
+        }
+
+        balance = new BigNumber( balance, 10 );
+        balance = balance.plus( overdraft, 10 ).minus( reserved, 10 );
+
+        return balance.greaterThanOrEqualTo( amt );
+    }
 }
 
 module.exports = AmountTools;

@@ -179,7 +179,7 @@ describe('AmountTools', function() {
         })).to.equal(false);
     });
 
-    it('should checks min limit', function() {
+    it('should check min limit', function() {
         expect(AmountTools.checkStatsLimit({
             'check_min_amt' : '12.34',
         }, {
@@ -204,6 +204,36 @@ describe('AmountTools', function() {
             'check_min_amt' : '1.01',
         })).to.equal(false);
     });
+    
+    it('should check xfer amount', function() {
+        expect(AmountTools.checkXferAmount(
+            '0', { balance: '10', reserved: '5', overdraft: '20'})
+        ).to.equal(false);
+        expect(AmountTools.checkXferAmount(
+            '1', { balance: '10', reserved: '5', overdraft: '20'})
+        ).to.equal(true);
+        expect(AmountTools.checkXferAmount(
+            '25', { balance: '10', reserved: '5', overdraft: '20'})
+        ).to.equal(true);
+        expect(AmountTools.checkXferAmount(
+            '25.10', { balance: '10', reserved: '5', overdraft: '20.10'})
+        ).to.equal(true);
+        
+        expect(AmountTools.checkXferAmount(
+            '26', { balance: '10', reserved: '5', overdraft: '20'})
+        ).to.equal(false);
+            
+        expect(AmountTools.checkXferAmount(
+            '26.10', { balance: '10.10', reserved: '5', overdraft: '20'})
+        ).to.equal(false);
+        
+        expect(AmountTools.checkXferAmount(
+            '5', { balance: '-10', reserved: '5', overdraft: '20'})
+        ).to.equal(true);
+        expect(AmountTools.checkXferAmount(
+            '5.01', { balance: '-10', reserved: '5', overdraft: '20'})
+        ).to.equal(false);
+    } );
     
     it('should process misc', function() {
         expect(AmountTools.MAX_DIGITS).to.equal(22);
