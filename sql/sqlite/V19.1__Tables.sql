@@ -198,8 +198,8 @@ CREATE TABLE active_xfers (
     "dst_amount" DECIMAL(22, 0) NOT NULL,
     "created" TIMESTAMP NOT NULL,
     "updated" TIMESTAMP NOT NULL,
-    "xfer_type" xfer_type NOT NULL,
-    "xfer_status" xfer_status NOT NULL,
+    "xfer_type" VARCHAR(16) NOT NULL,
+    "xfer_status" VARCHAR(10) NOT NULL,
     "fee_id" CHARACTER(22) NULL REFERENCES active_xfers(uuidb64),
     -- Should be "real ext id : rel_account_id" - in that order
     "ext_id" VARCHAR(128) NULL UNIQUE,

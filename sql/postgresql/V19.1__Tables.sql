@@ -83,6 +83,7 @@ CREATE DOMAIN acct_alias AS VARCHAR(20);
 CREATE DOMAIN ext_acct_id AS VARCHAR(64);
 CREATE TYPE acct_type AS ENUM(
     'System',
+    'Regular',
     'External',
     'Transit',
     'Bonus'

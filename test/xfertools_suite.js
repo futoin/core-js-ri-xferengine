@@ -8,6 +8,8 @@ const Executor = require('futoin-executor/Executor');
 const GenFace = require( 'futoin-eventstream/GenFace' );
 const DBGenFace = require( 'futoin-eventstream/DBGenFace' );
 const DBGenService = require( 'futoin-eventstream/DBGenService' );
+const SpecTools = require( 'futoin-invoker/SpecTools' );
+const $as = require( 'futoin-asyncsteps' );
 
 module.exports = function(describe, it, vars) {
     let as;
@@ -465,6 +467,208 @@ module.exports = function(describe, it, vars) {
             as.add( (as) => done() );
             as.execute();
             const xt = new XferTools(ccm, 'Retail');
+        });
+        
+            
+        let system_account;
+        let first_account;
+        let second_account
+        
+        const check_balance = ( as, account, req ) => {
+            ccm.db('xfer').select('accounts')
+                .where('uuidb64', account)
+                .executeAssoc(as);
+            as.add( (as, rows) => expect(`${rows[0].balance}`).to.eql(req) );            
+        };
+
+        beforeEach('xferaccounts', function() {
+            as.add(
+                (as) =>
+                {
+                    // once only, but DB connection is required
+                    if (system_account) {
+                        return;
+                    }
+                    
+                    const xferlim = ccm.iface('xfer.limits');
+                    xferlim.addLimitGroup(as, 'SimpleXfer');
+                    
+                    const currmgr = ccm.iface('currency.manage');
+                    currmgr.setCurrency(as, 'L:XFRT', 3, 'Xfer Test Currency', 'XFT', true);
+                    currmgr.setExRate(as, 'I:EUR', 'L:XFRT', '1.500', '0.05');
+                    
+                    const xferacct = ccm.iface('xfer.accounts');
+                    
+                    xferacct.addAccountHolder( as, 'SimpleXfer', 'SimpleXfer', true, true, {}, {} );
+                    as.add( (as, holder) => {
+                        xferacct.addAccount(
+                            as,
+                            holder,
+                            'System',
+                            'I:EUR',
+                            'Source'
+                        );
+                        as.add( (as, id) => system_account = id );
+                        xferacct.addAccount(
+                            as,
+                            holder,
+                            'Regular',
+                            'I:EUR',
+                            'First'
+                        );
+                        as.add( (as, id) => first_account = id );
+                        xferacct.addAccount(
+                            as,
+                            holder,
+                            'Regular',
+                            'I:EUR',
+                            'Second'
+                        );
+                        as.add( (as, id) => second_account = id );
+                    } );
+                },
+                (as, err) =>
+                {
+                    console.log(err);
+                    console.log(as.state.error_info);
+                    done(as.state.last_exception || 'Fail');
+                }
+            );
+        } );
+        
+        it('should process simple xfer', function(done) {
+            const dxt = new class extends XferTools {
+                constructor() {
+                    super( ccm, 'Deposits' );
+                }
+            };
+            const pxt = new class extends XferTools {
+                constructor() {
+                    super( ccm, 'Payments' );
+                }
+            };
+            
+            as.add(
+                (as) =>
+                {
+                    const db = ccm.db('xfer');
+                    
+                    dxt.processXfer( as, {
+                        src_account: system_account,
+                        dst_account: first_account,
+                        currency: 'I:EUR',
+                        amount: '4.10',
+                        type: 'Deposit',
+                    } );
+
+                    check_balance(as, first_account, '410');
+                    
+                    dxt.processXfer( as, {
+                        src_account: system_account,
+                        dst_account: first_account,
+                        currency: 'I:EUR',
+                        amount: '6',
+                        type: 'Deposit',
+                    } );
+
+                    check_balance(as, first_account, '1010');
+                    
+                    //---
+                    pxt.processXfer( as, {
+                        src_account: first_account,
+                        dst_account: second_account,
+                        currency: 'I:EUR',
+                        amount: '10.10',
+                        type: 'Generic',
+                    } );
+                    
+                    check_balance(as, first_account, '0');
+                    check_balance(as, second_account, '1010');
+
+                    //---
+                    dxt.processXfer( as, {
+                        src_account: second_account,
+                        dst_account: system_account,
+                        currency: 'I:EUR',
+                        amount: '10.10',
+                        type: 'Withdrawal',
+                    } );
+                    
+                    check_balance(as, second_account, '0');
+
+                },
+                (as, err) =>
+                {
+                    console.log(as.state.test_name);
+                    console.log(err);
+                    console.log(as.state.error_info);
+                    done(as.state.last_exception || 'Fail');
+                }
+            );
+            as.add( (as) => done() );
+            as.execute();            
+        });
+        
+        it('should process simple xfer with exrate', function(done) {
+            const dxt = new class extends XferTools {
+                constructor() {
+                    super( ccm, 'Deposits' );
+                }
+            };
+            const pxt = new class extends XferTools {
+                constructor() {
+                    super( ccm, 'Payments' );
+                }
+            };
+            
+            as.add(
+                (as) =>
+                {
+                    const db = ccm.db('xfer');
+                    
+                    dxt.processXfer( as, {
+                        src_account: system_account,
+                        dst_account: first_account,
+                        currency: 'L:XFRT',
+                        amount: '10.10',
+                        type: 'Deposit',
+                    } );
+                    
+                    check_balance(as, first_account, '650');
+                    
+                    //---
+                    pxt.processXfer( as, {
+                        src_account: first_account,
+                        dst_account: second_account,
+                        currency: 'I:EUR',
+                        amount: '6.50',
+                        type: 'Generic',
+                    } );
+                    
+                    check_balance(as, first_account, '0');
+                    check_balance(as, second_account, '650');
+                    
+                    //---
+                    dxt.processXfer( as, {
+                        src_account: second_account,
+                        dst_account: system_account,
+                        currency: 'L:XFRT',
+                        amount: '9.43',
+                        type: 'Withdrawal',
+                    } );
+                    
+                    check_balance(as, second_account, '0');
+                },
+                (as, err) =>
+                {
+                    console.log(as.state.test_name);
+                    console.log(err);
+                    console.log(as.state.error_info);
+                    done(as.state.last_exception || 'Fail');
+                }
+            );
+            as.add( (as) => done() );
+            as.execute();            
         });
     });
 };

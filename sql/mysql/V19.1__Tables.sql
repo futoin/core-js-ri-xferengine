@@ -89,6 +89,7 @@ CREATE TABLE accounts (
     `enabled` ENUM('N', 'Y') NOT NULL,
     `acct_type` ENUM(
         'System',
+        'Regular',
         'External',
         'Transit',
         'Bonus'

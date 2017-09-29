@@ -27,49 +27,52 @@ const TypeSpec = {
             },
         },
         XferInfo : {
-            src_account: 'AccountID',
-            src_limit_prefix: {
-                type: 'string',
-                optional: true,
-            },
-            src_limit_extra: {
-                type: 'map',
-                optional: true,
-            },
+            type: 'map',
+            fields: {
+                src_account: 'AccountID',
+                src_limit_prefix: {
+                    type: 'string',
+                    optional: true,
+                },
+                src_limit_extra: {
+                    type: 'map',
+                    optional: true,
+                },
 
-            dst_account: 'AccountID',
-            dst_limit_prefix: {
-                type: 'string',
-                optional: true,
-            },
-            dst_limit_extra: {
-                type: 'map',
-                optional: true,
-            },
+                dst_account: 'AccountID',
+                dst_limit_prefix: {
+                    type: 'string',
+                    optional: true,
+                },
+                dst_limit_extra: {
+                    type: 'map',
+                    optional: true,
+                },
 
-            currency: 'string',
-            amount: 'string',
-            preauth: {
-                type: 'boolean',
-                optional: true,
-            },
-            user_confirm: {
-                type: 'boolean',
-                optional: true,
-            },
-            type: 'string',
-
-            ext_id : {
+                currency: 'string',
+                amount: 'string',
+                preauth: {
+                    type: 'boolean',
+                    optional: true,
+                },
+                user_confirm: {
+                    type: 'boolean',
+                    optional: true,
+                },
                 type: 'string',
-                optional: true,
-            },
-            misc_data: {
-                type: 'map',
-                optional: true,
-            },
-            fee: {
-                type: 'Fee',
-                optional: true,
+
+                ext_id : {
+                    type: 'string',
+                    optional: true,
+                },
+                misc_data: {
+                    type: 'map',
+                    optional: true,
+                },
+                fee: {
+                    type: 'Fee',
+                    optional: true,
+                },
             },
         },
     },
@@ -351,7 +354,7 @@ class XferTools {
                     as.error( "OriginalMismatch" );
                 }
 
-                xfer.id = r.uuid64;
+                xfer.id = r.uuidb64;
                 xfer.status = r.status;
                 xfer.misc_data = Object.assign(
                     xfer.misc_data,
@@ -365,7 +368,7 @@ class XferTools {
         this._ccm.db( 'xfer' )
             .getPrepared( ACC_INFO, ( db ) => {
                 const q = db.select( DB_ENABLED_ACCOUNT_VIEW );
-                q.where( 'uuid64 IN', [
+                q.where( 'uuidb64 IN', [
                     q.param( 'src' ),
                     q.param( 'dst' ),
                 ] );
@@ -385,10 +388,10 @@ class XferTools {
                 const r = rows[i];
                 r.balance = AmountTools.fromStorage( r.balance, r.dec_places );
                 r.reserved = AmountTools.fromStorage( r.reserved, r.dec_places );
-                r.overdraft = AmountTools.fromStorage( r.overdraft, r.dec_places );
+                r.overdraft = AmountTools.fromStorage( r.overdraft || '0', r.dec_places );
             }
 
-            if ( rows[0].uuid64 === xfer.src_account ) {
+            if ( rows[0].uuidb64 === xfer.src_account ) {
                 xfer.src_info = rows[0];
                 xfer.dst_info = rows[1];
             } else {
@@ -452,7 +455,7 @@ class XferTools {
 
             // dst -> sell rate & round down
             if ( xfer.dst_info.currency === xfer.currency ) {
-                xfer.dst_info = xfer.amount;
+                xfer.dst_amount = xfer.amount;
             } else {
                 currinfo.getExRate( as, xfer.currency, xfer.dst_info.currency );
                 as.add( ( as, { rate, margin } ) => {
@@ -469,6 +472,7 @@ class XferTools {
         as.add( ( as ) => {
             // Check if enough balance, if not Transit account
             if ( xfer.src_info.acct_type !== 'Transit' &&
+                 xfer.src_info.acct_type !== 'System' &&
                  !AmountTools.checkXferAmount( xfer.src_amount, xfer.src_info )
             ) {
                 as.error( 'NotEnoughFunds' );
@@ -585,11 +589,25 @@ class XferTools {
             src_q.set( 'balance', dbxfer.expr( `balance - ${q_src_amt}` ) );
         }
 
-        src_q.where( 'uuid64', xfer.src_account );
+        src_q.where( 'uuidb64', xfer.src_account );
 
-        if ( !xfer.force ) {
+        if ( !xfer.force &&
+             ( xfer.src_info.acct_type !== 'System' )
+        ) {
             src_q.where( `(balance + COALESCE(overdraft, ${q_zero}) - reserved - ${q_src_amt}) >= 0` );
         }
+    }
+
+    _increaseBalance( dbxfer, xfer_id ) {
+        const sq = dbxfer.select( DB_XFERS_TABLE, { selected: 1 } )
+            .where( 'uuidb64', xfer_id )
+            .where( 'xfer_status', 'Done' );
+
+        const uq = dbxfer.update( DB_ACCOUNTS_TABLE, { affected: 1 } );
+        uq.set( 'balance', uq.expr( `balance + ${uq.backref( sq, 'dst_amount' )}` ) );
+        uq.set( 'updated', dbxfer.helpers().now() );
+        uq.where( 'uuidb64', uq.backref( sq, 'dst' ) );
+        uq.where( 'currency_id', uq.backref( sq, 'dst_currency_id' ) );
     }
 
     _createXfer( as, dbxfer, xfer ) {
@@ -599,6 +617,7 @@ class XferTools {
             }
 
             if ( xfer.fee ) {
+                xfer.fee.id = UUIDTool.genXfer( dbxfer );
                 this._createFee( as, dbxfer, xfer );
             }
 
@@ -636,6 +655,10 @@ class XferTools {
             if ( xfer.fee ) {
                 xfer_q.set( 'fee_id', xfer.fee.id );
             }
+
+            if ( xfer.status === 'Done' ) {
+                this._increaseBalance( dbxfer, xfer.id );
+            }
         } );
     }
 
@@ -666,36 +689,21 @@ class XferTools {
             } else if ( xfer.user_confirm ) {
                 this._completeXfer( dbxfer, xfer.id, 'WaitUser', 'Done' );
             }
-
-            // Finally add selection of inserted transaction data
-            as.add( ( as ) => {
-                dbxfer.select( DB_XFERS_TABLE, { result: true, selected: 1 } )
-                    .where( 'uuidb64', xfer.id );
-            } );
         } );
     }
 
     _completeXfer( dbxfer, xfer_id, prev_state, next_state='Done' ) {
-        const q_now = dbxfer.helpers().now();
-
         dbxfer.update( DB_XFERS_TABLE, { affected: 1 } )
             .set( 'xfer_status', next_state )
-            .set( 'updated', q_now )
+            .set( 'updated', dbxfer.helpers().now() )
             .where( 'uuidb64', xfer_id )
             .where( 'xfer_status', prev_state );
 
-        const sq = dbxfer.select( DB_XFERS_TABLE, { selected: 1 } )
-            .where( 'uuidb64', xfer_id );
-
-        const uq = dbxfer.update( DB_ACCOUNTS_TABLE, { affected: 1 } );
-        uq.set( 'balance', uq.expr( `balance + ${uq.backref( sq, 'dst_amount' )}` ) );
-        uq.set( 'updated', q_now );
-        uq.where( 'uuidb64', uq.backref( sq, 'dst' ) );
-        uq.where( 'currency_id', uq.backref( sq, 'dst_currency_id' ) );
+        this._increaseBalance( dbxfer, xfer_id );
     }
 
     _completeExtIn( as, xfer ) {
-        const dbxfer = this._ccm.db( 'xfer' );
+        const dbxfer = this._ccm.db( 'xfer' ).newXfer();
         this._decreaseBalance( dbxfer, xfer.in_xfer );
         this._completeXfer( dbxfer, xfer.misc_data.rel_in_id, 'WaitExtIn' );
         this._decreaseBalance( dbxfer, xfer );
@@ -711,7 +719,7 @@ class XferTools {
     }
 
     _completeExtOut( as, xfer ) {
-        const dbxfer = this._ccm.db( 'xfer' );
+        const dbxfer = this._ccm.db( 'xfer' ).newXfer();
         this._completeXfer( dbxfer, xfer.misc_data.rel_out_id,
             'WaitExtOut', 'Done' );
         dbxfer.execute( as );
@@ -724,20 +732,18 @@ class XferTools {
             as.error( 'InternalError', 'Invalid type info' );
         }
 
-        const dbxfer = this._ccm.db( 'xfer' );
+        const dbxfer = this._ccm.db( 'xfer' ).newXfer();
 
         this._startXfer( as, dbxfer, xfer );
         as.add( ( as ) => this._domainDbStep( as, dbxfer, xfer ) );
         as.add( ( as ) => dbxfer.executeAssoc( as ) );
-        as.add( ( as, results ) => {
-            const xfer_data = results[ 0 ][ 0 ];
-
-            if ( xfer_data.status === 'WaitExtIn' ) {
+        as.add( ( as ) => {
+            if ( xfer.status === 'WaitExtIn' ) {
                 this._domainExtIn( as, xfer.in_xfer );
                 as.add( ( as ) => this._completeExtIn( as, xfer ) );
             }
 
-            if ( xfer_data.status === 'WaitUser' ) {
+            if ( xfer.status === 'WaitUser' ) {
                 return;
             }
 
@@ -749,7 +755,7 @@ class XferTools {
     }
 
     _domainDbStep( as, _dbxfer, _xfer ) {
-        as.error( 'NotImplemented' );
+        // noop
     }
 
     _domainExtIn( as, _in_xfer ) {
