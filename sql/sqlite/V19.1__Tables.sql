@@ -69,11 +69,21 @@ CREATE TABLE accounts (
     "enabled" CHARACTER(1) NOT NULL,
     "acct_type" VARCHAR(8) NOT NULL,
     "acct_alias" VARCHAR(20) NOT NULL,
+    "overdraft" DECIMAL(22, 0) NULL,
     "rel_uuid64" CHARACTER(22) NULL REFERENCES accounts(uuidb64),
     "ext_acct_id" VARCHAR(64) NULL,
     CONSTRAINT "holder_alias" UNIQUE ("holder", "acct_alias")
 );
 
+CREATE VIEW v_enabled_accounts AS
+    SELECT A.uuidb64, A.holder, A.currency_id, A.balance,
+           A.reserved, A.acct_type, A.rel_uuid64, A.ext_acct_id,
+           COALESCE( A.overdraft, '0' ),
+           C.code AS currency, C.dec_places
+      FROM accounts A
+      JOIN account_holders H ON (H.uuidb64 = A.holder)
+      JOIN currencies C ON (C.id = A.currency_id)
+    WHERE A.enabled = 'Y' AND H.enabled = 'Y' AND C.enabled = 'Y';
 
 -- Account limit stats
 
@@ -177,3 +187,22 @@ CREATE TABLE limit_personnel_stats (
 );
 
 -- Xfers
+
+CREATE TABLE active_xfers (
+    "uuidb64" CHARACTER(22) NOT NULL PRIMARY KEY,
+    "src" CHARACTER(22) NOT NULL REFERENCES accounts(uuidb64),
+    "src_currency_id" SMALLINT NOT NULL REFERENCES currencies(id),
+    "src_amount" DECIMAL(22, 0) NOT NULL,
+    "dst" CHARACTER(22) NOT NULL REFERENCES accounts(uuidb64),
+    "dst_currency_id" SMALLINT NOT NULL REFERENCES currencies(id),
+    "dst_amount" DECIMAL(22, 0) NOT NULL,
+    "created" TIMESTAMP NOT NULL,
+    "updated" TIMESTAMP NOT NULL,
+    "xfer_type" xfer_type NOT NULL,
+    "xfer_status" xfer_status NOT NULL,
+    "fee_id" CHARACTER(22) NULL REFERENCES active_xfers(uuidb64),
+    -- Should be "real ext id : rel_account_id" - in that order
+    "ext_id" VARCHAR(128) NULL UNIQUE,
+    "misc_data" TEXT NULL
+);
+

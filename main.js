@@ -1,8 +1,9 @@
 'use strict';
 
 const path = require( 'path' );
+const moment = require( 'moment' );
 
-module.exports = {
+const main = {
     specDirs : path.resolve( __dirname, 'specs' ),
     PING_VERSION : '1.0',
     FTN19_VERSION : '1.0',
@@ -20,4 +21,13 @@ module.exports = {
 
     DB_IFACEVER : 'futoin.db.l2:1.0',
     EVTGEN_IFACEVER : 'futoin.evt.gen:1.0',
+
+    historyTimeBarrier : null,
+    setHistoryTimeBarrier : ( count, units ) => {
+        main.historyTimeBarrier = () => moment.utc().subtract( count, units );
+    },
 };
+
+main.setHistoryTimeBarrier( 30, 'days' );
+
+module.exports = main;

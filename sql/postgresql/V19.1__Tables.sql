@@ -1,6 +1,7 @@
 
 -- Common
 CREATE TYPE enabled_enum AS ENUM('N', 'Y');
+CREATE DOMAIN amount AS DECIMAL(22, 0);
 
 -- Yes, PostgreSQL does have UUID type
 CREATE DOMAIN uuid_b64 AS CHARACTER(22);
@@ -92,89 +93,100 @@ CREATE TABLE accounts (
     "currency_id" currency_id NOT NULL REFERENCES currencies(id),
     "created" TIMESTAMP NOT NULL,
     "updated" TIMESTAMP NOT NULL,
-    "balance" DECIMAL(22, 0) NOT NULL,
-    "reserved" DECIMAL(22, 0) NOT NULL,
+    "balance" amount NOT NULL,
+    "reserved" amount NOT NULL,
     "enabled" enabled_enum NOT NULL,
     "acct_type" acct_type NOT NULL,
     "acct_alias" acct_alias NOT NULL,
+    "overdraft" amount NULL,
     "rel_uuid64" uuid_b64 NULL REFERENCES accounts(uuidb64),
     "ext_acct_id" ext_acct_id NULL,
     CONSTRAINT "holder_alias" UNIQUE ("holder", "acct_alias")
 );
 
+CREATE VIEW v_enabled_accounts AS
+    SELECT A.uuidb64, A.holder, A.currency_id, A.balance,
+           A.reserved, A.acct_type, A.rel_uuid64, A.ext_acct_id,
+           COALESCE( A.overdraft, '0' ),
+           C.code AS currency, C.dec_places
+      FROM accounts A
+      JOIN account_holders H ON (H.uuidb64 = A.holder)
+      JOIN currencies C ON (C.id = A.currency_id)
+    WHERE A.enabled = 'Y' AND H.enabled = 'Y' AND C.enabled = 'Y';
+
 -- Account limit stats
 
 CREATE TABLE limit_retail_stats (
-    "holder" CHARACTER(22) NOT NULL PRIMARY KEY REFERENCES account_holders(uuidb64),
+    "holder" uuid_b64 NOT NULL PRIMARY KEY REFERENCES account_holders(uuidb64),
     "currency_id" SMALLINT NOT NULL REFERENCES currencies(id),
     "stats_date" DATE NOT NULL,
-    "retail_daily_amt" DECIMAL(22, 0) NOT NULL DEFAULT '0',
+    "retail_daily_amt" amount NOT NULL DEFAULT '0',
     "retail_daily_cnt" INTEGER NOT NULL DEFAULT 0,
-    "retail_weekly_amt" DECIMAL(22, 0) NOT NULL DEFAULT '0',
+    "retail_weekly_amt" amount NOT NULL DEFAULT '0',
     "retail_weekly_cnt" INTEGER NOT NULL DEFAULT 0,
-    "retail_monthly_amt" DECIMAL(22, 0) NOT NULL DEFAULT '0',
+    "retail_monthly_amt" amount NOT NULL DEFAULT '0',
     "retail_monthly_cnt" INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE limit_deposits_stats (
-    "holder" CHARACTER(22) NOT NULL PRIMARY KEY REFERENCES account_holders(uuidb64),
+    "holder" uuid_b64 NOT NULL PRIMARY KEY REFERENCES account_holders(uuidb64),
     "currency_id" SMALLINT NOT NULL REFERENCES currencies(id),
     "stats_date" DATE NOT NULL,
-    "deposit_daily_amt" DECIMAL(22, 0) NOT NULL DEFAULT '0',
+    "deposit_daily_amt" amount NOT NULL DEFAULT '0',
     "deposit_daily_cnt" INTEGER NOT NULL DEFAULT 0,
-    "withdrawal_daily_amt" DECIMAL(22, 0) NOT NULL DEFAULT '0',
+    "withdrawal_daily_amt" amount NOT NULL DEFAULT '0',
     "withdrawal_daily_cnt" INTEGER NOT NULL DEFAULT 0,
-    "deposit_weekly_amt" DECIMAL(22, 0) NOT NULL DEFAULT '0',
+    "deposit_weekly_amt" amount NOT NULL DEFAULT '0',
     "deposit_weekly_cnt" INTEGER NOT NULL DEFAULT 0,
-    "withdrawal_weekly_amt" DECIMAL(22, 0) NOT NULL DEFAULT '0',
+    "withdrawal_weekly_amt" amount NOT NULL DEFAULT '0',
     "withdrawal_weekly_cnt" INTEGER NOT NULL DEFAULT 0,
-    "deposit_monthly_amt" DECIMAL(22, 0) NOT NULL DEFAULT '0',
+    "deposit_monthly_amt" amount NOT NULL DEFAULT '0',
     "deposit_monthly_cnt" INTEGER NOT NULL DEFAULT 0,
-    "withdrawal_monthly_amt" DECIMAL(22, 0) NOT NULL DEFAULT '0',
+    "withdrawal_monthly_amt" amount NOT NULL DEFAULT '0',
     "withdrawal_monthly_cnt" INTEGER NOT NULL DEFAULT 0
 );
     
 CREATE TABLE limit_payments_stats (
-    "holder" CHARACTER(22) NOT NULL PRIMARY KEY REFERENCES account_holders(uuidb64),
+    "holder" uuid_b64 NOT NULL PRIMARY KEY REFERENCES account_holders(uuidb64),
     "currency_id" SMALLINT NOT NULL REFERENCES currencies(id),
     "stats_date" DATE NOT NULL,
-    "outbound_daily_amt" DECIMAL(22, 0) NOT NULL DEFAULT '0',
+    "outbound_daily_amt" amount NOT NULL DEFAULT '0',
     "outbound_daily_cnt" INTEGER NOT NULL DEFAULT 0,
-    "inbound_daily_amt" DECIMAL(22, 0) NOT NULL DEFAULT '0',
+    "inbound_daily_amt" amount NOT NULL DEFAULT '0',
     "inbound_daily_cnt" INTEGER NOT NULL DEFAULT 0,
-    "outbound_weekly_amt" DECIMAL(22, 0) NOT NULL DEFAULT '0',
+    "outbound_weekly_amt" amount NOT NULL DEFAULT '0',
     "outbound_weekly_cnt" INTEGER NOT NULL DEFAULT 0,
-    "inbound_weekly_amt" DECIMAL(22, 0) NOT NULL DEFAULT '0',
+    "inbound_weekly_amt" amount NOT NULL DEFAULT '0',
     "inbound_weekly_cnt" INTEGER NOT NULL DEFAULT 0,
-    "outbound_monthly_amt" DECIMAL(22, 0) NOT NULL DEFAULT '0',
+    "outbound_monthly_amt" amount NOT NULL DEFAULT '0',
     "outbound_monthly_cnt" INTEGER NOT NULL DEFAULT 0,
-    "inbound_monthly_amt" DECIMAL(22, 0) NOT NULL DEFAULT '0',
+    "inbound_monthly_amt" amount NOT NULL DEFAULT '0',
     "inbound_monthly_cnt" INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE limit_gaming_stats (
-    "holder" CHARACTER(22) NOT NULL PRIMARY KEY REFERENCES account_holders(uuidb64),
+    "holder" uuid_b64 NOT NULL PRIMARY KEY REFERENCES account_holders(uuidb64),
     "currency_id" SMALLINT NOT NULL REFERENCES currencies(id),
     "stats_date" DATE NOT NULL,
-    "bet_daily_amt" DECIMAL(22, 0) NOT NULL DEFAULT '0',
+    "bet_daily_amt" amount NOT NULL DEFAULT '0',
     "bet_daily_cnt" INTEGER NOT NULL DEFAULT 0,
-    "win_daily_amt" DECIMAL(22, 0) NOT NULL DEFAULT '0',
+    "win_daily_amt" amount NOT NULL DEFAULT '0',
     "win_daily_cnt" INTEGER NOT NULL DEFAULT 0,
-    "profit_daily_amt" DECIMAL(22, 0) NOT NULL DEFAULT '0',
-    "bet_weekly_amt" DECIMAL(22, 0) NOT NULL DEFAULT '0',
+    "profit_daily_amt" amount NOT NULL DEFAULT '0',
+    "bet_weekly_amt" amount NOT NULL DEFAULT '0',
     "bet_weekly_cnt" INTEGER NOT NULL DEFAULT 0,
-    "win_weekly_amt" DECIMAL(22, 0) NOT NULL DEFAULT '0',
+    "win_weekly_amt" amount NOT NULL DEFAULT '0',
     "win_weekly_cnt" INTEGER NOT NULL DEFAULT 0,
-    "profit_weekly_amt" DECIMAL(22, 0) NOT NULL DEFAULT '0',
-    "bet_monthly_amt" DECIMAL(22, 0) NOT NULL DEFAULT '0',
+    "profit_weekly_amt" amount NOT NULL DEFAULT '0',
+    "bet_monthly_amt" amount NOT NULL DEFAULT '0',
     "bet_monthly_cnt" INTEGER NOT NULL DEFAULT 0,
-    "win_monthly_amt" DECIMAL(22, 0) NOT NULL DEFAULT '0',
+    "win_monthly_amt" amount NOT NULL DEFAULT '0',
     "win_monthly_cnt" INTEGER NOT NULL DEFAULT 0,
-    "profit_monthly_amt" DECIMAL(22, 0) NOT NULL DEFAULT '0'
+    "profit_monthly_amt" amount NOT NULL DEFAULT '0'
 );
 
 CREATE TABLE limit_misc_stats (
-    "holder" CHARACTER(22) NOT NULL PRIMARY KEY REFERENCES account_holders(uuidb64),
+    "holder" uuid_b64 NOT NULL PRIMARY KEY REFERENCES account_holders(uuidb64),
     "currency_id" SMALLINT NOT NULL REFERENCES currencies(id),
     "stats_date" DATE NOT NULL,
     "message_daily_cnt" INTEGER NOT NULL DEFAULT 0,
@@ -189,18 +201,70 @@ CREATE TABLE limit_misc_stats (
 );
 
 CREATE TABLE limit_personnel_stats (
-    "holder" CHARACTER(22) NOT NULL PRIMARY KEY REFERENCES account_holders(uuidb64),
+    "holder" uuid_b64 NOT NULL PRIMARY KEY REFERENCES account_holders(uuidb64),
     "currency_id" SMALLINT NOT NULL REFERENCES currencies(id),
     "stats_date" DATE NOT NULL,
     "message_daily_cnt" INTEGER NOT NULL DEFAULT 0,
-    "manual_daily_amt" DECIMAL(22, 0) NOT NULL DEFAULT '0',
+    "manual_daily_amt" amount NOT NULL DEFAULT '0',
     "manual_daily_cnt" INTEGER NOT NULL DEFAULT 0,
     "message_weekly_cnt" INTEGER NOT NULL DEFAULT 0,
-    "manual_weekly_amt" DECIMAL(22, 0) NOT NULL DEFAULT '0',
+    "manual_weekly_amt" amount NOT NULL DEFAULT '0',
     "manual_weekly_cnt" INTEGER NOT NULL DEFAULT 0,
     "message_monthly_cnt" INTEGER NOT NULL DEFAULT 0,
-    "manual_monthly_amt" DECIMAL(22, 0) NOT NULL DEFAULT '0',
+    "manual_monthly_amt" amount NOT NULL DEFAULT '0',
     "manual_monthly_cnt" INTEGER NOT NULL DEFAULT 0
 );
 
 -- Xfers
+
+CREATE TYPE xfer_type AS ENUM(
+    -- Deposits
+    'Deposit',
+    'Withdrawal',
+    'CancelWithdrawal',
+    -- Retail
+    'Purchase',
+    'CancelPurchase',
+    'Refund',
+    'PreAuth',
+    'ClearAuth',
+    -- Gaming
+    'Bet',
+    'CancelBet',
+    'Win',
+    -- Bonus
+    'Bonus',
+    'ReleaseBonus',
+    'CancelBonus',
+    --
+    'Fee',
+    'Settle',
+    'Generic'
+);
+CREATE TYPE xfer_status AS ENUM(
+    'WaitUser',
+    'WaitExtIn',
+    'WaitExtOut',
+    'Done',
+    'Canceled',
+    'Rejected'
+);
+
+CREATE TABLE active_xfers (
+    "uuidb64" uuid_b64 NOT NULL PRIMARY KEY,
+    "src" uuid_b64 NOT NULL REFERENCES accounts(uuidb64),
+    "src_currency_id" SMALLINT NOT NULL REFERENCES currencies(id),
+    "src_amount" amount NOT NULL,
+    "dst" uuid_b64 NOT NULL REFERENCES accounts(uuidb64),
+    "dst_currency_id" SMALLINT NOT NULL REFERENCES currencies(id),
+    "dst_amount" amount NOT NULL,
+    "created" TIMESTAMP NOT NULL,
+    "updated" TIMESTAMP NOT NULL,
+    "xfer_type" xfer_type NOT NULL,
+    "xfer_status" xfer_status NOT NULL,
+    "fee_id" uuid_b64 NULL REFERENCES active_xfers(uuidb64),
+    -- Should be "real ext id : rel_account_id" - in that order
+    "ext_id" VARCHAR(128) NULL UNIQUE,
+    "misc_data" TEXT NULL
+);
+

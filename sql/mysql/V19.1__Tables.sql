@@ -110,7 +110,7 @@ CREATE VIEW v_enabled_accounts AS
       FROM accounts A
       JOIN account_holders H ON (H.uuidb64 = A.holder)
       JOIN currencies C ON (C.id = A.currency_id)
-    WHERE A.enabled = 'Y' AND H.enabled AND C.enabled = 'Y';
+    WHERE A.enabled = 'Y' AND H.enabled = 'Y' AND C.enabled = 'Y';
     
 -- Account limit stats
 
@@ -277,7 +277,6 @@ CREATE TABLE active_xfers (
         'Rejected'
     ) NOT NULL,
     `fee_id` CHARACTER(22) NULL REFERENCES active_xfers(uuidb64),
-    `cancel_id` CHARACTER(22) NULL REFERENCES active_xfers(uuidb64),
     -- Should be "real ext id : rel_account_id" - in that order
     `ext_id` VARCHAR(128) NULL UNIQUE,
     `misc_data` TEXT NULL
