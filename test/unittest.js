@@ -7,8 +7,8 @@ describe('AmountTools', function() {
     it('should trim zeros', function() {
         expect(AmountTools.trimZeros('123')).to.equal('123');
         expect(AmountTools.trimZeros('100')).to.equal('100');
-        expect(AmountTools.trimZeros('100.')).to.equal('100.');
-        expect(AmountTools.trimZeros('100.00')).to.equal('100.');
+        expect(AmountTools.trimZeros('100.')).to.equal('100');
+        expect(AmountTools.trimZeros('100.00')).to.equal('100');
         expect(AmountTools.trimZeros('100.01232000')).to.equal('100.01232');
     });
     
@@ -84,6 +84,8 @@ describe('AmountTools', function() {
         expect(AmountTools.backRate('1.00')).to.equal('1');
         expect(AmountTools.backRate('1.23')).to.equal('0.813008130081');
         expect(AmountTools.backRate('0.777')).to.equal('1.287001287001');
+        
+        expect(AmountTools.backMargin('2', '40')).to.equal('0.00125');
     });
     
     it('should prepare stats', function() {

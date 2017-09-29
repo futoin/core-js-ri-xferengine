@@ -32,7 +32,7 @@ class AmountTools {
     }
 
     static trimZeros( amt ) {
-        return amt.replace( /(\.([0-9]*[1-9])?)0+$/, '$1' );
+        return amt.replace( /(((\.[0-9]*[1-9])0+)|(\.0*))$/, '$3' );
     }
 
     static fromStorage( amt, places ) {
@@ -63,6 +63,12 @@ class AmountTools {
         BigNumber.config( RATE_PRECISSION, ROUND_HALF_UP );
         const res = new BigNumber( '1', 10 );
         return res.dividedBy( rate ).toString();
+    }
+
+    static backMargin( margin, rate ) {
+        BigNumber.config( RATE_PRECISSION, ROUND_UP );
+        const res = new BigNumber( margin, 10 );
+        return res.dividedBy( rate ).dividedBy( rate ).toString();
     }
 
     static convAmount( amt, rate, dec_places, round_up=false ) {

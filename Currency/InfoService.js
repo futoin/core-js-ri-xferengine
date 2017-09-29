@@ -64,23 +64,23 @@ class InfoService extends BaseService {
         const p = reqinfo.params();
         const db = reqinfo.executor().ccm().db( 'xfer' );
 
-        db
-            .getPrepared( SYM_GETRATE, ( db ) => {
-                const qb = db.select( DB_EXRATE_TABLE );
-                qb.get( [ 'rate', 'margin' ] )
-                    .where( 'base_id',
-                        db.select( DB_CURRENCY_TABLE ).get( 'id' )
-                            .where( 'code', qb.param( 'base' ) )
-                            .where( 'enabled', 'Y' )
-                    )
-                    .where( 'foreign_id',
-                        db.select( DB_CURRENCY_TABLE ).get( 'id' )
-                            .where( 'code', qb.param( 'foreign' ) )
-                            .where( 'enabled', 'Y' )
-                    );
-                return qb.prepare();
-            } )
-            .executeAssoc( as, p );
+        const prepq = db.getPrepared( SYM_GETRATE, ( db ) => {
+            const qb = db.select( DB_EXRATE_TABLE );
+            qb.get( [ 'rate', 'margin' ] )
+                .where( 'base_id',
+                    db.select( DB_CURRENCY_TABLE ).get( 'id' )
+                        .where( 'code', qb.param( 'base' ) )
+                        .where( 'enabled', 'Y' )
+                )
+                .where( 'foreign_id',
+                    db.select( DB_CURRENCY_TABLE ).get( 'id' )
+                        .where( 'code', qb.param( 'foreign' ) )
+                        .where( 'enabled', 'Y' )
+                );
+            return qb.prepare();
+        } );
+
+        prepq.executeAssoc( as, p );
 
         as.add( ( as, res ) => {
             if ( res.length ) {
@@ -90,7 +90,22 @@ class InfoService extends BaseService {
                     margin: AmountTools.trimZeros( res.margin ),
                 } );
             } else {
-                as.error( 'UnknownPair', `${p.base} & ${p.foreign}` );
+                prepq.executeAssoc( as, {
+                    base: p.foreign,
+                    foreign: p.base,
+                } );
+
+                as.add( ( as, res ) => {
+                    if ( res.length ) {
+                        res = res[0];
+                        const rate = AmountTools.backRate( res.rate );
+                        const margin = AmountTools.backMargin( res.margin, res.rate );
+
+                        reqinfo.result( { rate, margin } );
+                    } else {
+                        as.error( 'UnknownPair', `${p.base} & ${p.foreign}` );
+                    }
+                } );
             }
         } );
     }

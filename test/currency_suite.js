@@ -112,6 +112,38 @@ module.exports = function(describe, it, vars) {
             as.execute();
         });
         
+        it('should auto-generate backrate', function(done) {
+            as.add(
+                (as) =>
+                {
+                    const currmng = ccm.iface('currency.manage');
+                    currmng.setCurrency(as, 'I:RUB', 2, 'Ruble', 'R', true);
+                    currmng.setExRate(as, 'I:EUR', 'I:RUB', '70.00', '2.00');
+                    
+                    const currinfo = ccm.iface('currency.info');
+                    currinfo.getExRate(as, 'I:EUR', 'I:RUB');
+                    as.add( (as, res) => {
+                        expect(res.rate).to.equal('70');
+                        expect(res.margin).to.equal('2');
+                    });
+                    
+                    currinfo.getExRate(as, 'I:RUB', 'I:EUR');
+                    as.add( (as, res) => {
+                        expect(res.rate).to.equal('0.014285714286');
+                        expect(res.margin).to.equal('0.000408163266');
+                    });
+                },
+                (as, err) =>
+                {
+                    console.log(err);
+                    console.log(as.state.error_info);
+                    done(as.state.last_exception || 'Fail');
+                }
+            );
+            as.add( (as) => done() );
+            as.execute();
+        } );
+        
         it('should detect errors', function(done) {
             as.add(
                 (as) =>
