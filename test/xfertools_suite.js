@@ -1586,5 +1586,157 @@ module.exports = function(describe, it, vars) {
             as.add( (as) => done() );
             as.execute(); 
         });
+        
+        
+        it('should process ext_id with extra fee', function(done) {
+            const dxt = new class extends XferTools {
+                constructor() {
+                    super( ccm, 'Deposits' );
+                }
+            };
+            
+            as.add(
+                (as) =>
+                {
+                    const db = ccm.db('xfer');
+                    
+                    //
+                    as.add( (as) => as.state.test_name = 'setup' );
+                    dxt.processXfer( as, {
+                        src_account: system_account,
+                        dst_account: external_account,
+                        currency: 'I:EUR',
+                        amount: '10.00',
+                        type: 'Generic',
+                    } );
+                    
+                    check_balance(as, external_account, '1000');
+                    
+                    //
+                    as.add( (as) => as.state.test_name = 'initial' );
+                    dxt.processXfer( as, {
+                        src_account: external_account,
+                        dst_account: first_account,
+                        currency: 'I:EUR',
+                        amount: '4.10',
+                        type: 'Deposit',
+                        orig_ts: moment.utc().format(),
+                        ext_id: dxt.makeExtId( external_account, 'RF1'),
+                        extra_fee: {
+                            currency: 'I:EUR',
+                            amount: '0.20',
+                            dst_account: fee_account,
+                        }
+                    } );
+
+                    check_balance(as, external_account, '570');
+                    check_balance(as, first_account, '410');
+                    check_balance(as, fee_account, '20');
+                    
+                    //
+                    as.add( (as) => as.state.test_name = 'repeat first #1' );
+                    dxt.processXfer( as, {
+                        src_account: external_account,
+                        dst_account: first_account,
+                        currency: 'I:EUR',
+                        amount: '4.10',
+                        type: 'Deposit',
+                        ext_id: dxt.makeExtId( external_account, 'RF1'),
+                        orig_ts: moment.utc().format(),
+                        extra_fee: {
+                            currency: 'I:EUR',
+                            amount: '0.20',
+                            dst_account: fee_account,
+                        }
+                    } );
+
+                    check_balance(as, external_account, '570');
+                    check_balance(as, first_account, '410');
+                    check_balance(as, fee_account, '20');
+                    
+                    //
+                    as.add( (as) => as.state.test_name = 'second' );
+                    dxt.processXfer( as, {
+                        src_account: external_account,
+                        dst_account: first_account,
+                        currency: 'I:EUR',
+                        amount: '5.70',
+                        type: 'Deposit',
+                        orig_ts: moment.utc().format(),
+                        ext_id: dxt.makeExtId( external_account, 'RF2'),
+                    } );
+
+                    check_balance(as, external_account, '0');
+                    check_balance(as, first_account, '980');
+                    
+                    //
+                    as.add( (as) => as.state.test_name = 'repeat first #2' );
+                    dxt.processXfer( as, {
+                        src_account: external_account,
+                        dst_account: first_account,
+                        currency: 'I:EUR',
+                        amount: '4.10',
+                        type: 'Deposit',
+                        ext_id: dxt.makeExtId( external_account, 'RF1'),
+                        orig_ts: moment.utc().format(),
+                        extra_fee: {
+                            currency: 'I:EUR',
+                            amount: '0.20',
+                            dst_account: fee_account,
+                        }
+                    } );
+
+                    check_balance(as, external_account, '0');
+                    check_balance(as, first_account, '980');
+                    check_balance(as, fee_account, '20');
+                    
+                    //
+                    as.add( (as) => as.state.test_name = 'third' );
+                    dxt.processXfer( as, {
+                        src_account: first_account,
+                        dst_account: external_account,
+                        currency: 'I:EUR',
+                        amount: '9.80',
+                        type: 'Withdrawal',
+                        orig_ts: moment.utc().format(),
+                        ext_id: dxt.makeExtId( external_account, 'RF3'),
+                    } );
+
+
+                    check_balance(as, external_account, '980');
+                    check_balance(as, first_account, '0');
+                    
+                    //
+                    as.add( (as) => as.state.test_name = 'cleanup' );
+                    dxt.processXfer( as, {
+                        src_account: external_account,
+                        dst_account: system_account,
+                        currency: 'I:EUR',
+                        amount: '9.80',
+                        type: 'Generic',
+                    } );
+                    dxt.processXfer( as, {
+                        src_account: fee_account,
+                        dst_account: system_account,
+                        currency: 'I:EUR',
+                        amount: '0.20',
+                        type: 'Generic',
+                    } );
+                    
+                    check_balance(as, external_account, '0');
+                    check_balance(as, fee_account, '0');
+
+                },
+                (as, err) =>
+                {
+                    console.log(as.state.test_name);
+                    console.log(err);
+                    console.log(as.state.error_info);
+                    done(as.state.last_exception || 'Fail');
+                }
+            );
+            as.add( (as) => done() );
+            as.execute();            
+        });
     });
 };
