@@ -750,6 +750,8 @@ class XferTools {
                 this._startXfer( as, dbxfer, xfer.extra_fee );
             }
 
+            //=========================
+
             const q_now = dbxfer.helpers().now();
 
             // Xfer
@@ -789,8 +791,38 @@ class XferTools {
                 } );
             }
 
+            //=========================
+
             if ( xfer.status === 'Done' ) {
                 this._increaseBalance( dbxfer, xfer.id );
+            }
+
+            //=========================
+
+            // Transaction Fee
+            if ( xfer.xfer_fee ) {
+                if ( xfer.out_xfer ) {
+                    as.error( 'InternalError',
+                        'Xfer fee is not allowed for Transit destination' );
+                }
+
+                xfer.xfer_fee.id = UUIDTool.genXfer( dbxfer );
+                xfer.xfer_fee.type = 'Fee';
+                xfer.xfer_fee.status = xfer.status;
+                xfer.xfer_fee.src_account = xfer.dst_account;
+                xfer.xfer_fee.force = xfer.force;
+                xfer.xfer_fee.in_xfer_fee = true;
+                this._startXfer( as, dbxfer, xfer.xfer_fee );
+
+                xfer_q.set( 'xfer_fee_id', xfer.xfer_fee.id );
+
+                // Fee ID gets generated in async step
+                as.add( ( as ) => {
+                    if ( xfer.xfer_fee.dst_info.acct_type === 'Transit' ) {
+                        as.error( 'InternalError',
+                            'Transit Xfer Fee destination is not allowed' );
+                    }
+                } );
             }
         } );
     }
@@ -820,7 +852,7 @@ class XferTools {
                 this._createTransitInbound( as, dbxfer, xfer );
                 this._createXfer( as, dbxfer, xfer );
                 this._createTransitOutbound( as, dbxfer, xfer );
-            } else if ( xfer.in_transit ) {
+            } else if ( xfer.in_transit || xfer.in_xfer_fee ) {
                 this._createXfer( as, dbxfer, xfer );
             } else if ( xfer.user_confirm &&
                         ( xfer.status === 'WaitUser' )
@@ -875,6 +907,12 @@ class XferTools {
 
             this._completeXfer( dbxfer, xfer.id, 'WaitExtIn', xfer.status );
             this._increaseBalance( dbxfer, xfer.id );
+
+            if ( xfer.xfer_fee ) {
+                this._decreaseBalance( dbxfer, xfer.xfer_fee );
+                this._completeXfer( dbxfer, xfer.xfer_fee.id, 'WaitExtIn', 'Done' );
+                this._increaseBalance( dbxfer, xfer.xfer_fee.id );
+            }
         }
 
         dbxfer.execute( as );

@@ -1489,7 +1489,7 @@ module.exports = function(describe, it, vars) {
                     check_balance(as, external_account, '1000');
                     
                     //--
-                    as.add( (as) => as.state.test_name = 'Transit Int' );
+                    as.add( (as) => as.state.test_name = 'Transit In' );
                     xt.processXfer( as, {
                         src_account: first_transit,
                         dst_account: first_account,
@@ -1507,6 +1507,35 @@ module.exports = function(describe, it, vars) {
                     check_balance(as, first_transit, '0');
                     check_balance(as, first_account, '200');
                     check_balance(as, fee_account, '20');
+                    
+                    
+                    //---
+                    as.add(
+                        (as) => {
+                            as.state.test_name = 'Transit Int Fail';
+                            xt.processXfer( as, {
+                                src_account: first_transit,
+                                dst_account: first_account,
+                                currency: 'I:EUR',
+                                amount: '2.00',
+                                type: 'Generic',
+                                extra_fee: {
+                                    dst_account: second_transit,
+                                    currency: 'I:EUR',
+                                    amount: '0.20',
+                                }
+                            } );
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if (err === 'InternalError') {
+                                expect( as.state.error_info ).to.equal(
+                                    'Transit Extra Fee destination is not allowed'
+                                );
+                                as.success();
+                            }
+                        }
+                    );
                     
                     //---
                     as.add( (as) => as.state.test_name = 'Transit Out' );
@@ -1655,6 +1684,49 @@ module.exports = function(describe, it, vars) {
                     check_balance(as, fee_account, '20');
                     
                     //
+                    as.add( (as) => {
+                        as.state.test_name = 'repeat first #1 (fail)';
+                        dxt.processXfer( as, {
+                            src_account: external_account,
+                            dst_account: first_account,
+                            currency: 'I:EUR',
+                            amount: '4.10',
+                            type: 'Deposit',
+                            ext_id: dxt.makeExtId( external_account, 'RF1'),
+                            orig_ts: moment.utc().format(),
+                        } );
+                        as.add( (as) => as.error('Fail') );
+                    }, (as, err) => {
+                        if ( err === 'OriginalMismatch' ) {
+                            as.success();
+                        }
+                    } );
+                    
+                    //
+                    as.add( (as) => {
+                        as.state.test_name = 'repeat first #1 (fail 2)';
+                        dxt.processXfer( as, {
+                            src_account: external_account,
+                            dst_account: first_account,
+                            currency: 'I:EUR',
+                            amount: '4.10',
+                            type: 'Deposit',
+                            ext_id: dxt.makeExtId( external_account, 'RF1'),
+                            orig_ts: moment.utc().format(),
+                            extra_fee: {
+                                currency: 'I:EUR',
+                                amount: '0.20',
+                                dst_account: second_account,
+                            }
+                        } );
+                        as.add( (as) => as.error('Fail') );
+                    }, (as, err) => {
+                        if ( err === 'OriginalMismatch' ) {
+                            as.success();
+                        }
+                    } );
+                    
+                    //
                     as.add( (as) => as.state.test_name = 'second' );
                     dxt.processXfer( as, {
                         src_account: external_account,
@@ -1738,5 +1810,418 @@ module.exports = function(describe, it, vars) {
             as.add( (as) => done() );
             as.execute();            
         });
+        
+        it('should process xfer fee', function(done) {
+            const dxt = new class extends XferTools {
+                constructor() {
+                    super( ccm, 'Deposits' );
+                }
+            };
+            
+            as.add(
+                (as) =>
+                {
+                    //=================
+                    dxt.processXfer( as, {
+                        src_account: system_account,
+                        dst_account: first_account,
+                        currency: 'I:EUR',
+                        amount: '1.20',
+                        type: 'Deposit',
+                        xfer_fee: {
+                            dst_account: fee_account,
+                            currency: 'I:EUR',
+                            amount: '0.20',
+                        }
+                    } );
+                    check_balance(as, first_account, '100');
+                    check_balance(as, fee_account, '20');
+                    
+                    
+                    dxt.processXfer( as, {
+                        src_account: first_account,
+                        dst_account: system_account,
+                        currency: 'I:EUR',
+                        amount: '1.00',
+                        type: 'Withdrawal',
+                    } );
+                    dxt.processXfer( as, {
+                        src_account: fee_account,
+                        dst_account: system_account,
+                        currency: 'I:EUR',
+                        amount: '0.20',
+                        type: 'Generic',
+                    } );
+                    check_balance(as, second_account, '0');
+                    check_balance(as, fee_account, '0');
+                },
+                (as, err) =>
+                {
+                    console.log(as.state.test_name);
+                    console.log(err);
+                    console.log(as.state.error_info);
+                    done(as.state.last_exception || 'Fail');
+                }
+            );
+            as.add( (as) => done() );
+            as.execute(); 
+        });
+        
+        it('should process xfer fee with tansit accounts', function(done) {
+            const xt = new class extends XferTools {
+                constructor() {
+                    super( ccm, 'Deposits' );
+                }
+                
+                _feeExtIn () {
+                    // noop
+                }
+                
+                _domainExtIn() {
+                    // noop
+                }
+                
+                _domainExtOut() {
+                    // noop
+                }
+            };
+            
+            as.add(
+                (as) =>
+                {
+                    
+                    xt.processXfer( as, {
+                        src_account: system_account,
+                        dst_account: external_account,
+                        currency: 'I:EUR',
+                        amount: '10.00',
+                        type: 'Generic',
+                    } );
+                    
+                    check_balance(as, external_account, '1000');
+                    
+                    //--
+                    as.add( (as) => as.state.test_name = 'Transit In' );
+                    xt.processXfer( as, {
+                        src_account: first_transit,
+                        dst_account: first_account,
+                        currency: 'I:EUR',
+                        amount: '2.20',
+                        type: 'Generic',
+                        xfer_fee: {
+                            dst_account: fee_account,
+                            currency: 'I:EUR',
+                            amount: '0.20',
+                        }
+                    } );
+
+                    check_balance(as, external_account, '780');
+                    check_balance(as, first_transit, '0');
+                    check_balance(as, first_account, '200');
+                    check_balance(as, fee_account, '20');
+                    
+                    //---
+                    as.add(
+                        (as) => {
+                            as.state.test_name = 'Transit Out';
+                            xt.processXfer( as, {
+                                src_account: first_account,
+                                dst_account: second_transit,
+                                currency: 'I:EUR',
+                                amount: '2.00',
+                                type: 'Generic',
+                                xfer_fee: {
+                                    dst_account: fee_account,
+                                    currency: 'I:EUR',
+                                    amount: '0.20',
+                                }
+                            } );
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if (err === 'InternalError') {
+                                expect( as.state.error_info ).to.equal(
+                                    'Xfer fee is not allowed for Transit destination'
+                                );
+                                as.success();
+                            }
+                        }
+                    );
+                    
+                    //---
+                    as.add(
+                        (as) => {
+                            as.state.test_name = 'Transit Out';
+                            xt.processXfer( as, {
+                                src_account: first_account,
+                                dst_account: second_account,
+                                currency: 'I:EUR',
+                                amount: '2.00',
+                                type: 'Generic',
+                                xfer_fee: {
+                                    dst_account: second_transit,
+                                    currency: 'I:EUR',
+                                    amount: '0.20',
+                                }
+                            } );
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if (err === 'InternalError') {
+                                expect( as.state.error_info ).to.equal(
+                                    'Transit Xfer Fee destination is not allowed'
+                                );
+                                as.success();
+                            }
+                        }
+                    );
+                    
+                    //---
+                    as.add(
+                        (as) => {
+                            as.state.test_name = 'Transit In-Out';
+                            xt.processXfer( as, {
+                                src_account: first_transit,
+                                dst_account: second_transit,
+                                currency: 'I:EUR',
+                                amount: '2.20',
+                                type: 'Generic',
+                                xfer_fee: {
+                                    dst_account: fee_account,
+                                    currency: 'I:EUR',
+                                    amount: '0.20',
+                                }
+                            } );
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if (err === 'InternalError') {
+                                expect( as.state.error_info ).to.equal(
+                                    'Xfer fee is not allowed for Transit destination'
+                                );
+                                as.success();
+                            }
+                        }
+                    );
+
+                    //---
+                    xt.processXfer( as, {
+                        src_account: external_account,
+                        dst_account: system_account,
+                        currency: 'I:EUR',
+                        amount: '7.80',
+                        type: 'Generic',
+                    } );
+                    
+                    xt.processXfer( as, {
+                        src_account: first_account,
+                        dst_account: system_account,
+                        currency: 'I:EUR',
+                        amount: '2.00',
+                        type: 'Generic',
+                    } );
+                    
+                    
+                    xt.processXfer( as, {
+                        src_account: fee_account,
+                        dst_account: system_account,
+                        currency: 'I:EUR',
+                        amount: '0.20',
+                        type: 'Generic',
+                    } );
+                    
+                    check_balance(as, external_account, '0');
+                    check_balance(as, first_account, '0');
+                    check_balance(as, fee_account, '0');
+
+                    //---
+                    as.add( (as) => as.state.test_name = 'Ensure all xfers Done' );
+                    ccm.db('xfer').select( 'active_xfers' ).where('xfer_status !=', 'Done').execute(as);
+                    as.add( (as, { rows } ) => expect(rows.length).to.equal(0));
+                    //ccm.db('xfer').select( 'active_xfers' ).where('xfer_type', 'Fee').executeAssoc(as);
+                    //as.add( (as, rows ) => console.log(rows));
+                },
+                (as, err) =>
+                {
+                    console.log(as.state.test_name);
+                    console.log(err);
+                    console.log(as.state.error_info);
+                    done(as.state.last_exception || 'Fail');
+                }
+            );
+            as.add( (as) => done() );
+            as.execute(); 
+        });
+        
+        it('should process ext_id with xfer fee', function(done) {
+            const dxt = new class extends XferTools {
+                constructor() {
+                    super( ccm, 'Deposits' );
+                }
+            };
+            
+            as.add(
+                (as) =>
+                {
+                    const db = ccm.db('xfer');
+                    
+                    //
+                    as.add( (as) => as.state.test_name = 'setup' );
+                    dxt.processXfer( as, {
+                        src_account: system_account,
+                        dst_account: external_account,
+                        currency: 'I:EUR',
+                        amount: '10.00',
+                        type: 'Generic',
+                    } );
+                    
+                    check_balance(as, external_account, '1000');
+                    
+                    //
+                    as.add( (as) => as.state.test_name = 'initial' );
+                    dxt.processXfer( as, {
+                        src_account: external_account,
+                        dst_account: first_account,
+                        currency: 'I:EUR',
+                        amount: '4.30',
+                        type: 'Deposit',
+                        orig_ts: moment.utc().format(),
+                        ext_id: dxt.makeExtId( external_account, 'RX1'),
+                        xfer_fee: {
+                            currency: 'I:EUR',
+                            amount: '0.20',
+                            dst_account: fee_account,
+                        }
+                    } );
+
+                    check_balance(as, external_account, '570');
+                    check_balance(as, first_account, '410');
+                    check_balance(as, fee_account, '20');
+                    
+                    //
+                    as.add( (as) => as.state.test_name = 'repeat first #1' );
+                    dxt.processXfer( as, {
+                        src_account: external_account,
+                        dst_account: first_account,
+                        currency: 'I:EUR',
+                        amount: '4.30',
+                        type: 'Deposit',
+                        ext_id: dxt.makeExtId( external_account, 'RX1'),
+                        orig_ts: moment.utc().format(),
+                        xfer_fee: {
+                            currency: 'I:EUR',
+                            amount: '0.20',
+                            dst_account: fee_account,
+                        }
+                    } );
+
+                    check_balance(as, external_account, '570');
+                    check_balance(as, first_account, '410');
+                    check_balance(as, fee_account, '20');
+                    
+                    //
+                    as.add( (as) => {
+                        as.state.test_name = 'repeat first #1 (fail)';
+                        dxt.processXfer( as, {
+                            src_account: external_account,
+                            dst_account: first_account,
+                            currency: 'I:EUR',
+                            amount: '4.30',
+                            type: 'Deposit',
+                            ext_id: dxt.makeExtId( external_account, 'RX1'),
+                            orig_ts: moment.utc().format()
+                        } );
+                        as.add( (as) => as.error('Fail') );
+                    }, (as, err) => {
+                        if ( err === 'OriginalMismatch' ) {
+                            as.success();
+                        }
+                    } );
+                    
+                    //
+                    as.add( (as) => as.state.test_name = 'second' );
+                    dxt.processXfer( as, {
+                        src_account: external_account,
+                        dst_account: first_account,
+                        currency: 'I:EUR',
+                        amount: '5.70',
+                        type: 'Deposit',
+                        orig_ts: moment.utc().format(),
+                        ext_id: dxt.makeExtId( external_account, 'RX2'),
+                    } );
+
+                    check_balance(as, external_account, '0');
+                    check_balance(as, first_account, '980');
+                    
+                    //
+                    as.add( (as) => as.state.test_name = 'repeat first #2' );
+                    dxt.processXfer( as, {
+                        src_account: external_account,
+                        dst_account: first_account,
+                        currency: 'I:EUR',
+                        amount: '4.30',
+                        type: 'Deposit',
+                        ext_id: dxt.makeExtId( external_account, 'RX1'),
+                        orig_ts: moment.utc().format(),
+                        xfer_fee: {
+                            currency: 'I:EUR',
+                            amount: '0.20',
+                            dst_account: fee_account,
+                        }
+                    } );
+
+                    check_balance(as, external_account, '0');
+                    check_balance(as, first_account, '980');
+                    check_balance(as, fee_account, '20');
+                    
+                    //
+                    as.add( (as) => as.state.test_name = 'third' );
+                    dxt.processXfer( as, {
+                        src_account: first_account,
+                        dst_account: external_account,
+                        currency: 'I:EUR',
+                        amount: '9.80',
+                        type: 'Withdrawal',
+                        orig_ts: moment.utc().format(),
+                        ext_id: dxt.makeExtId( external_account, 'RX3'),
+                    } );
+
+
+                    check_balance(as, external_account, '980');
+                    check_balance(as, first_account, '0');
+                    
+                    //
+                    as.add( (as) => as.state.test_name = 'cleanup' );
+                    dxt.processXfer( as, {
+                        src_account: external_account,
+                        dst_account: system_account,
+                        currency: 'I:EUR',
+                        amount: '9.80',
+                        type: 'Generic',
+                    } );
+                    dxt.processXfer( as, {
+                        src_account: fee_account,
+                        dst_account: system_account,
+                        currency: 'I:EUR',
+                        amount: '0.20',
+                        type: 'Generic',
+                    } );
+                    
+                    check_balance(as, external_account, '0');
+                    check_balance(as, fee_account, '0');
+
+                },
+                (as, err) =>
+                {
+                    console.log(as.state.test_name);
+                    console.log(err);
+                    console.log(as.state.error_info);
+                    done(as.state.last_exception || 'Fail');
+                }
+            );
+            as.add( (as) => done() );
+            as.execute();            
+        });
+        
     });
 };
