@@ -752,7 +752,7 @@ module.exports = function(describe, it, vars) {
                     check_balance(as, external_account, '1000');
                     
                     //--
-                    as.state.test_name = 'Transit Int';
+                    as.add( (as) => as.state.test_name = 'Transit Int' );
                     pxt.processXfer( as, {
                         src_account: first_transit,
                         dst_account: first_account,
@@ -766,7 +766,7 @@ module.exports = function(describe, it, vars) {
                     check_balance(as, first_account, '100');
                     
                     //---
-                    as.state.test_name = 'Transit Out';
+                    as.add( (as) => as.state.test_name = 'Transit Out' );
                     pxt.processXfer( as, {
                         src_account: first_account,
                         dst_account: second_transit,
@@ -780,7 +780,7 @@ module.exports = function(describe, it, vars) {
                     check_balance(as, external_account, '1000');
                     
                     //---
-                    as.state.test_name = 'Transit In-Out';
+                    as.add( (as) => as.state.test_name = 'Transit In-Out' );
                     pxt.processXfer( as, {
                         src_account: first_transit,
                         dst_account: second_transit,
@@ -805,7 +805,7 @@ module.exports = function(describe, it, vars) {
                     check_balance(as, external_account, '0');
 
                     //---
-                    as.state.test_name = 'Ensure all xfers Done';
+                    as.add( (as) => as.state.test_name = 'Ensure all xfers Done' );
                     db.select( 'active_xfers' ).where('xfer_status !=', 'Done').execute(as);
                     as.add( (as, { rows } ) => expect(rows.length).to.equal(0));
                 },
@@ -834,7 +834,7 @@ module.exports = function(describe, it, vars) {
                     const db = ccm.db('xfer');
                     
                     //
-                    as.state.test_name = 'setup';
+                    as.add( (as) => as.state.test_name = 'setup' );
                     dxt.processXfer( as, {
                         src_account: system_account,
                         dst_account: external_account,
@@ -846,7 +846,7 @@ module.exports = function(describe, it, vars) {
                     check_balance(as, external_account, '1000');
                     
                     //
-                    as.state.test_name = 'initial';
+                    as.add( (as) => as.state.test_name = 'initial' );
                     dxt.processXfer( as, {
                         src_account: external_account,
                         dst_account: first_account,
@@ -861,7 +861,7 @@ module.exports = function(describe, it, vars) {
                     check_balance(as, first_account, '410');
                     
                     //
-                    as.state.test_name = 'repeat first #1';
+                    as.add( (as) => as.state.test_name = 'repeat first #1' );
                     dxt.processXfer( as, {
                         src_account: external_account,
                         dst_account: first_account,
@@ -876,7 +876,7 @@ module.exports = function(describe, it, vars) {
                     check_balance(as, first_account, '410');
                     
                     //
-                    as.state.test_name = 'second';
+                    as.add( (as) => as.state.test_name = 'second' );
                     dxt.processXfer( as, {
                         src_account: external_account,
                         dst_account: first_account,
@@ -891,7 +891,7 @@ module.exports = function(describe, it, vars) {
                     check_balance(as, first_account, '1000');
                     
                     //
-                    as.state.test_name = 'repeat first #2';
+                    as.add( (as) => as.state.test_name = 'repeat first #2' );
                     dxt.processXfer( as, {
                         src_account: external_account,
                         dst_account: first_account,
@@ -906,7 +906,7 @@ module.exports = function(describe, it, vars) {
                     check_balance(as, first_account, '1000');
                     
                     //
-                    as.state.test_name = 'repeat second #1';
+                    as.add( (as) => as.state.test_name = 'repeat second #1' );
                     dxt.processXfer( as, {
                         src_account: external_account,
                         dst_account: first_account,
@@ -921,7 +921,7 @@ module.exports = function(describe, it, vars) {
                     check_balance(as, first_account, '1000');
                     
                     //
-                    as.state.test_name = 'third';
+                    as.add( (as) => as.state.test_name = 'third' );
                     dxt.processXfer( as, {
                         src_account: first_account,
                         dst_account: external_account,
@@ -936,7 +936,7 @@ module.exports = function(describe, it, vars) {
                     check_balance(as, first_account, '0');
                     
                     //
-                    as.state.test_name = 'repeat second #2';
+                    as.add( (as) => as.state.test_name = 'repeat second #2' );
                     dxt.processXfer( as, {
                         src_account: external_account,
                         dst_account: first_account,
@@ -948,7 +948,7 @@ module.exports = function(describe, it, vars) {
                     } );
                     
                     //
-                    as.state.test_name = 'repeat third';
+                    as.add( (as) => as.state.test_name = 'repeat third' );
                     dxt.processXfer( as, {
                         src_account: first_account,
                         dst_account: external_account,
@@ -963,7 +963,7 @@ module.exports = function(describe, it, vars) {
                     check_balance(as, first_account, '0');
                     
                     //
-                    as.state.test_name = 'cleanup';
+                    as.add( (as) => as.state.test_name = 'cleanup' );
                     dxt.processXfer( as, {
                         src_account: external_account,
                         dst_account: system_account,
@@ -997,8 +997,45 @@ module.exports = function(describe, it, vars) {
             as.add(
                 (as) =>
                 {
-                    //
-                    as.state.test_name = 'ext_id format';
+                    //=================
+                    as.add( (as) => as.state.test_name = 'not enough funds' );
+                    
+                    dxt.processXfer( as, {
+                        src_account: system_account,
+                        dst_account: first_account,
+                        currency: 'I:EUR',
+                        amount: '2.00',
+                        type: 'Deposit'
+                    } );
+                    
+                    as.add(
+                        (as) => {
+                            dxt.processXfer( as, {
+                                src_account: first_account,
+                                dst_account: system_account,
+                                currency: 'I:EUR',
+                                amount: '4.10',
+                                type: 'Deposit'
+                            } );
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'NotEnoughFunds' ) {
+                                as.success();
+                            }
+                        }
+                    );
+                    
+                    dxt.processXfer( as, {
+                        src_account: first_account,
+                        dst_account: system_account,
+                        currency: 'I:EUR',
+                        amount: '2.00',
+                        type: 'Deposit'
+                    } );
+                    
+                    //=================
+                    as.add( (as) => as.state.test_name = 'ext_id format' );
                     
                     as.add(
                         (as) => {
@@ -1023,8 +1060,8 @@ module.exports = function(describe, it, vars) {
                         }
                     );
                     
-                    //
-                    as.state.test_name = 'too old';
+                    //=================
+                    as.add( (as) => as.state.test_name = 'too old' );
                     
                     as.add(
                         (as) => {
@@ -1047,7 +1084,7 @@ module.exports = function(describe, it, vars) {
                     );
                     
                     //=================
-                    as.state.test_name = 'original mismatch';
+                    as.add( (as) => as.state.test_name = 'original mismatch' );
                     
                     dxt.processXfer( as, {
                         src_account: system_account,
@@ -1059,7 +1096,7 @@ module.exports = function(describe, it, vars) {
                         ext_id: dxt.makeExtId( system_account, 'OM1'),
                     } );
                     
-                    as.state.test_name = 'original mismatch account';
+                    as.add( (as) => as.state.test_name = 'original mismatch account' );
                     as.add(
                         (as) => {
                             dxt.processXfer( as, {
@@ -1080,7 +1117,7 @@ module.exports = function(describe, it, vars) {
                         }
                     );
                     
-                    as.state.test_name = 'original mismatch currency';
+                    as.add( (as) => as.state.test_name = 'original mismatch currency' );
                     as.add(
                         (as) => {
                             dxt.processXfer( as, {
@@ -1101,7 +1138,7 @@ module.exports = function(describe, it, vars) {
                         }
                     );
                     
-                    as.state.test_name = 'original mismatch amount';
+                    as.add( (as) => as.state.test_name = 'original mismatch amount' );
                     as.add(
                         (as) => {
                             dxt.processXfer( as, {
@@ -1122,7 +1159,27 @@ module.exports = function(describe, it, vars) {
                         }
                     );
                     //=================
-                    as.state.test_name = 'XferTool callback';
+                    as.add( (as) => as.state.test_name = 'Unknown Account ID' );
+                    as.add(
+                        (as) => {
+                            dxt.processXfer( as, {
+                                src_account: system_account,
+                                dst_account: 'missingmissingmissing1',
+                                currency: 'I:EUR',
+                                amount: '1.01',
+                                type: 'Generic',
+                            } );
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'UnknownAccountID' ) {
+                                as.success();
+                            }
+                        }
+                    );
+                    
+                    //=================
+                    as.add( (as) => as.state.test_name = 'XferTool callback' );
                     const tmpxt = new XferTools( ccm, 'Deposits' );
                     
                     tmpxt._domainDbStep();
@@ -1152,7 +1209,7 @@ module.exports = function(describe, it, vars) {
                     );
                     
                     //=================
-                    as.state.test_name = 'Invalid xfer data';
+                    as.add( (as) => as.state.test_name = 'Invalid xfer data' );
                     
                     as.add(
                         (as) => {
@@ -1182,42 +1239,110 @@ module.exports = function(describe, it, vars) {
         });
         
         it('should process forced xfers', function(done) {
-            const dxt = new class extends XferTools {
+            const xt = new class extends XferTools {
                 constructor() {
-                    super( ccm, 'Deposits' );
+                    super( ccm, 'Payments' );
                 }
             };
             
             as.add(
                 (as) =>
                 {
-                    //
-                    /*
-                    as.state.test_name = 'ext_id format';
+                    // 
+                    as.add( (as) => as.state.test_name = 'to disabled' );
+                    xt.processXfer( as, {
+                        src_account: system_account,
+                        dst_account: disabled_account,
+                        currency: 'I:EUR',
+                        amount: '1.00',
+                        type: 'Generic'
+                    } );
+                    check_balance(as, disabled_account, '100');
                     
+                    //
+                    as.add( (as) => as.state.test_name = 'from disabled' );
                     as.add(
                         (as) => {
-                            dxt.processXfer( as, {
-                                src_account: external_account,
-                                dst_account: first_account,
+                            xt.processXfer( as, {
+                                src_account: disabled_account,
+                                dst_account: system_account,
                                 currency: 'I:EUR',
-                                amount: '4.10',
-                                type: 'Deposit',
-                                orig_ts: moment.utc().format(),
-                                ext_id: dxt.makeExtId( '123', 'R1'),
+                                amount: '1.00',
+                                type: 'Generic'
                             } );
                             as.add( (as) => as.error('Fail') );
                         },
                         (as, err) => {
-                            if ( err === 'InternalError' ) {
-                                expect(as.state.error_info).to.equal(
-                                    'Invalid external ID format'
-                                );
+                            if ( err === 'DisabledAccount' ) {
                                 as.success();
                             }
                         }
                     );
-                    */
+                    
+                    //
+                    as.add( (as) => as.state.test_name = 'from disabled forced' );
+                    xt.processXfer( as, {
+                        src_account: disabled_account,
+                        dst_account: system_account,
+                        currency: 'I:EUR',
+                        amount: '1.00',
+                        type: 'Generic',
+                        force: true,
+                    } );
+                    check_balance(as, disabled_account, '0');
+                    
+                    //
+                    as.add( (as) => as.state.test_name = 'from disabled holder' );
+                    const xferacct = ccm.iface('xfer.accounts');
+                    xferacct.addAccountHolder( as, 'Disabled', 'SimpleXfer', false, true, {}, {} );
+                    as.add( (as, holder) => {
+                        xferacct.addAccount(
+                            as,
+                            holder,
+                            'Regular',
+                            'I:EUR',
+                            'Enabled',
+                            true
+                        );
+                        as.add( (as, account) => {
+                            check_balance(as, account, '0');
+                            
+                            xt.processXfer( as, {
+                                src_account: system_account,
+                                dst_account: account,
+                                currency: 'I:EUR',
+                                amount: '1.00',
+                                type: 'Generic',
+                            } );
+                            
+                            as.add(
+                                (as) => {
+                                    xt.processXfer( as, {
+                                        src_account: account,
+                                        dst_account: system_account,
+                                        currency: 'I:EUR',
+                                        amount: '1.00',
+                                        type: 'Generic',
+                                    } );
+                                    as.add( (as) => as.error('Fail') );
+                                },
+                                (as, err) => {
+                                    if ( err === 'DisabledAccount' ) {
+                                        as.success();
+                                    }
+                                }
+                            );
+                            
+                            xt.processXfer( as, {
+                                src_account: account,
+                                dst_account: system_account,
+                                currency: 'I:EUR',
+                                amount: '1.00',
+                                type: 'Generic',
+                                force: true,
+                            } );
+                        } );
+                    } );
                 },
                 (as, err) =>
                 {

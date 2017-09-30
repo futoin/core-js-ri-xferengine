@@ -9,8 +9,7 @@ const UUIDTool = require( './UUIDTool' );
 
 const {
     DB_ACCOUNTS_TABLE,
-    DB_ALL_ACCOUNT_VIEW,
-    DB_ENABLED_ACCOUNT_VIEW,
+    DB_ACCOUNTS_VIEW,
     DB_XFERS_TABLE,
     limitStatsTable,
     historyTimeBarrier,
@@ -86,7 +85,6 @@ const TypeSpec = {
 
 const BY_EXT_ID = Symbol( 'by-ext-id' );
 const ACC_INFO = Symbol( 'get-account-info' );
-const ACC_FORCED_INFO = Symbol( 'get-account-forced-info' );
 
 /**
  * Actual transaction core
@@ -377,44 +375,28 @@ class XferTools {
     }
 
     _getAccountsInfo( as, xfer ) {
-        const db = this._ccm.db( 'xfer' );
-        let prep_q;
-
-        if ( xfer.force ) {
-            prep_q = db
-                .getPrepared( ACC_FORCED_INFO, ( db ) => {
-                    const q = db.select( DB_ALL_ACCOUNT_VIEW );
-                    q.where( 'uuidb64 IN', [
-                        q.param( 'src' ),
-                        q.param( 'dst' ),
-                    ] );
-                    return q.prepare();
-                } );
-        } else {
-            prep_q = db
-                .getPrepared( ACC_INFO, ( db ) => {
-                    const q = db.select( DB_ENABLED_ACCOUNT_VIEW );
-                    q.where( 'uuidb64 IN', [
-                        q.param( 'src' ),
-                        q.param( 'dst' ),
-                    ] );
-                    return q.prepare();
-                } );
-        }
-
-        prep_q.executeAssoc( as, {
-            src: xfer.src_account,
-            dst: xfer.dst_account,
-        } );
+        this._ccm.db( 'xfer' )
+            .getPrepared( ACC_INFO, ( db ) => {
+                const q = db.select( DB_ACCOUNTS_VIEW );
+                q.where( 'uuidb64 IN', [
+                    q.param( 'src' ),
+                    q.param( 'dst' ),
+                ] );
+                return q.prepare();
+            } )
+            .executeAssoc( as, {
+                src: xfer.src_account,
+                dst: xfer.dst_account,
+            } );
 
         as.add( ( as, rows ) => {
-            if ( xfer.src_account === xfer.dst_account ) {
+            if ( ( xfer.src_account === xfer.dst_account ) && rows.length ) {
                 // artificial case
                 rows.push( Object.assign( {}, rows[0] ) );
             }
 
             if ( rows.length !== 2 ) {
-                as.error( 'DisabledAccount' );
+                as.error( 'UnknownAccountID' );
             }
 
             for ( let i = 0; i < 2; ++i ) {
@@ -430,6 +412,15 @@ class XferTools {
             } else {
                 xfer.src_info = rows[1];
                 xfer.dst_info = rows[0];
+            }
+
+            if ( xfer.force ) {
+                // ignore
+            } else if (
+                ( xfer.src_info.account_enabled !== 'Y' ) ||
+                ( xfer.src_info.holder_enabled !== 'Y' )
+            ) {
+                as.error( 'DisabledAccount' );
             }
         } );
     }

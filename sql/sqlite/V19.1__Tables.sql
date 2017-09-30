@@ -75,24 +75,16 @@ CREATE TABLE accounts (
     CONSTRAINT "holder_alias" UNIQUE ("holder", "acct_alias")
 );
 
-CREATE VIEW v_all_accounts AS
+CREATE VIEW v_accounts AS
     SELECT A.uuidb64, A.holder, A.currency_id, A.balance,
            A.reserved, A.acct_type, A.rel_uuidb64, A.ext_acct_id,
            COALESCE( A.overdraft, '0' ),
-           C.code AS currency, C.dec_places
+           C.code AS currency, C.dec_places,
+           A.enabled AS account_enabled,
+           H.enabled AS holder_enabled
       FROM accounts A
       JOIN account_holders H ON (H.uuidb64 = A.holder)
       JOIN currencies C ON (C.id = A.currency_id);
-
-CREATE VIEW v_enabled_accounts AS
-    SELECT A.uuidb64, A.holder, A.currency_id, A.balance,
-           A.reserved, A.acct_type, A.rel_uuidb64, A.ext_acct_id,
-           COALESCE( A.overdraft, '0' ),
-           C.code AS currency, C.dec_places
-      FROM accounts A
-      JOIN account_holders H ON (H.uuidb64 = A.holder)
-      JOIN currencies C ON (C.id = A.currency_id)
-    WHERE A.enabled = 'Y' AND H.enabled = 'Y' AND C.enabled = 'Y';
 
 -- Account limit stats
 
