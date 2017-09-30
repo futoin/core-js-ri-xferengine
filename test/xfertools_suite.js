@@ -655,6 +655,8 @@ module.exports = function(describe, it, vars) {
                         currency: 'I:EUR',
                         amount: '4.10',
                         type: 'Deposit',
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
 
                     check_balance(as, first_account, '410');
@@ -665,6 +667,8 @@ module.exports = function(describe, it, vars) {
                         currency: 'I:EUR',
                         amount: '6',
                         type: 'Deposit',
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
 
                     check_balance(as, first_account, '1010');
@@ -676,6 +680,8 @@ module.exports = function(describe, it, vars) {
                         currency: 'I:EUR',
                         amount: '10.10',
                         type: 'Generic',
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
                     
                     check_balance(as, first_account, '0');
@@ -688,6 +694,8 @@ module.exports = function(describe, it, vars) {
                         currency: 'I:EUR',
                         amount: '10.10',
                         type: 'Withdrawal',
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
                     
                     check_balance(as, second_account, '0');
@@ -728,6 +736,8 @@ module.exports = function(describe, it, vars) {
                         currency: 'L:XFRT',
                         amount: '10.10',
                         type: 'Deposit',
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
                     
                     check_balance(as, first_account, '650');
@@ -739,6 +749,8 @@ module.exports = function(describe, it, vars) {
                         currency: 'I:EUR',
                         amount: '6.50',
                         type: 'Generic',
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
                     
                     check_balance(as, first_account, '0');
@@ -751,6 +763,8 @@ module.exports = function(describe, it, vars) {
                         currency: 'L:XFRT',
                         amount: '9.43',
                         type: 'Withdrawal',
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
                     
                     check_balance(as, second_account, '0');
@@ -793,6 +807,8 @@ module.exports = function(describe, it, vars) {
                         currency: 'I:EUR',
                         amount: '10.00',
                         type: 'Generic',
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
                     
                     check_balance(as, external_account, '1000');
@@ -805,6 +821,8 @@ module.exports = function(describe, it, vars) {
                         currency: 'I:EUR',
                         amount: '1.00',
                         type: 'Generic',
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
 
                     check_balance(as, external_account, '900');
@@ -819,6 +837,8 @@ module.exports = function(describe, it, vars) {
                         currency: 'I:EUR',
                         amount: '1.00',
                         type: 'Generic',
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
 
                     check_balance(as, first_account, '0');
@@ -833,6 +853,8 @@ module.exports = function(describe, it, vars) {
                         currency: 'I:EUR',
                         amount: '1.00',
                         type: 'Generic',
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
 
                     check_balance(as, first_transit, '0');
@@ -846,6 +868,8 @@ module.exports = function(describe, it, vars) {
                         currency: 'I:EUR',
                         amount: '10.00',
                         type: 'Generic',
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
                     
                     check_balance(as, external_account, '0');
@@ -887,6 +911,8 @@ module.exports = function(describe, it, vars) {
                         currency: 'I:EUR',
                         amount: '10.00',
                         type: 'Generic',
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
                     
                     check_balance(as, external_account, '1000');
@@ -901,6 +927,8 @@ module.exports = function(describe, it, vars) {
                         type: 'Deposit',
                         orig_ts: moment.utc().format(),
                         ext_id: dxt.makeExtId( external_account, 'R1'),
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
 
                     check_balance(as, external_account, '590');
@@ -916,6 +944,8 @@ module.exports = function(describe, it, vars) {
                         type: 'Deposit',
                         ext_id: dxt.makeExtId( external_account, 'R1'),
                         orig_ts: moment.utc().format(),
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
 
                     check_balance(as, external_account, '590');
@@ -931,6 +961,8 @@ module.exports = function(describe, it, vars) {
                         type: 'Deposit',
                         orig_ts: moment.utc().format(),
                         ext_id: dxt.makeExtId( external_account, 'R2'),
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
 
                     check_balance(as, external_account, '0');
@@ -946,6 +978,8 @@ module.exports = function(describe, it, vars) {
                         type: 'Deposit',
                         ext_id: dxt.makeExtId( external_account, 'R1'),
                         orig_ts: moment.utc().format(),
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
 
                     check_balance(as, external_account, '0');
@@ -961,6 +995,8 @@ module.exports = function(describe, it, vars) {
                         type: 'Deposit',
                         orig_ts: moment.utc().format(),
                         ext_id: dxt.makeExtId( external_account, 'R2'),
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
 
                     check_balance(as, external_account, '0');
@@ -976,6 +1012,8 @@ module.exports = function(describe, it, vars) {
                         type: 'Withdrawal',
                         orig_ts: moment.utc().format(),
                         ext_id: dxt.makeExtId( external_account, 'R3'),
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
 
                     check_balance(as, external_account, '1000');
@@ -991,6 +1029,8 @@ module.exports = function(describe, it, vars) {
                         type: 'Deposit',
                         orig_ts: moment.utc().format(),
                         ext_id: dxt.makeExtId( external_account, 'R2'),
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
                     
                     //
@@ -1003,6 +1043,8 @@ module.exports = function(describe, it, vars) {
                         type: 'Withdrawal',
                         orig_ts: moment.utc().format(),
                         ext_id: dxt.makeExtId( external_account, 'R3'),
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
 
                     check_balance(as, external_account, '1000');
@@ -1016,6 +1058,8 @@ module.exports = function(describe, it, vars) {
                         currency: 'I:EUR',
                         amount: '10.00',
                         type: 'Generic',
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
                     
                     check_balance(as, external_account, '0');
@@ -1051,7 +1095,9 @@ module.exports = function(describe, it, vars) {
                         dst_account: first_account,
                         currency: 'I:EUR',
                         amount: '2.00',
-                        type: 'Deposit'
+                        type: 'Deposit',
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
                     
                     as.add(
@@ -1061,7 +1107,9 @@ module.exports = function(describe, it, vars) {
                                 dst_account: system_account,
                                 currency: 'I:EUR',
                                 amount: '4.10',
-                                type: 'Deposit'
+                                type: 'Deposit',
+                                src_limit_prefix: false,
+                                dst_limit_prefix: false,
                             } );
                             as.add( (as) => as.error('Fail') );
                         },
@@ -1077,7 +1125,9 @@ module.exports = function(describe, it, vars) {
                         dst_account: system_account,
                         currency: 'I:EUR',
                         amount: '2.00',
-                        type: 'Deposit'
+                        type: 'Deposit',
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
                     
                     //=================
@@ -1093,6 +1143,8 @@ module.exports = function(describe, it, vars) {
                                 type: 'Deposit',
                                 orig_ts: moment.utc().format(),
                                 ext_id: dxt.makeExtId( '123', 'R1'),
+                                src_limit_prefix: false,
+                                dst_limit_prefix: false,
                             } );
                             as.add( (as) => as.error('Fail') );
                         },
@@ -1119,6 +1171,8 @@ module.exports = function(describe, it, vars) {
                                 type: 'Deposit',
                                 orig_ts: '2017-01-01',
                                 ext_id: dxt.makeExtId( external_account, 'R1'),
+                                src_limit_prefix: false,
+                                dst_limit_prefix: false,
                             } );
                             as.add( (as) => as.error('Fail') );
                         },
@@ -1140,6 +1194,8 @@ module.exports = function(describe, it, vars) {
                         type: 'Generic',
                         orig_ts: moment.utc().format(),
                         ext_id: dxt.makeExtId( system_account, 'OM1'),
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
                     
                     as.add( (as) => as.state.test_name = 'original mismatch account' );
@@ -1153,6 +1209,8 @@ module.exports = function(describe, it, vars) {
                                 type: 'Generic',
                                 orig_ts: moment.utc().format(),
                                 ext_id: dxt.makeExtId( system_account, 'OM1'),
+                                src_limit_prefix: false,
+                                dst_limit_prefix: false,
                             } );
                             as.add( (as) => as.error('Fail') );
                         },
@@ -1174,6 +1232,8 @@ module.exports = function(describe, it, vars) {
                                 type: 'Generic',
                                 orig_ts: moment.utc().format(),
                                 ext_id: dxt.makeExtId( system_account, 'OM1'),
+                                src_limit_prefix: false,
+                                dst_limit_prefix: false,
                             } );
                             as.add( (as) => as.error('Fail') );
                         },
@@ -1195,6 +1255,8 @@ module.exports = function(describe, it, vars) {
                                 type: 'Generic',
                                 orig_ts: moment.utc().format(),
                                 ext_id: dxt.makeExtId( system_account, 'OM1'),
+                                src_limit_prefix: false,
+                                dst_limit_prefix: false,
                             } );
                             as.add( (as) => as.error('Fail') );
                         },
@@ -1214,6 +1276,8 @@ module.exports = function(describe, it, vars) {
                                 currency: 'I:EUR',
                                 amount: '1.01',
                                 type: 'Generic',
+                                src_limit_prefix: false,
+                                dst_limit_prefix: false,
                             } );
                             as.add( (as) => as.error('Fail') );
                         },
@@ -1301,7 +1365,9 @@ module.exports = function(describe, it, vars) {
                         dst_account: disabled_account,
                         currency: 'I:EUR',
                         amount: '1.00',
-                        type: 'Generic'
+                        type: 'Generic',
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
                     check_balance(as, disabled_account, '100');
                     
@@ -1314,7 +1380,9 @@ module.exports = function(describe, it, vars) {
                                 dst_account: system_account,
                                 currency: 'I:EUR',
                                 amount: '1.00',
-                                type: 'Generic'
+                                type: 'Generic',
+                                src_limit_prefix: false,
+                                dst_limit_prefix: false,
                             } );
                             as.add( (as) => as.error('Fail') );
                         },
@@ -1334,6 +1402,8 @@ module.exports = function(describe, it, vars) {
                         amount: '1.00',
                         type: 'Generic',
                         force: true,
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
                     check_balance(as, disabled_account, '0');
                     
@@ -1359,6 +1429,8 @@ module.exports = function(describe, it, vars) {
                                 currency: 'I:EUR',
                                 amount: '1.00',
                                 type: 'Generic',
+                                src_limit_prefix: false,
+                                dst_limit_prefix: false,
                             } );
                             
                             as.add(
@@ -1369,6 +1441,8 @@ module.exports = function(describe, it, vars) {
                                         currency: 'I:EUR',
                                         amount: '1.00',
                                         type: 'Generic',
+                                        src_limit_prefix: false,
+                                        dst_limit_prefix: false,
                                     } );
                                     as.add( (as) => as.error('Fail') );
                                 },
@@ -1386,6 +1460,8 @@ module.exports = function(describe, it, vars) {
                                 amount: '1.00',
                                 type: 'Generic',
                                 force: true,
+                                src_limit_prefix: false,
+                                dst_limit_prefix: false,
                             } );
                         } );
                     } );
@@ -1420,6 +1496,8 @@ module.exports = function(describe, it, vars) {
                         currency: 'I:EUR',
                         amount: '1.20',
                         type: 'Deposit',
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
                     check_balance(as, first_account, '120');
                     dxt.processXfer( as, {
@@ -1432,7 +1510,9 @@ module.exports = function(describe, it, vars) {
                             dst_account: fee_account,
                             currency: 'I:EUR',
                             amount: '0.20',
-                        }
+                        },
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
                     check_balance(as, first_account, '0');
                     check_balance(as, second_account, '100');
@@ -1444,6 +1524,8 @@ module.exports = function(describe, it, vars) {
                         currency: 'I:EUR',
                         amount: '1.00',
                         type: 'Withdrawal',
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
                     dxt.processXfer( as, {
                         src_account: fee_account,
@@ -1451,6 +1533,8 @@ module.exports = function(describe, it, vars) {
                         currency: 'I:EUR',
                         amount: '0.20',
                         type: 'Generic',
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
                     check_balance(as, second_account, '0');
                     check_balance(as, fee_account, '0');
@@ -1496,6 +1580,8 @@ module.exports = function(describe, it, vars) {
                         currency: 'I:EUR',
                         amount: '10.00',
                         type: 'Generic',
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
                     
                     check_balance(as, external_account, '1000');
@@ -1512,7 +1598,9 @@ module.exports = function(describe, it, vars) {
                             dst_account: fee_account,
                             currency: 'I:EUR',
                             amount: '0.20',
-                        }
+                        },
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
 
                     check_balance(as, external_account, '780');
@@ -1535,7 +1623,9 @@ module.exports = function(describe, it, vars) {
                                     dst_account: second_transit,
                                     currency: 'I:EUR',
                                     amount: '0.20',
-                                }
+                                },
+                                src_limit_prefix: false,
+                                dst_limit_prefix: false,
                             } );
                             as.add( (as) => as.error('Fail') );
                         },
@@ -1561,7 +1651,9 @@ module.exports = function(describe, it, vars) {
                             dst_account: fee_account,
                             currency: 'I:EUR',
                             amount: '0.20',
-                        }
+                        },
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
 
                     check_balance(as, first_account, '0');
@@ -1581,7 +1673,9 @@ module.exports = function(describe, it, vars) {
                             dst_account: fee_account,
                             currency: 'I:EUR',
                             amount: '0.20',
-                        }
+                        },
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
 
                     check_balance(as, first_transit, '0');
@@ -1596,6 +1690,8 @@ module.exports = function(describe, it, vars) {
                         currency: 'I:EUR',
                         amount: '9.40',
                         type: 'Generic',
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
                     
                     xt.processXfer( as, {
@@ -1604,6 +1700,8 @@ module.exports = function(describe, it, vars) {
                         currency: 'I:EUR',
                         amount: '0.60',
                         type: 'Generic',
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
                     
                     check_balance(as, external_account, '0');
@@ -1649,6 +1747,8 @@ module.exports = function(describe, it, vars) {
                         currency: 'I:EUR',
                         amount: '10.00',
                         type: 'Generic',
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
                     
                     check_balance(as, external_account, '1000');
@@ -1667,7 +1767,9 @@ module.exports = function(describe, it, vars) {
                             currency: 'I:EUR',
                             amount: '0.20',
                             dst_account: fee_account,
-                        }
+                        },
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
 
                     check_balance(as, external_account, '570');
@@ -1688,7 +1790,9 @@ module.exports = function(describe, it, vars) {
                             currency: 'I:EUR',
                             amount: '0.20',
                             dst_account: fee_account,
-                        }
+                        },
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
 
                     check_balance(as, external_account, '570');
@@ -1706,6 +1810,8 @@ module.exports = function(describe, it, vars) {
                             type: 'Deposit',
                             ext_id: dxt.makeExtId( external_account, 'RF1'),
                             orig_ts: moment.utc().format(),
+                            src_limit_prefix: false,
+                            dst_limit_prefix: false,
                         } );
                         as.add( (as) => as.error('Fail') );
                     }, (as, err) => {
@@ -1729,7 +1835,9 @@ module.exports = function(describe, it, vars) {
                                 currency: 'I:EUR',
                                 amount: '0.20',
                                 dst_account: second_account,
-                            }
+                            },
+                            src_limit_prefix: false,
+                            dst_limit_prefix: false,
                         } );
                         as.add( (as) => as.error('Fail') );
                     }, (as, err) => {
@@ -1748,6 +1856,8 @@ module.exports = function(describe, it, vars) {
                         type: 'Deposit',
                         orig_ts: moment.utc().format(),
                         ext_id: dxt.makeExtId( external_account, 'RF2'),
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
 
                     check_balance(as, external_account, '0');
@@ -1767,7 +1877,9 @@ module.exports = function(describe, it, vars) {
                             currency: 'I:EUR',
                             amount: '0.20',
                             dst_account: fee_account,
-                        }
+                        },
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
 
                     check_balance(as, external_account, '0');
@@ -1784,6 +1896,8 @@ module.exports = function(describe, it, vars) {
                         type: 'Withdrawal',
                         orig_ts: moment.utc().format(),
                         ext_id: dxt.makeExtId( external_account, 'RF3'),
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
 
 
@@ -1798,6 +1912,8 @@ module.exports = function(describe, it, vars) {
                         currency: 'I:EUR',
                         amount: '9.80',
                         type: 'Generic',
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
                     dxt.processXfer( as, {
                         src_account: fee_account,
@@ -1805,6 +1921,8 @@ module.exports = function(describe, it, vars) {
                         currency: 'I:EUR',
                         amount: '0.20',
                         type: 'Generic',
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
                     
                     check_balance(as, external_account, '0');
@@ -1844,7 +1962,9 @@ module.exports = function(describe, it, vars) {
                             dst_account: fee_account,
                             currency: 'I:EUR',
                             amount: '0.20',
-                        }
+                        },
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
                     check_balance(as, first_account, '100');
                     check_balance(as, fee_account, '20');
@@ -1856,6 +1976,8 @@ module.exports = function(describe, it, vars) {
                         currency: 'I:EUR',
                         amount: '1.00',
                         type: 'Withdrawal',
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
                     dxt.processXfer( as, {
                         src_account: fee_account,
@@ -1863,6 +1985,8 @@ module.exports = function(describe, it, vars) {
                         currency: 'I:EUR',
                         amount: '0.20',
                         type: 'Generic',
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
                     check_balance(as, second_account, '0');
                     check_balance(as, fee_account, '0');
@@ -1908,6 +2032,8 @@ module.exports = function(describe, it, vars) {
                         currency: 'I:EUR',
                         amount: '10.00',
                         type: 'Generic',
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
                     
                     check_balance(as, external_account, '1000');
@@ -1924,7 +2050,9 @@ module.exports = function(describe, it, vars) {
                             dst_account: fee_account,
                             currency: 'I:EUR',
                             amount: '0.20',
-                        }
+                        },
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
 
                     check_balance(as, external_account, '780');
@@ -1946,7 +2074,9 @@ module.exports = function(describe, it, vars) {
                                     dst_account: fee_account,
                                     currency: 'I:EUR',
                                     amount: '0.20',
-                                }
+                                },
+                                src_limit_prefix: false,
+                                dst_limit_prefix: false,
                             } );
                             as.add( (as) => as.error('Fail') );
                         },
@@ -1974,7 +2104,9 @@ module.exports = function(describe, it, vars) {
                                     dst_account: second_transit,
                                     currency: 'I:EUR',
                                     amount: '0.20',
-                                }
+                                },
+                                src_limit_prefix: false,
+                                dst_limit_prefix: false,
                             } );
                             as.add( (as) => as.error('Fail') );
                         },
@@ -2002,7 +2134,9 @@ module.exports = function(describe, it, vars) {
                                     dst_account: fee_account,
                                     currency: 'I:EUR',
                                     amount: '0.20',
-                                }
+                                },
+                                src_limit_prefix: false,
+                                dst_limit_prefix: false,
                             } );
                             as.add( (as) => as.error('Fail') );
                         },
@@ -2023,6 +2157,8 @@ module.exports = function(describe, it, vars) {
                         currency: 'I:EUR',
                         amount: '7.80',
                         type: 'Generic',
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
                     
                     xt.processXfer( as, {
@@ -2031,6 +2167,8 @@ module.exports = function(describe, it, vars) {
                         currency: 'I:EUR',
                         amount: '2.00',
                         type: 'Generic',
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
                     
                     
@@ -2040,6 +2178,8 @@ module.exports = function(describe, it, vars) {
                         currency: 'I:EUR',
                         amount: '0.20',
                         type: 'Generic',
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
                     
                     check_balance(as, external_account, '0');
@@ -2085,6 +2225,8 @@ module.exports = function(describe, it, vars) {
                         currency: 'I:EUR',
                         amount: '10.00',
                         type: 'Generic',
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
                     
                     check_balance(as, external_account, '1000');
@@ -2103,7 +2245,9 @@ module.exports = function(describe, it, vars) {
                             currency: 'I:EUR',
                             amount: '0.20',
                             dst_account: fee_account,
-                        }
+                        },
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
 
                     check_balance(as, external_account, '570');
@@ -2124,7 +2268,9 @@ module.exports = function(describe, it, vars) {
                             currency: 'I:EUR',
                             amount: '0.20',
                             dst_account: fee_account,
-                        }
+                        },
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
 
                     check_balance(as, external_account, '570');
@@ -2141,7 +2287,9 @@ module.exports = function(describe, it, vars) {
                             amount: '4.30',
                             type: 'Deposit',
                             ext_id: dxt.makeExtId( external_account, 'RX1'),
-                            orig_ts: moment.utc().format()
+                            orig_ts: moment.utc().format(),
+                            src_limit_prefix: false,
+                            dst_limit_prefix: false,
                         } );
                         as.add( (as) => as.error('Fail') );
                     }, (as, err) => {
@@ -2160,6 +2308,8 @@ module.exports = function(describe, it, vars) {
                         type: 'Deposit',
                         orig_ts: moment.utc().format(),
                         ext_id: dxt.makeExtId( external_account, 'RX2'),
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
 
                     check_balance(as, external_account, '0');
@@ -2179,7 +2329,9 @@ module.exports = function(describe, it, vars) {
                             currency: 'I:EUR',
                             amount: '0.20',
                             dst_account: fee_account,
-                        }
+                        },
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
 
                     check_balance(as, external_account, '0');
@@ -2196,6 +2348,8 @@ module.exports = function(describe, it, vars) {
                         type: 'Withdrawal',
                         orig_ts: moment.utc().format(),
                         ext_id: dxt.makeExtId( external_account, 'RX3'),
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
 
 
@@ -2210,6 +2364,8 @@ module.exports = function(describe, it, vars) {
                         currency: 'I:EUR',
                         amount: '9.80',
                         type: 'Generic',
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
                     dxt.processXfer( as, {
                         src_account: fee_account,
@@ -2217,6 +2373,8 @@ module.exports = function(describe, it, vars) {
                         currency: 'I:EUR',
                         amount: '0.20',
                         type: 'Generic',
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
                     
                     check_balance(as, external_account, '0');
@@ -2253,6 +2411,8 @@ module.exports = function(describe, it, vars) {
                         currency: 'I:EUR',
                         amount: '20',
                         type: 'Deposit',
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                     } );
                     
                     check_balance(as, first_account, '2000');
@@ -2261,11 +2421,12 @@ module.exports = function(describe, it, vars) {
                     as.add( (as) => as.state.test_name = 'Over check limit' );
                     xt.processXfer( as, {
                         src_account: first_account,
-                        src_limit_type: 'bet',
+                        src_limit_prefix: 'bet',
                         dst_account: external_account,
+                        dst_limit_prefix: false,
                         currency: 'I:EUR',
                         amount: '11',
-                        type: 'Bet',
+                        type: 'Bet'
                     } );
 
                     check_balance(as, first_account, '900');
@@ -2278,6 +2439,7 @@ module.exports = function(describe, it, vars) {
                         src_account: first_account,
                         src_limit_prefix: 'bet',
                         dst_account: external_account,
+                        dst_limit_prefix: false,
                         currency: 'I:EUR',
                         amount: '3',
                         type: 'Bet',
@@ -2293,6 +2455,7 @@ module.exports = function(describe, it, vars) {
                         src_account: first_account,
                         src_limit_prefix: 'bet',
                         dst_account: external_account,
+                        dst_limit_prefix: false,
                         currency: 'I:EUR',
                         amount: '3',
                         type: 'Bet',
@@ -2311,6 +2474,7 @@ module.exports = function(describe, it, vars) {
                         src_account: first_account,
                         src_limit_prefix: 'bet',
                         dst_account: external_account,
+                        dst_limit_prefix: false,
                         currency: 'I:EUR',
                         amount: '6',
                         type: 'Bet'
@@ -2327,6 +2491,7 @@ module.exports = function(describe, it, vars) {
                             src_account: first_account,
                             src_limit_prefix: 'bet',
                             dst_account: external_account,
+                            dst_limit_prefix: false,
                             currency: 'I:EUR',
                             amount: '6',
                             type: 'Bet',
@@ -2343,6 +2508,8 @@ module.exports = function(describe, it, vars) {
                     xt.processXfer( as, {
                         src_account: external_account,
                         dst_account: system_account,
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
                         currency: 'I:EUR',
                         amount: '20',
                         type: 'Deposit',

@@ -30,6 +30,7 @@ const TypeSpec = {
                 },
             },
         },
+        PrefixOrFalse: ['string', 'boolean'],
         XferInfo : {
             type: 'map',
             fields: {
@@ -38,20 +39,14 @@ const TypeSpec = {
                     optional: true,
                 },
                 src_account: 'AccountID',
-                src_limit_prefix: {
-                    type: 'string',
-                    optional: true,
-                },
+                src_limit_prefix: "PrefixOrFalse",
                 src_limit_extra: {
                     type: 'map',
                     optional: true,
                 },
 
                 dst_account: 'AccountID',
-                dst_limit_prefix: {
-                    type: 'string',
-                    optional: true,
-                },
+                dst_limit_prefix: "PrefixOrFalse",
                 dst_limit_extra: {
                     type: 'map',
                     optional: true,
