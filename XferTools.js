@@ -24,7 +24,10 @@ const TypeSpec = {
                 dst_account : 'AccountID',
                 currency: 'string',
                 amount: 'string',
-                misc_data: 'map',
+                misc_data: {
+                    type: 'map',
+                    optional: true,
+                },
             },
         },
         XferInfo : {
@@ -74,7 +77,11 @@ const TypeSpec = {
                     type: 'string',
                     optional: true,
                 },
-                fee: {
+                extra_fee: {
+                    type: 'Fee',
+                    optional: true,
+                },
+                xfer_fee: {
                     type: 'Fee',
                     optional: true,
                 },
@@ -84,6 +91,7 @@ const TypeSpec = {
 };
 
 const BY_EXT_ID = Symbol( 'by-ext-id' );
+const BY_FEE_ID = Symbol( 'by-fee-id' );
 const ACC_INFO = Symbol( 'get-account-info' );
 
 /**
@@ -365,12 +373,73 @@ class XferTools {
 
                 xfer.id = r.uuidb64;
                 xfer.status = r.status;
+                xfer.created = r.created;
                 xfer.misc_data = Object.assign(
                     xfer.misc_data,
                     JSON.parse( r.misc_data )
                 );
                 xfer.repeat = true;
+
+                if ( r.extra_fee_id ) {
+                    xfer.extra_fee.id = r.extra_fee_id;
+                    xfer.extra_fee.force = xfer.force;
+                    this._readFeeXfer( xfer.extra_fee );
+                }
+
+                if ( r.xfer_fee_id ) {
+                    xfer.xfer_fee.id = r.xfer_fee_id;
+                    xfer.xfer_fee.force = xfer.force;
+                    this._readFeeXfer( xfer.xfer_fee );
+                }
             }
+        } );
+    }
+
+    _readFeeXfer( as, fee_xfer ) {
+        fee_xfer.misc_data = fee_xfer.misc_data || {};
+
+        this._getAccountsInfo( as, fee_xfer );
+        this._convXferAmounts( as, fee_xfer );
+        this._prepareTransit( as, fee_xfer );
+
+        this._ccm.db( 'xfer' )
+            .getPrepared( BY_FEE_ID, ( db ) => {
+                const q = db.select( DB_XFERS_TABLE );
+                q.where( 'uuidb64', q.param( 'uuidb64' ) );
+                return q.prepare();
+            } )
+            .executeAssoc( as, { uuidb64: fee_xfer.id } );
+
+        as.add( ( as, rows ) => {
+            if ( !rows.length ) {
+                as.error( 'InternalError', 'Missing fee xfer' );
+            }
+
+            const r = rows[0];
+
+            if ( ( fee_xfer.src_account !== r.src ) ||
+                ( fee_xfer.src_info.currency_id !== r.src_currency_id ) ||
+                ( fee_xfer.dst_account !== r.dst ) ||
+                ( fee_xfer.dst_info.currency_id !== r.dst_currency_id ) ||
+                ( fee_xfer.type !== r.xfer_type )
+            ) {
+                as.error( "OriginalMismatch" );
+            }
+
+            fee_xfer.status = r.status;
+            fee_xfer.created = r.created;
+            fee_xfer.misc_data = Object.assign(
+                fee_xfer.misc_data,
+                JSON.parse( r.misc_data )
+            );
+
+            // fee amounts may change on repeat calls - use original
+            fee_xfer.src_amount = AmountTools.fromStorage(
+                r.src_amount, fee_xfer.src_info.dec_places );
+            fee_xfer.dst_amount = AmountTools.fromStorage(
+                r.dst_amount, fee_xfer.dst_info.dec_places );
+
+            fee_xfer.repeat = true;
         } );
     }
 
@@ -487,6 +556,11 @@ class XferTools {
             }
 
             if ( xfer.dst_info.acct_type === 'Transit' ) {
+                if ( xfer.type === 'Fee' ) {
+                    as.error( 'InternalError',
+                        'External Fee destination is not allowed' );
+                }
+
                 xfer.out_xfer = {
                     id: xfer.misc_data.rel_out_id,
                     src_account: xfer.dst_account,
@@ -604,13 +678,6 @@ class XferTools {
         } );
     }
 
-    _createFee( as, dbxfer, xfer ) {
-        const fee_xfer = Object.assign( {}, xfer.fee );
-        fee_xfer.status = xfer.status;
-        fee_xfer.src_account = xfer.src_account;
-        this.startXfer( as, dbxfer, fee_xfer );
-    }
-
     _decreaseBalance( dbxfer, xfer ) {
         const q_zero = dbxfer.escape( '0' );
         const q_src_amt = dbxfer.escape(
@@ -655,11 +722,6 @@ class XferTools {
                 xfer.status = 'WaitUser';
             }
 
-            if ( xfer.fee ) {
-                xfer.fee.id = UUIDTool.genXfer( dbxfer );
-                this._createFee( as, dbxfer, xfer );
-            }
-
             if ( xfer.status === 'WaitExtIn' ) {
                 /// pass all
             } else if ( xfer.in_transit &&
@@ -672,6 +734,14 @@ class XferTools {
 
             if ( xfer.out_xfer && ( xfer.status === 'Done' ) ) {
                 xfer.status = 'WaitExtOut';
+            }
+
+            // Extra Fee
+            if ( xfer.extra_fee ) {
+                xfer.extra_fee.type = 'Fee';
+                xfer.extra_fee.src_account = xfer.src_account;
+                xfer.extra_fee.force = xfer.force;
+                this._startXfer( as, dbxfer, xfer.extra_fee );
             }
 
             const q_now = dbxfer.helpers().now();
@@ -701,8 +771,11 @@ class XferTools {
                 xfer_q.set( 'misc_data', JSON.stringify( xfer.misc_data ) );
             }
 
-            if ( xfer.fee ) {
-                xfer_q.set( 'fee_id', xfer.fee.id );
+            if ( xfer.extra_fee ) {
+                // Fee ID gets generated in async step
+                as.add( ( as ) => {
+                    xfer_q.set( 'extra_fee_id', xfer.extra_fee.id );
+                } );
             }
 
             if ( xfer.status === 'Done' ) {
@@ -833,6 +906,11 @@ class XferTools {
         } );
         as.add( ( as ) => {
             if ( xfer.status === 'WaitExtIn' ) {
+                if ( xfer.extra_fee && ( xfer.extra_fee.status !== 'Done' ) ) {
+                    this._feeExtIn( as, xfer.extra_fee );
+                    as.add( ( as ) => this._completeExtIn( as, xfer.extra_fee ) );
+                }
+
                 this._domainExtIn( as, xfer.in_xfer );
                 as.add( ( as ) => this._completeExtIn( as, xfer ) );
             }
@@ -847,6 +925,20 @@ class XferTools {
                     as.add( ( as ) => this._completeExtOut( as, xfer ) );
                 }
             } );
+        } );
+    }
+
+    _feeExtIn( as, fee_xfer ) {
+        const feeface = this._ccm.iface( 'TODO' );
+        feeface.call( as, 'fee', {
+            holder: fee_xfer.dst_info.ext_holder_id,
+            currency: fee_xfer.dst_info.currency,
+            amount: fee_xfer.dst_amount,
+            reason: fee_xfer.misc_data.reason || '',
+            ext_id: fee_xfer.id,
+            ext_info: fee_xfer.misc_data.info || {},
+            orig_ts : fee_xfer.created,
+            force : fee_xfer.force,
         } );
     }
 

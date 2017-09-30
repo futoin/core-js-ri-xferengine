@@ -80,6 +80,7 @@ CREATE VIEW v_accounts AS
            A.reserved, A.acct_type, A.rel_uuidb64, A.ext_acct_id,
            COALESCE( A.overdraft, '0' ),
            C.code AS currency, C.dec_places,
+           H.ext_id AS ext_holder_id,
            A.enabled AS account_enabled,
            H.enabled AS holder_enabled
       FROM accounts A
@@ -201,7 +202,8 @@ CREATE TABLE active_xfers (
     "updated" TIMESTAMP NOT NULL,
     "xfer_type" VARCHAR(16) NOT NULL,
     "xfer_status" VARCHAR(10) NOT NULL,
-    "fee_id" CHARACTER(22) NULL REFERENCES active_xfers(uuidb64),
+    "extra_fee_id" CHARACTER(22) NULL REFERENCES active_xfers(uuidb64),
+    "xfer_fee_id" CHARACTER(22) NULL REFERENCES active_xfers(uuidb64),
     -- Should be "real ext id : rel_account_id" - in that order
     "ext_id" VARCHAR(128) NULL UNIQUE,
     "misc_data" TEXT NULL

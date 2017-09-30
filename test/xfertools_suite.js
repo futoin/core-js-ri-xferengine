@@ -1366,33 +1366,7 @@ module.exports = function(describe, it, vars) {
             as.add(
                 (as) =>
                 {
-                    //
-                    /*
-                    as.state.test_name = 'ext_id format';
-                    
-                    as.add(
-                        (as) => {
-                            dxt.processXfer( as, {
-                                src_account: external_account,
-                                dst_account: first_account,
-                                currency: 'I:EUR',
-                                amount: '4.10',
-                                type: 'Deposit',
-                                orig_ts: moment.utc().format(),
-                                ext_id: dxt.makeExtId( '123', 'R1'),
-                            } );
-                            as.add( (as) => as.error('Fail') );
-                        },
-                        (as, err) => {
-                            if ( err === 'InternalError' ) {
-                                expect(as.state.error_info).to.equal(
-                                    'Invalid external ID format'
-                                );
-                                as.success();
-                            }
-                        }
-                    );
-                    */
+
                 },
                 (as, err) =>
                 {
@@ -1406,7 +1380,7 @@ module.exports = function(describe, it, vars) {
             as.execute(); 
         });
         
-        it('should process associated fee', function(done) {
+        it('should process extra fee', function(done) {
             const dxt = new class extends XferTools {
                 constructor() {
                     super( ccm, 'Deposits' );
@@ -1416,33 +1390,38 @@ module.exports = function(describe, it, vars) {
             as.add(
                 (as) =>
                 {
-                    //
-                    /*
-                    as.state.test_name = 'ext_id format';
-                    
-                    as.add(
-                        (as) => {
-                            dxt.processXfer( as, {
-                                src_account: external_account,
-                                dst_account: first_account,
-                                currency: 'I:EUR',
-                                amount: '4.10',
-                                type: 'Deposit',
-                                orig_ts: moment.utc().format(),
-                                ext_id: dxt.makeExtId( '123', 'R1'),
-                            } );
-                            as.add( (as) => as.error('Fail') );
-                        },
-                        (as, err) => {
-                            if ( err === 'InternalError' ) {
-                                expect(as.state.error_info).to.equal(
-                                    'Invalid external ID format'
-                                );
-                                as.success();
-                            }
+                    //=================
+                    as.state.test_name = 'simple';
+                    dxt.processXfer( as, {
+                        src_account: system_account,
+                        dst_account: first_account,
+                        currency: 'I:EUR',
+                        amount: '1.20',
+                        type: 'Deposit',
+                    } );
+                    check_balance(as, first_account, '120');
+                    dxt.processXfer( as, {
+                        src_account: first_account,
+                        dst_account: second_account,
+                        currency: 'I:EUR',
+                        amount: '1.00',
+                        type: 'Generic',
+                        extra_fee: {
+                            dst_account: system_account,
+                            currency: 'I:EUR',
+                            amount: '0.20',
                         }
-                    );
-                    */
+                    } );
+                    check_balance(as, first_account, '0');
+                    check_balance(as, second_account, '100');
+                    dxt.processXfer( as, {
+                        src_account: second_account,
+                        dst_account: system_account,
+                        currency: 'I:EUR',
+                        amount: '1.00',
+                        type: 'Withdrawal',
+                    } );
+                    check_balance(as, second_account, '0');
                 },
                 (as, err) =>
                 {
