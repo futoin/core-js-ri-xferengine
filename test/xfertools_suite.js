@@ -777,11 +777,188 @@ module.exports = function(describe, it, vars) {
                     check_balance(as, first_transit, '0');
                     check_balance(as, second_transit, '0');
                     check_balance(as, external_account, '1000');
+                    
+                    //---
+                    pxt.processXfer( as, {
+                        src_account: external_account,
+                        dst_account: system_account,
+                        currency: 'I:EUR',
+                        amount: '10.00',
+                        type: 'Generic',
+                    } );
+                    
+                    check_balance(as, external_account, '0');
 
                     //---
                     as.state.test_name = 'Ensure all xfers Done';
                     db.select( 'active_xfers' ).where('xfer_status !=', 'Done').execute(as);
                     as.add( (as, { rows } ) => expect(rows.length).to.equal(0));
+                },
+                (as, err) =>
+                {
+                    console.log(as.state.test_name);
+                    console.log(err);
+                    console.log(as.state.error_info);
+                    done(as.state.last_exception || 'Fail');
+                }
+            );
+            as.add( (as) => done() );
+            as.execute();            
+        });
+        
+        it('should process ext_id', function(done) {
+            const dxt = new class extends XferTools {
+                constructor() {
+                    super( ccm, 'Deposits' );
+                }
+            };
+            
+            as.add(
+                (as) =>
+                {
+                    const db = ccm.db('xfer');
+                    
+                    //
+                    as.state.test_name = 'setup';
+                    dxt.processXfer( as, {
+                        src_account: system_account,
+                        dst_account: external_account,
+                        currency: 'I:EUR',
+                        amount: '10.00',
+                        type: 'Generic',
+                    } );
+                    
+                    check_balance(as, external_account, '1000');
+                    
+                    //
+                    as.state.test_name = 'initial';
+                    dxt.processXfer( as, {
+                        src_account: external_account,
+                        dst_account: first_account,
+                        currency: 'I:EUR',
+                        amount: '4.10',
+                        type: 'Deposit',
+                        orig_ts: moment.utc().format(),
+                        ext_id: dxt.makeExtId( external_account, 'R1'),
+                    } );
+
+                    check_balance(as, external_account, '590');
+                    check_balance(as, first_account, '410');
+                    
+                    //
+                    as.state.test_name = 'repeat first #1';
+                    dxt.processXfer( as, {
+                        src_account: external_account,
+                        dst_account: first_account,
+                        currency: 'I:EUR',
+                        amount: '4.10',
+                        type: 'Deposit',
+                        ext_id: dxt.makeExtId( external_account, 'R1'),
+                        orig_ts: moment.utc().format(),
+                    } );
+
+                    check_balance(as, external_account, '590');
+                    check_balance(as, first_account, '410');
+                    
+                    //
+                    as.state.test_name = 'second';
+                    dxt.processXfer( as, {
+                        src_account: external_account,
+                        dst_account: first_account,
+                        currency: 'I:EUR',
+                        amount: '5.90',
+                        type: 'Deposit',
+                        orig_ts: moment.utc().format(),
+                        ext_id: dxt.makeExtId( external_account, 'R2'),
+                    } );
+
+                    check_balance(as, external_account, '0');
+                    check_balance(as, first_account, '1000');
+                    
+                    //
+                    as.state.test_name = 'repeat first #2';
+                    dxt.processXfer( as, {
+                        src_account: external_account,
+                        dst_account: first_account,
+                        currency: 'I:EUR',
+                        amount: '4.10',
+                        type: 'Deposit',
+                        ext_id: dxt.makeExtId( external_account, 'R1'),
+                        orig_ts: moment.utc().format(),
+                    } );
+
+                    check_balance(as, external_account, '0');
+                    check_balance(as, first_account, '1000');
+                    
+                    //
+                    as.state.test_name = 'repeat second #1';
+                    dxt.processXfer( as, {
+                        src_account: external_account,
+                        dst_account: first_account,
+                        currency: 'I:EUR',
+                        amount: '5.90',
+                        type: 'Deposit',
+                        orig_ts: moment.utc().format(),
+                        ext_id: dxt.makeExtId( external_account, 'R2'),
+                    } );
+
+                    check_balance(as, external_account, '0');
+                    check_balance(as, first_account, '1000');
+                    
+                    //
+                    as.state.test_name = 'third';
+                    dxt.processXfer( as, {
+                        src_account: first_account,
+                        dst_account: external_account,
+                        currency: 'I:EUR',
+                        amount: '10.00',
+                        type: 'Withdrawal',
+                        orig_ts: moment.utc().format(),
+                        ext_id: dxt.makeExtId( external_account, 'R3'),
+                    } );
+
+                    check_balance(as, external_account, '1000');
+                    check_balance(as, first_account, '0');
+                    
+                    //
+                    as.state.test_name = 'repeat second #2';
+                    dxt.processXfer( as, {
+                        src_account: external_account,
+                        dst_account: first_account,
+                        currency: 'I:EUR',
+                        amount: '5.90',
+                        type: 'Deposit',
+                        orig_ts: moment.utc().format(),
+                        ext_id: dxt.makeExtId( external_account, 'R2'),
+                    } );
+                    
+                    //
+                    as.state.test_name = 'repeat third';
+                    dxt.processXfer( as, {
+                        src_account: first_account,
+                        dst_account: external_account,
+                        currency: 'I:EUR',
+                        amount: '10.00',
+                        type: 'Withdrawal',
+                        orig_ts: moment.utc().format(),
+                        ext_id: dxt.makeExtId( external_account, 'R3'),
+                    } );
+
+                    check_balance(as, external_account, '1000');
+                    check_balance(as, first_account, '0');
+                    
+                    //
+                    as.state.test_name = 'cleanup';
+                    dxt.processXfer( as, {
+                        src_account: external_account,
+                        dst_account: system_account,
+                        currency: 'I:EUR',
+                        amount: '10.00',
+                        type: 'Generic',
+                    } );
+                    
+                    check_balance(as, external_account, '0');
+
                 },
                 (as, err) =>
                 {

@@ -10,6 +10,7 @@ const main = {
 
     DB_ACCOUNT_HOLDERS_TABLE : 'account_holders',
     DB_ACCOUNTS_TABLE : 'accounts',
+    DB_ALL_ACCOUNT_VIEW : 'v_all_accounts',
     DB_CURRENCY_TABLE : 'currencies',
     DB_ENABLED_ACCOUNT_VIEW : 'v_enabled_accounts',
     DB_EXRATE_TABLE : 'exrates',

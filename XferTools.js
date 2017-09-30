@@ -1,5 +1,6 @@
 'use strict';
 
+const assert = require( 'assert' );
 const moment = require( 'moment' );
 const SpecTools = require( 'futoin-invoker/SpecTools' );
 
@@ -8,6 +9,7 @@ const UUIDTool = require( './UUIDTool' );
 
 const {
     DB_ACCOUNTS_TABLE,
+    DB_ALL_ACCOUNT_VIEW,
     DB_ENABLED_ACCOUNT_VIEW,
     DB_XFERS_TABLE,
     limitStatsTable,
@@ -69,6 +71,10 @@ const TypeSpec = {
                     type: 'map',
                     optional: true,
                 },
+                orig_ts: {
+                    type: 'string',
+                    optional: true,
+                },
                 fee: {
                     type: 'Fee',
                     optional: true,
@@ -80,6 +86,7 @@ const TypeSpec = {
 
 const BY_EXT_ID = Symbol( 'by-ext-id' );
 const ACC_INFO = Symbol( 'get-account-info' );
+const ACC_FORCED_INFO = Symbol( 'get-account-forced-info' );
 
 /**
  * Actual transaction core
@@ -342,13 +349,17 @@ class XferTools {
         as.add( ( as, rows ) => {
             if ( rows.length ) {
                 const r = rows[0];
+                r.src_amount = AmountTools.fromStorage(
+                    r.src_amount, xfer.src_info.dec_places );
+                r.dst_amount = AmountTools.fromStorage(
+                    r.dst_amount, xfer.dst_info.dec_places );
 
                 if ( ( xfer.src_account !== r.src ) ||
                      ( xfer.src_info.currency_id !== r.src_currency_id ) ||
-                     ( xfer.src_amount !== r.src_amount ) ||
+                     !AmountTools.isEqual( xfer.src_amount, r.src_amount ) ||
                      ( xfer.dst_account !== r.dst ) ||
                      ( xfer.dst_info.currency_id !== r.dst_currency_id ) ||
-                     ( xfer.dst_amount !== r.dst_amount ) ||
+                     !AmountTools.isEqual( xfer.dst_amount, r.dst_amount ) ||
                      ( xfer.type !== r.xfer_type )
                 ) {
                     as.error( "OriginalMismatch" );
@@ -360,24 +371,41 @@ class XferTools {
                     xfer.misc_data,
                     JSON.parse( r.misc_data )
                 );
+                xfer.repeat = true;
             }
         } );
     }
 
     _getAccountsInfo( as, xfer ) {
-        this._ccm.db( 'xfer' )
-            .getPrepared( ACC_INFO, ( db ) => {
-                const q = db.select( DB_ENABLED_ACCOUNT_VIEW );
-                q.where( 'uuidb64 IN', [
-                    q.param( 'src' ),
-                    q.param( 'dst' ),
-                ] );
-                return q.prepare();
-            } )
-            .executeAssoc( as, {
-                src: xfer.src_account,
-                dst: xfer.dst_account,
-            } );
+        const db = this._ccm.db( 'xfer' );
+        let prep_q;
+
+        if ( xfer.force ) {
+            prep_q = db
+                .getPrepared( ACC_FORCED_INFO, ( db ) => {
+                    const q = db.select( DB_ALL_ACCOUNT_VIEW );
+                    q.where( 'uuidb64 IN', [
+                        q.param( 'src' ),
+                        q.param( 'dst' ),
+                    ] );
+                    return q.prepare();
+                } );
+        } else {
+            prep_q = db
+                .getPrepared( ACC_INFO, ( db ) => {
+                    const q = db.select( DB_ENABLED_ACCOUNT_VIEW );
+                    q.where( 'uuidb64 IN', [
+                        q.param( 'src' ),
+                        q.param( 'dst' ),
+                    ] );
+                    return q.prepare();
+                } );
+        }
+
+        prep_q.executeAssoc( as, {
+            src: xfer.src_account,
+            dst: xfer.dst_account,
+        } );
 
         as.add( ( as, rows ) => {
             if ( rows.length !== 2 ) {
@@ -798,7 +826,13 @@ class XferTools {
 
         this._startXfer( as, dbxfer, xfer );
         as.add( ( as ) => this._domainDbStep( as, dbxfer, xfer ) );
-        as.add( ( as ) => dbxfer.executeAssoc( as ) );
+        as.add( ( as ) => {
+            if ( xfer.repeat ) {
+                assert( dbxfer._query_list.length === 0 );
+            } else {
+                dbxfer.executeAssoc( as );
+            }
+        } );
         as.add( ( as ) => {
             if ( xfer.status === 'WaitExtIn' ) {
                 this._domainExtIn( as, xfer.in_xfer );

@@ -102,7 +102,16 @@ CREATE TABLE accounts (
 )
     ENGINE=InnoDB
     CHARACTER SET 'utf8';
-
+    
+CREATE VIEW v_all_accounts AS
+    SELECT A.uuidb64, A.holder, A.currency_id, A.balance,
+           A.reserved, A.acct_type, rel_uuidb64, A.ext_acct_id,
+           COALESCE( A.overdraft, '0' ),
+           C.code AS currency, C.dec_places
+      FROM accounts A
+      JOIN account_holders H ON (H.uuidb64 = A.holder)
+      JOIN currencies C ON (C.id = A.currency_id);
+    
 CREATE VIEW v_enabled_accounts AS
     SELECT A.uuidb64, A.holder, A.currency_id, A.balance,
            A.reserved, A.acct_type, rel_uuidb64, A.ext_acct_id,
