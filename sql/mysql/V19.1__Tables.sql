@@ -106,7 +106,7 @@ CREATE TABLE accounts (
 CREATE VIEW v_accounts AS
     SELECT A.uuidb64, A.holder, A.currency_id, A.balance,
            A.reserved, A.acct_type, rel_uuidb64, A.ext_acct_id,
-           COALESCE( A.overdraft, '0' ),
+           COALESCE( A.overdraft, '0' ) AS overdraft,
            C.code AS currency, C.dec_places,
            H.ext_id AS ext_holder_id,
            A.enabled AS account_enabled,

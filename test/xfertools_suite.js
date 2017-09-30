@@ -2568,5 +2568,99 @@ module.exports = function(describe, it, vars) {
             as.execute(); 
         });
         
+        it('should support overdraft', function(done) {
+            const xt = new class extends XferTools {
+                constructor() {
+                    super( ccm, 'Payments' );
+                }
+            };
+            
+            as.add(
+                (as) =>
+                {
+                    as.add( (as) => as.state.test_name = 'setup' );
+                    xt.processXfer( as, {
+                        src_account: system_account,
+                        dst_account: first_account,
+                        currency: 'I:EUR',
+                        amount: '20',
+                        type: 'Generic',
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
+                    } );
+                    const xferacct = ccm.iface('xfer.accounts');
+                    xferacct.setOverdraft(as, first_account, 'I:EUR', '10');
+                    
+                    check_balance(as, first_account, '2000');
+                    check_balance(as, second_account, '0');
+                    
+                    
+                    as.add( (as) => as.state.test_name = 'use' );
+                    xt.processXfer( as, {
+                        src_account: first_account,
+                        dst_account: second_account,
+                        currency: 'I:EUR',
+                        amount: '30',
+                        type: 'Generic',
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
+                    } );
+                    
+                    check_balance(as, first_account, '-1000');
+                    check_balance(as, second_account, '3000');
+                    
+                    as.add( (as) => {
+                        xt.processXfer( as, {
+                            src_account: first_account,
+                            dst_account: second_account,
+                            currency: 'I:EUR',
+                            amount: '0.01',
+                            type: 'Generic',
+                            src_limit_prefix: false,
+                            dst_limit_prefix: false,
+                        } );
+                        as.add( (as) => as.error('Fail') );
+                    }, (as, err) => {
+                        if ( err === 'NotEnoughFunds') {
+                            as.success();
+                        }
+                    });
+                    
+                    
+                    as.add( (as) => as.state.test_name = 'Cleanup' );
+                    xt.processXfer( as, {
+                        src_account: second_account,
+                        dst_account: system_account,
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
+                        currency: 'I:EUR',
+                        amount: '30',
+                        type: 'Generic',
+                    } );
+                    xt.processXfer( as, {
+                        src_account: system_account,
+                        dst_account: first_account,
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
+                        currency: 'I:EUR',
+                        amount: '10',
+                        type: 'Generic',
+                    } );
+                    xferacct.setOverdraft(as, first_account, 'I:EUR', '0');
+
+                    check_balance(as, first_account, '0');
+                    check_balance(as, second_account, '0');
+                },
+                (as, err) =>
+                {
+                    console.log(as.state.test_name);
+                    console.log(err);
+                    console.log(as.state.error_info);
+                    done(as.state.last_exception || 'Fail');
+                }
+            );
+            as.add( (as) => done() );
+            as.execute(); 
+        });
     });
 };

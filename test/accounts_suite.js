@@ -547,6 +547,102 @@ module.exports = function(describe, it, vars) {
                                     rel_id: null,
                                     balance: '0.00',
                                     reserved: '0.00',
+                                    overdraft: '0.00',
+                                    created: res.created,
+                                    updated: res.updated,
+                                }) );
+                            });
+                        });
+                    });
+                },
+                (as, err) => {
+                    console.log(err);
+                    console.log(as.state.error_info);
+                    done(as.state.last_exception || 'Fail');
+                }
+            );
+            as.add( (as) => done() );
+            as.execute();
+        });
+        
+        it('should set overdraft', function(done) {
+            as.add(
+                (as) => {
+                    const xferacct = ccm.iface('xfer.accounts');
+                    
+                    xferacct.addAccountHolder(
+                        as,
+                        'Overdrafter',
+                        'default',
+                        true,
+                        true,
+                        {},
+                        {}
+                    );
+                    
+                    as.add( (as, holder) => {
+                        xferacct.addAccount(
+                            as,
+                            holder,
+                            'Regular',
+                            'I:EUR',
+                            'Overdraft'
+                        );
+                        
+                        as.add( (as, last_id) => {
+                            xferacct.setOverdraft(
+                                as,
+                                last_id,
+                                'I:EUR',
+                                '123.45'
+                            );
+                            as.add( (as, res) => expect(res).to.be.true );
+                        
+                            xferacct.listAccounts(as, holder);
+                            
+                            as.add( (as, res) => {
+                                expect(res).to.be.lengthOf(1);
+                                xferacct.getAccount(as, res[0].id);
+                                as.add( (as, res) => expect(res).to.eql({
+                                    id: last_id,
+                                    type: 'Regular',
+                                    currency: 'I:EUR',
+                                    alias: 'Overdraft',
+                                    enabled: true,
+                                    ext_id: null,
+                                    rel_id: null,
+                                    balance: '0.00',
+                                    reserved: '0.00',
+                                    overdraft: '123.45',
+                                    created: res.created,
+                                    updated: res.updated,
+                                }) );
+                            });
+                            
+                            xferacct.setOverdraft(
+                                as,
+                                last_id,
+                                'I:EUR',
+                                '0'
+                            );
+                            as.add( (as, res) => expect(res).to.be.true );
+                        
+                            xferacct.listAccounts(as, holder);
+                            
+                            as.add( (as, res) => {
+                                expect(res).to.be.lengthOf(1);
+                                xferacct.getAccount(as, res[0].id);
+                                as.add( (as, res) => expect(res).to.eql({
+                                    id: last_id,
+                                    type: 'Regular',
+                                    currency: 'I:EUR',
+                                    alias: 'Overdraft',
+                                    enabled: true,
+                                    ext_id: null,
+                                    rel_id: null,
+                                    balance: '0.00',
+                                    reserved: '0.00',
+                                    overdraft: '0.00',
                                     created: res.created,
                                     updated: res.updated,
                                 }) );
@@ -633,6 +729,65 @@ module.exports = function(describe, it, vars) {
                         },
                         (as, err) => {
                             if ( err === 'UnknownAccountID' ) {
+                                as.success();
+                            }
+                        }
+                    );
+                    
+                    as.add(
+                        (as) => {
+                            as.state.test_name = 'UnknownAccountID on overdraft';
+                            xferacct.setOverdraft(
+                                as,
+                                '1234567890123456789012',
+                                'I:EUR',
+                                '123'
+                            );
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'UnknownAccountID' ) {
+                                as.success();
+                            }
+                        }
+                    );
+                    
+                    as.add(
+                        (as) => {
+                            as.state.test_name = 'CurrencyMismatch on overdraft';
+                    
+                            xferacct.addAccountHolder(
+                                as,
+                                'INVCURROVER',
+                                'default',
+                                true,
+                                true,
+                                {},
+                                {}
+                            );
+                    
+                            as.add( (as, holder) => {
+                                xferacct.addAccount(
+                                    as,
+                                    holder,
+                                    'Regular',
+                                    'I:EUR',
+                                    'OV'
+                                );
+                                
+                                as.add( (as, account_id) => {
+                                    xferacct.setOverdraft(
+                                        as,
+                                        account_id,
+                                        'I:USD',
+                                        '123'
+                                    );
+                                });
+                            });
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'CurrencyMismatch' ) {
                                 as.success();
                             }
                         }

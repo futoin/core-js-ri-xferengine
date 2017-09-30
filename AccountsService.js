@@ -8,6 +8,7 @@ const UUIDTool = require( './UUIDTool' );
 const AmountTools = require( './AmountTools' );
 const {
     DB_ACCOUNT_HOLDERS_TABLE,
+    DB_ACCOUNTS_VIEW,
     DB_ACCOUNTS_TABLE,
     DB_CURRENCY_TABLE,
     DB_DOMAIN_LIMITS_TABLE,
@@ -267,6 +268,39 @@ class AccountsService extends BaseService {
         } );
     }
 
+    setOverdraft( as, reqinfo ) {
+        const p = reqinfo.params();
+        const db = reqinfo.executor().ccm().db( 'xfer' );
+
+        db.select( DB_ACCOUNTS_VIEW )
+            .where( 'uuidb64', p.id )
+            .executeAssoc( as );
+
+        as.add( ( as, rows ) => {
+            if ( rows.length !== 1 ) {
+                as.error( 'UnknownAccountID' );
+            }
+
+            const acct = rows[0];
+
+            if ( acct.currency !== p.currency ) {
+                as.error( 'CurrencyMismatch' );
+            }
+
+            const overdraft = AmountTools.toStorage( p.overdraft, acct.dec_places );
+            const xfer = db.newXfer();
+            xfer.update( DB_ACCOUNTS_TABLE, { affected: 1 } )
+                .set( { overdraft } )
+                .where( {
+                    uuidb64 : p.id,
+                    currency_id : acct.currency_id,
+                } );
+            xfer.execute( as );
+
+            as.add( ( as ) => reqinfo.result( true ) );
+        } );
+    }
+
     _accountInfo( raw ) {
         return {
             id: raw.uuidb64,
@@ -278,6 +312,7 @@ class AccountsService extends BaseService {
             rel_id: raw.rel_uuidb64,
             balance: AmountTools.fromStorage( raw.balance, raw.dec_places ),
             reserved: AmountTools.fromStorage( raw.reserved, raw.dec_places ),
+            overdraft: AmountTools.fromStorage( raw.overdraft || '0', raw.dec_places ),
             created: moment.utc( raw.created ).format(),
             updated: moment.utc( raw.updated ).format(),
         };
