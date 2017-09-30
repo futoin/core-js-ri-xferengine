@@ -408,6 +408,11 @@ class XferTools {
         } );
 
         as.add( ( as, rows ) => {
+            if ( xfer.src_account === xfer.dst_account ) {
+                // artificial case
+                rows.push( Object.assign( {}, rows[0] ) );
+            }
+
             if ( rows.length !== 2 ) {
                 as.error( 'DisabledAccount' );
             }
@@ -486,6 +491,7 @@ class XferTools {
                         xfer_id: xfer.id,
                     } ),
                     in_transit: true,
+                    force: xfer.force,
                 };
             }
 
@@ -501,6 +507,7 @@ class XferTools {
                         xfer_id: xfer.id,
                     } ),
                     in_transit: true,
+                    force: xfer.force,
                 };
             }
         } );
@@ -819,7 +826,7 @@ class XferTools {
         // check data for consistency
         // TODO; disable for production
         if ( !SpecTools.checkType( TypeSpec, 'XferInfo', xfer ) ) {
-            as.error( 'InternalError', 'Invalid type info' );
+            as.error( 'InternalError', 'Invalid xfer data' );
         }
 
         const dbxfer = this._ccm.db( 'xfer' ).newXfer();

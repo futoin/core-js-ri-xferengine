@@ -476,6 +476,7 @@ module.exports = function(describe, it, vars) {
         let external_account;
         let first_transit;
         let second_transit;
+        let disabled_account;
         
         const check_balance = ( as, account, req ) => {
             ccm.db('xfer').select('accounts')
@@ -512,6 +513,7 @@ module.exports = function(describe, it, vars) {
                             'Source'
                         );
                         as.add( (as, id) => system_account = id );
+                        
                         xferacct.addAccount(
                             as,
                             holder,
@@ -520,6 +522,7 @@ module.exports = function(describe, it, vars) {
                             'First'
                         );
                         as.add( (as, id) => first_account = id );
+                        
                         xferacct.addAccount(
                             as,
                             holder,
@@ -528,6 +531,17 @@ module.exports = function(describe, it, vars) {
                             'Second'
                         );
                         as.add( (as, id) => second_account = id );
+                        
+                        xferacct.addAccount(
+                            as,
+                            holder,
+                            'Regular',
+                            'I:EUR',
+                            'Disabled',
+                            false
+                        );
+                        as.add( (as, id) => disabled_account = id );
+                        
                         xferacct.addAccount(
                             as,
                             holder,
@@ -548,6 +562,7 @@ module.exports = function(describe, it, vars) {
                                 external_account,
                             );
                             as.add( (as, id) => first_transit = id );
+                            
                             xferacct.addAccount(
                                 as,
                                 holder,
@@ -971,5 +986,350 @@ module.exports = function(describe, it, vars) {
             as.add( (as) => done() );
             as.execute();            
         });
+        
+        it('should detect xfer errors', function(done) {
+            const dxt = new class extends XferTools {
+                constructor() {
+                    super( ccm, 'Deposits' );
+                }
+            };
+            
+            as.add(
+                (as) =>
+                {
+                    //
+                    as.state.test_name = 'ext_id format';
+                    
+                    as.add(
+                        (as) => {
+                            dxt.processXfer( as, {
+                                src_account: external_account,
+                                dst_account: first_account,
+                                currency: 'I:EUR',
+                                amount: '4.10',
+                                type: 'Deposit',
+                                orig_ts: moment.utc().format(),
+                                ext_id: dxt.makeExtId( '123', 'R1'),
+                            } );
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'InternalError' ) {
+                                expect(as.state.error_info).to.equal(
+                                    'Invalid external ID format'
+                                );
+                                as.success();
+                            }
+                        }
+                    );
+                    
+                    //
+                    as.state.test_name = 'too old';
+                    
+                    as.add(
+                        (as) => {
+                            dxt.processXfer( as, {
+                                src_account: external_account,
+                                dst_account: first_account,
+                                currency: 'I:EUR',
+                                amount: '4.10',
+                                type: 'Deposit',
+                                orig_ts: '2017-01-01',
+                                ext_id: dxt.makeExtId( external_account, 'R1'),
+                            } );
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'OriginalTooOld' ) {
+                                as.success();
+                            }
+                        }
+                    );
+                    
+                    //=================
+                    as.state.test_name = 'original mismatch';
+                    
+                    dxt.processXfer( as, {
+                        src_account: system_account,
+                        dst_account: system_account,
+                        currency: 'I:EUR',
+                        amount: '1.00',
+                        type: 'Generic',
+                        orig_ts: moment.utc().format(),
+                        ext_id: dxt.makeExtId( system_account, 'OM1'),
+                    } );
+                    
+                    as.state.test_name = 'original mismatch account';
+                    as.add(
+                        (as) => {
+                            dxt.processXfer( as, {
+                                src_account: system_account,
+                                dst_account: first_account,
+                                currency: 'I:EUR',
+                                amount: '1.00',
+                                type: 'Generic',
+                                orig_ts: moment.utc().format(),
+                                ext_id: dxt.makeExtId( system_account, 'OM1'),
+                            } );
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'OriginalMismatch' ) {
+                                as.success();
+                            }
+                        }
+                    );
+                    
+                    as.state.test_name = 'original mismatch currency';
+                    as.add(
+                        (as) => {
+                            dxt.processXfer( as, {
+                                src_account: system_account,
+                                dst_account: system_account,
+                                currency: 'I:USD',
+                                amount: '1.00',
+                                type: 'Generic',
+                                orig_ts: moment.utc().format(),
+                                ext_id: dxt.makeExtId( system_account, 'OM1'),
+                            } );
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'OriginalMismatch' ) {
+                                as.success();
+                            }
+                        }
+                    );
+                    
+                    as.state.test_name = 'original mismatch amount';
+                    as.add(
+                        (as) => {
+                            dxt.processXfer( as, {
+                                src_account: system_account,
+                                dst_account: system_account,
+                                currency: 'I:EUR',
+                                amount: '1.01',
+                                type: 'Generic',
+                                orig_ts: moment.utc().format(),
+                                ext_id: dxt.makeExtId( system_account, 'OM1'),
+                            } );
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'OriginalMismatch' ) {
+                                as.success();
+                            }
+                        }
+                    );
+                    //=================
+                    as.state.test_name = 'XferTool callback';
+                    const tmpxt = new XferTools( ccm, 'Deposits' );
+                    
+                    tmpxt._domainDbStep();
+                    
+                    as.add(
+                        (as) => {
+                            tmpxt._domainExtIn(as);
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'NotImplemented' ) {
+                                as.success();
+                            }
+                        }
+                    );
+                    
+                    as.add(
+                        (as) => {
+                            tmpxt._domainExtOut(as);
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'NotImplemented' ) {
+                                as.success();
+                            }
+                        }
+                    );
+                    
+                    //=================
+                    as.state.test_name = 'Invalid xfer data';
+                    
+                    as.add(
+                        (as) => {
+                            dxt.processXfer( as, {} );
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'InternalError' ) {
+                                expect(as.state.error_info).to.equal(
+                                    'Invalid xfer data'
+                                );
+                                as.success();
+                            }
+                        }
+                    );
+                },
+                (as, err) =>
+                {
+                    console.log(as.state.test_name);
+                    console.log(err);
+                    console.log(as.state.error_info);
+                    done(as.state.last_exception || 'Fail');
+                }
+            );
+            as.add( (as) => done() );
+            as.execute();            
+        });
+        
+        it('should process forced xfers', function(done) {
+            const dxt = new class extends XferTools {
+                constructor() {
+                    super( ccm, 'Deposits' );
+                }
+            };
+            
+            as.add(
+                (as) =>
+                {
+                    //
+                    /*
+                    as.state.test_name = 'ext_id format';
+                    
+                    as.add(
+                        (as) => {
+                            dxt.processXfer( as, {
+                                src_account: external_account,
+                                dst_account: first_account,
+                                currency: 'I:EUR',
+                                amount: '4.10',
+                                type: 'Deposit',
+                                orig_ts: moment.utc().format(),
+                                ext_id: dxt.makeExtId( '123', 'R1'),
+                            } );
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'InternalError' ) {
+                                expect(as.state.error_info).to.equal(
+                                    'Invalid external ID format'
+                                );
+                                as.success();
+                            }
+                        }
+                    );
+                    */
+                },
+                (as, err) =>
+                {
+                    console.log(as.state.test_name);
+                    console.log(err);
+                    console.log(as.state.error_info);
+                    done(as.state.last_exception || 'Fail');
+                }
+            );
+            as.add( (as) => done() );
+            as.execute(); 
+        });
+        
+        it('should process user confirmation', function(done) {
+            const dxt = new class extends XferTools {
+                constructor() {
+                    super( ccm, 'Deposits' );
+                }
+            };
+            
+            as.add(
+                (as) =>
+                {
+                    //
+                    /*
+                    as.state.test_name = 'ext_id format';
+                    
+                    as.add(
+                        (as) => {
+                            dxt.processXfer( as, {
+                                src_account: external_account,
+                                dst_account: first_account,
+                                currency: 'I:EUR',
+                                amount: '4.10',
+                                type: 'Deposit',
+                                orig_ts: moment.utc().format(),
+                                ext_id: dxt.makeExtId( '123', 'R1'),
+                            } );
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'InternalError' ) {
+                                expect(as.state.error_info).to.equal(
+                                    'Invalid external ID format'
+                                );
+                                as.success();
+                            }
+                        }
+                    );
+                    */
+                },
+                (as, err) =>
+                {
+                    console.log(as.state.test_name);
+                    console.log(err);
+                    console.log(as.state.error_info);
+                    done(as.state.last_exception || 'Fail');
+                }
+            );
+            as.add( (as) => done() );
+            as.execute(); 
+        });
+        
+        it('should process associated fee', function(done) {
+            const dxt = new class extends XferTools {
+                constructor() {
+                    super( ccm, 'Deposits' );
+                }
+            };
+            
+            as.add(
+                (as) =>
+                {
+                    //
+                    /*
+                    as.state.test_name = 'ext_id format';
+                    
+                    as.add(
+                        (as) => {
+                            dxt.processXfer( as, {
+                                src_account: external_account,
+                                dst_account: first_account,
+                                currency: 'I:EUR',
+                                amount: '4.10',
+                                type: 'Deposit',
+                                orig_ts: moment.utc().format(),
+                                ext_id: dxt.makeExtId( '123', 'R1'),
+                            } );
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'InternalError' ) {
+                                expect(as.state.error_info).to.equal(
+                                    'Invalid external ID format'
+                                );
+                                as.success();
+                            }
+                        }
+                    );
+                    */
+                },
+                (as, err) =>
+                {
+                    console.log(as.state.test_name);
+                    console.log(err);
+                    console.log(as.state.error_info);
+                    done(as.state.last_exception || 'Fail');
+                }
+            );
+            as.add( (as) => done() );
+            as.execute(); 
+        });
+        
     });
 };
