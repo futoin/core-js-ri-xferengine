@@ -2399,6 +2399,10 @@ module.exports = function(describe, it, vars) {
                 constructor() {
                     super( ccm, 'Gaming' );
                 }
+                
+                _domainExtOut() {
+                    // noop
+                }
             };
             
             as.add(
@@ -2476,12 +2480,12 @@ module.exports = function(describe, it, vars) {
                         dst_account: external_account,
                         dst_limit_prefix: false,
                         currency: 'I:EUR',
-                        amount: '6',
+                        amount: '4',
                         type: 'Bet'
                     } );
                     
                     as.add( (as, id ) => {
-                        check_balance(as, first_account, '0');
+                        check_balance(as, first_account, '200');
                         check_balance(as, external_account, '1400');
 
                         as.state.test_name = 'User confirmation 2';
@@ -2493,7 +2497,42 @@ module.exports = function(describe, it, vars) {
                             dst_account: external_account,
                             dst_limit_prefix: false,
                             currency: 'I:EUR',
-                            amount: '6',
+                            amount: '4',
+                            type: 'Bet',
+                            user_confirm: true,
+                        } );
+                    } );
+
+                    check_balance(as, first_account, '200');
+                    check_balance(as, external_account, '1800');
+                    
+                    //---
+                    
+                    as.add( (as) => as.state.test_name = 'Under check limit 3' );
+                    xt.processXfer( as, {
+                        src_account: first_account,
+                        src_limit_prefix: 'bet',
+                        dst_account: second_transit,
+                        dst_limit_prefix: false,
+                        currency: 'I:EUR',
+                        amount: '2',
+                        type: 'Bet'
+                    } );
+                    
+                    as.add( (as, id ) => {
+                        check_balance(as, first_account, '0');
+                        check_balance(as, external_account, '1800');
+
+                        as.state.test_name = 'User confirmation 3';
+                    
+                        xt.processXfer( as, {
+                            id,
+                            src_account: first_account,
+                            src_limit_prefix: 'bet',
+                            dst_account: second_transit,
+                            dst_limit_prefix: false,
+                            currency: 'I:EUR',
+                            amount: '2',
                             type: 'Bet',
                             user_confirm: true,
                         } );

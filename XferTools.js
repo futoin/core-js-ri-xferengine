@@ -30,7 +30,7 @@ const TypeSpec = {
                 },
             },
         },
-        PrefixOrFalse: ['string', 'boolean'],
+        PrefixOrFalse: [ 'string', 'boolean' ],
         XferInfo : {
             type: 'map',
             fields: {
@@ -391,6 +391,14 @@ class XferTools {
                     JSON.parse( r.misc_data )
                 );
                 xfer.repeat = true;
+
+                if ( xfer.misc_data.rel_in_id ) {
+                    xfer.in_xfer.id = xfer.misc_data.rel_in_id;
+                }
+
+                if ( xfer.misc_data.rel_out_id ) {
+                    xfer.out_xfer.id = xfer.misc_data.rel_out_id;
+                }
 
                 if ( r.extra_fee_id ) {
                     if ( !xfer.extra_fee ) {
@@ -873,8 +881,8 @@ class XferTools {
                     xfer.status = 'WaitExtOut';
 
                     this._completeXfer( dbxfer, xfer.id, 'WaitUser', xfer.status );
-                    // not balance updates
-                    this._completeXfer( dbxfer, xfer.misc_data.rel_out_id,
+                    // no balance updates
+                    this._completeXfer( dbxfer, xfer.out_xfer.id,
                         'WaitUser', xfer.status );
                 } else {
                     xfer.status = 'Done';
