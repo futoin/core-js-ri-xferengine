@@ -237,6 +237,16 @@ describe('AmountTools', function() {
         ).to.equal(false);
     } );
     
+    it('should compare amount', function() {
+        expect(AmountTools.isEqual('1.00', '1.00')).to.be.true;
+        expect(AmountTools.isEqual('1.00', '1')).to.be.true;
+        expect(AmountTools.isEqual('21.10', '21.100')).to.be.true;
+        expect(AmountTools.isEqual('21.10', '21.101')).to.be.false;
+        expect(AmountTools.compare('21.10', '21.101')).to.be.below( 0 );
+        expect(AmountTools.compare('21.101', '21.10')).to.be.above( 0 );
+        expect(AmountTools.compare('3.101', '21.10')).to.be.below( 0 );
+    });
+    
     it('should process misc', function() {
         expect(AmountTools.MAX_DIGITS).to.equal(22);
         expect(AmountTools.RATE_PRECISSION).to.equal(12);

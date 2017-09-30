@@ -157,6 +157,15 @@ class AmountTools {
 
         return balance.greaterThanOrEqualTo( amt );
     }
+
+    static compare( a, b ) {
+        a = new BigNumber( a, 10 );
+        return a.cmp( b, 10 );
+    }
+
+    static isEqual( a, b ) {
+        return this.compare( a, b ) === 0;
+    }
 }
 
 module.exports = AmountTools;
