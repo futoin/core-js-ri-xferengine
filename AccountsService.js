@@ -225,7 +225,7 @@ class AccountsService extends BaseService {
                     enabled: p.enabled ? 'Y' : 'N',
                     acct_type: p.type,
                     acct_alias: p.alias,
-                    rel_uuid64: p.rel_id,
+                    rel_uuidb64: p.rel_id,
                     ext_acct_id: p.ext_id,
                 } );
                 xfer.execute( as );
@@ -275,7 +275,7 @@ class AccountsService extends BaseService {
             alias: raw.acct_alias,
             enabled: ( raw.enabled === 'Y' ),
             ext_id: raw.ext_acct_id,
-            rel_id: raw.rel_uuid64,
+            rel_id: raw.rel_uuidb64,
             balance: AmountTools.fromStorage( raw.balance, raw.dec_places ),
             reserved: AmountTools.fromStorage( raw.reserved, raw.dec_places ),
             created: moment.utc( raw.created ).format(),

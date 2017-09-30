@@ -473,6 +473,9 @@ module.exports = function(describe, it, vars) {
         let system_account;
         let first_account;
         let second_account
+        let external_account;
+        let first_transit;
+        let second_transit;
         
         const check_balance = ( as, account, req ) => {
             ccm.db('xfer').select('accounts')
@@ -525,6 +528,38 @@ module.exports = function(describe, it, vars) {
                             'Second'
                         );
                         as.add( (as, id) => second_account = id );
+                        xferacct.addAccount(
+                            as,
+                            holder,
+                            'External',
+                            'I:EUR',
+                            'Ext'
+                        );
+                        as.add( (as, id) => {
+                            external_account = id;
+                            xferacct.addAccount(
+                                as,
+                                holder,
+                                'Transit',
+                                'I:EUR',
+                                'Transit First',
+                                true,
+                                `transit1`,
+                                external_account,
+                            );
+                            as.add( (as, id) => first_transit = id );
+                            xferacct.addAccount(
+                                as,
+                                holder,
+                                'Transit',
+                                'I:EUR',
+                                'Transit Second',
+                                true,
+                                `transit2`,
+                                external_account
+                            );
+                            as.add( (as, id) => second_transit = id );
+                        });
                     } );
                 },
                 (as, err) =>
@@ -658,6 +693,95 @@ module.exports = function(describe, it, vars) {
                     } );
                     
                     check_balance(as, second_account, '0');
+                },
+                (as, err) =>
+                {
+                    console.log(as.state.test_name);
+                    console.log(err);
+                    console.log(as.state.error_info);
+                    done(as.state.last_exception || 'Fail');
+                }
+            );
+            as.add( (as) => done() );
+            as.execute();            
+        });
+        
+        it('should process transit xfers', function(done) {
+            const pxt = new class extends XferTools {
+                constructor() {
+                    super( ccm, 'Payments' );
+                }
+
+                _domainExtIn( as, _in_xfer ) {
+                    as.add( (as) => {} );
+                }
+
+                _domainExtOut( as, _out_xfer ) {
+                    as.add( (as) => {} );
+                }
+            };
+            
+            as.add(
+                (as) =>
+                {
+                    const db = ccm.db('xfer');
+                    
+                    pxt.processXfer( as, {
+                        src_account: system_account,
+                        dst_account: external_account,
+                        currency: 'I:EUR',
+                        amount: '10.00',
+                        type: 'Generic',
+                    } );
+                    
+                    check_balance(as, external_account, '1000');
+                    
+                    //--
+                    as.state.test_name = 'Transit Int';
+                    pxt.processXfer( as, {
+                        src_account: first_transit,
+                        dst_account: first_account,
+                        currency: 'I:EUR',
+                        amount: '1.00',
+                        type: 'Generic',
+                    } );
+
+                    check_balance(as, external_account, '900');
+                    check_balance(as, first_transit, '0');
+                    check_balance(as, first_account, '100');
+                    
+                    //---
+                    as.state.test_name = 'Transit Out';
+                    pxt.processXfer( as, {
+                        src_account: first_account,
+                        dst_account: second_transit,
+                        currency: 'I:EUR',
+                        amount: '1.00',
+                        type: 'Generic',
+                    } );
+
+                    check_balance(as, first_account, '0');
+                    check_balance(as, second_transit, '0');
+                    check_balance(as, external_account, '1000');
+                    
+                    //---
+                    as.state.test_name = 'Transit In-Out';
+                    pxt.processXfer( as, {
+                        src_account: first_transit,
+                        dst_account: second_transit,
+                        currency: 'I:EUR',
+                        amount: '1.00',
+                        type: 'Generic',
+                    } );
+
+                    check_balance(as, first_transit, '0');
+                    check_balance(as, second_transit, '0');
+                    check_balance(as, external_account, '1000');
+
+                    //---
+                    as.state.test_name = 'Ensure all xfers Done';
+                    db.select( 'active_xfers' ).where('xfer_status !=', 'Done').execute(as);
+                    as.add( (as, { rows } ) => expect(rows.length).to.equal(0));
                 },
                 (as, err) =>
                 {

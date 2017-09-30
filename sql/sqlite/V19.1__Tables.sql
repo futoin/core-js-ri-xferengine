@@ -70,14 +70,14 @@ CREATE TABLE accounts (
     "acct_type" VARCHAR(8) NOT NULL,
     "acct_alias" VARCHAR(20) NOT NULL,
     "overdraft" DECIMAL(22, 0) NULL,
-    "rel_uuid64" CHARACTER(22) NULL REFERENCES accounts(uuidb64),
+    "rel_uuidb64" CHARACTER(22) NULL REFERENCES accounts(uuidb64),
     "ext_acct_id" VARCHAR(64) NULL,
     CONSTRAINT "holder_alias" UNIQUE ("holder", "acct_alias")
 );
 
 CREATE VIEW v_enabled_accounts AS
     SELECT A.uuidb64, A.holder, A.currency_id, A.balance,
-           A.reserved, A.acct_type, A.rel_uuid64, A.ext_acct_id,
+           A.reserved, A.acct_type, A.rel_uuidb64, A.ext_acct_id,
            COALESCE( A.overdraft, '0' ),
            C.code AS currency, C.dec_places
       FROM accounts A

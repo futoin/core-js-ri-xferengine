@@ -96,7 +96,7 @@ CREATE TABLE accounts (
     ) NOT NULL,
     `acct_alias` VARCHAR(20) NOT NULL,
     `overdraft` DECIMAL(22, 0) NULL,
-    `rel_uuid64` CHARACTER(22) NULL REFERENCES accounts(uuidb64),
+    `rel_uuidb64` CHARACTER(22) NULL REFERENCES accounts(uuidb64),
     `ext_acct_id` VARCHAR(64) NULL,
     UNIQUE `holder_alias` (`holder`, `acct_alias`)
 )
@@ -105,7 +105,7 @@ CREATE TABLE accounts (
 
 CREATE VIEW v_enabled_accounts AS
     SELECT A.uuidb64, A.holder, A.currency_id, A.balance,
-           A.reserved, A.acct_type, A.rel_uuid64, A.ext_acct_id,
+           A.reserved, A.acct_type, rel_uuidb64, A.ext_acct_id,
            COALESCE( A.overdraft, '0' ),
            C.code AS currency, C.dec_places
       FROM accounts A
@@ -272,7 +272,8 @@ CREATE TABLE active_xfers (
     ) NOT NULL,
     `xfer_status` ENUM(
         'WaitUser',
-        'WaitExternal',
+        'WaitExtIn',
+        'WaitExtOut',
         'Done',
         'Canceled',
         'Rejected'

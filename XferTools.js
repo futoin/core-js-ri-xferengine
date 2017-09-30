@@ -398,34 +398,6 @@ class XferTools {
                 xfer.src_info = rows[1];
                 xfer.dst_info = rows[0];
             }
-
-            if ( xfer.src_info.acct_type === 'Transit' ) {
-                xfer.in_xfer = {
-                    id: xfer.misc_data.rel_in_id,
-                    src: xfer.src_info.rel_uuidb64,
-                    dst: xfer.src_account,
-                    currency: xfer.src_info.currency,
-                    amount: xfer.src_amount,
-                    type: xfer.type,
-                    misc_data: Object.assign( xfer.misc_data, {
-                        xfer_id: xfer.id,
-                    } ),
-                };
-            }
-
-            if ( xfer.dst_info.acct_type === 'Transit' ) {
-                xfer.out_xfer = {
-                    id: xfer.misc_data.rel_out_id,
-                    src: xfer.dst_account,
-                    dst: xfer.dst_info.rel_uuidb64,
-                    currency: xfer.dst_info.currency,
-                    amount: xfer.dst_amount,
-                    type: xfer.type,
-                    misc_data: Object.assign( xfer.misc_data, {
-                        xfer_id: xfer.id,
-                    } ),
-                };
-            }
         } );
     }
 
@@ -464,6 +436,44 @@ class XferTools {
                         xfer.amount, rate, xfer.dst_info.dec_places, false
                     );
                 } );
+            }
+        } );
+    }
+
+    _prepareTransit( as, xfer ) {
+        as.add( ( as ) => {
+            if ( xfer.in_transit ) {
+                return;
+            }
+
+            if ( xfer.src_info.acct_type === 'Transit' ) {
+                xfer.in_xfer = {
+                    id: xfer.misc_data.rel_in_id,
+                    src_account: xfer.src_info.rel_uuidb64,
+                    dst_account: xfer.src_account,
+                    currency: xfer.src_info.currency,
+                    amount: xfer.src_amount,
+                    type: xfer.type,
+                    misc_data: Object.assign( {}, xfer.misc_data, {
+                        xfer_id: xfer.id,
+                    } ),
+                    in_transit: true,
+                };
+            }
+
+            if ( xfer.dst_info.acct_type === 'Transit' ) {
+                xfer.out_xfer = {
+                    id: xfer.misc_data.rel_out_id,
+                    src_account: xfer.dst_account,
+                    dst_account: xfer.dst_info.rel_uuidb64,
+                    currency: xfer.dst_info.currency,
+                    amount: xfer.dst_amount,
+                    type: xfer.type,
+                    misc_data: Object.assign( {}, xfer.misc_data, {
+                        xfer_id: xfer.id,
+                    } ),
+                    in_transit: true,
+                };
             }
         } );
     }
@@ -526,6 +536,7 @@ class XferTools {
                     const rel_in_id = UUIDTool.genXfer( dbxfer );
                     xfer.misc_data.rel_in_id = rel_in_id;
                     xfer.in_xfer.id = rel_in_id;
+                    xfer.in_xfer.misc_data.xfer_id = xfer.id;
                 }
             }
 
@@ -535,6 +546,7 @@ class XferTools {
                     const rel_out_id = UUIDTool.genXfer( dbxfer );
                     xfer.misc_data.rel_out_id = rel_out_id;
                     xfer.out_xfer.id = rel_out_id;
+                    xfer.out_xfer.misc_data.xfer_id = xfer.id;
                 }
             }
         } );
@@ -561,6 +573,7 @@ class XferTools {
             }
 
             const out_xfer = xfer.out_xfer;
+            out_xfer.status = xfer.status;
             this._startXfer( as, dbxfer, out_xfer );
         } );
     }
@@ -621,8 +634,18 @@ class XferTools {
                 this._createFee( as, dbxfer, xfer );
             }
 
-            if ( xfer.status !== 'WaitExtIn' ) {
+            if ( xfer.status === 'WaitExtIn' ) {
+                /// pass all
+            } else if ( xfer.in_transit &&
+                       ( xfer.status === 'WaitUser' || xfer.status === 'WaitExtOut' )
+            ) {
+                // pass only on out
+            } else {
                 this._decreaseBalance( dbxfer, xfer );
+            }
+
+            if ( xfer.out_xfer && ( xfer.status === 'Done' ) ) {
+                xfer.status = 'WaitExtOut';
             }
 
             const q_now = dbxfer.helpers().now();
@@ -667,6 +690,7 @@ class XferTools {
 
         this._getAccountsInfo( as, xfer );
         this._convXferAmounts( as, xfer );
+        this._prepareTransit( as, xfer );
 
         // Check for previous attempts, if related external ID
         if ( xfer.ext_id ) {
@@ -686,8 +710,24 @@ class XferTools {
                 this._createTransitInbound( as, dbxfer, xfer );
                 this._createXfer( as, dbxfer, xfer );
                 this._createTransitOutbound( as, dbxfer, xfer );
-            } else if ( xfer.user_confirm ) {
-                this._completeXfer( dbxfer, xfer.id, 'WaitUser', 'Done' );
+            } else if ( xfer.in_transit ) {
+                this._createXfer( as, dbxfer, xfer );
+            } else if ( xfer.user_confirm &&
+                        ( xfer.status === 'WaitUser' )
+            ) {
+                if ( xfer.out_xfer ) {
+                    xfer.status = 'WaitExtOut';
+
+                    this._completeXfer( dbxfer, xfer.id, 'WaitUser', xfer.status );
+                    // not balance updates
+                    this._completeXfer( dbxfer, xfer.misc_data.rel_out_id,
+                        'WaitUser', xfer.status );
+                } else {
+                    xfer.status = 'Done';
+
+                    this._completeXfer( dbxfer, xfer.id, 'WaitUser', xfer.status );
+                    this._increaseBalance( dbxfer, xfer.id );
+                }
             }
         } );
     }
@@ -698,21 +738,33 @@ class XferTools {
             .set( 'updated', dbxfer.helpers().now() )
             .where( 'uuidb64', xfer_id )
             .where( 'xfer_status', prev_state );
-
-        this._increaseBalance( dbxfer, xfer_id );
     }
 
     _completeExtIn( as, xfer ) {
         const dbxfer = this._ccm.db( 'xfer' ).newXfer();
         this._decreaseBalance( dbxfer, xfer.in_xfer );
-        this._completeXfer( dbxfer, xfer.misc_data.rel_in_id, 'WaitExtIn' );
-        this._decreaseBalance( dbxfer, xfer );
-        this._completeXfer( dbxfer, xfer.id, 'WaitExtIn' );
+        this._completeXfer( dbxfer, xfer.in_xfer.id, 'WaitExtIn' );
+
+        // optimize out
+        //this._increaseBalance( dbxfer, xfer.in_xfer.id );
+        //this._decreaseBalance( dbxfer, xfer );
 
         if ( xfer.out_xfer ) {
-            this._decreaseBalance( dbxfer, xfer.out_xfer );
-            this._completeXfer( dbxfer, xfer.misc_data.rel_out_id,
+            xfer.status = 'WaitExtOut';
+
+            this._completeXfer( dbxfer, xfer.id, 'WaitExtIn', xfer.status );
+
+            // optimize out
+            //this._increaseBalance( dbxfer, xfer.id );
+            //this._decreaseBalance( dbxfer, xfer.out_xfer );
+
+            this._completeXfer( dbxfer, xfer.out_xfer.id,
                 'WaitExtIn', 'WaitExtOut' );
+        } else {
+            xfer.status = 'Done';
+
+            this._completeXfer( dbxfer, xfer.id, 'WaitExtIn', xfer.status );
+            this._increaseBalance( dbxfer, xfer.id );
         }
 
         dbxfer.execute( as );
@@ -720,8 +772,18 @@ class XferTools {
 
     _completeExtOut( as, xfer ) {
         const dbxfer = this._ccm.db( 'xfer' ).newXfer();
-        this._completeXfer( dbxfer, xfer.misc_data.rel_out_id,
+
+        this._completeXfer( dbxfer, xfer.id,
             'WaitExtOut', 'Done' );
+
+        // optimize out
+        //this._increaseBalance( dbxfer, xfer.id );
+        //this._decreaseBalance( dbxfer, xfer.out_xfer );
+
+        this._completeXfer( dbxfer, xfer.out_xfer.id,
+            'WaitExtOut', 'Done' );
+        this._increaseBalance( dbxfer, xfer.out_xfer.id );
+
         dbxfer.execute( as );
     }
 
@@ -747,10 +809,12 @@ class XferTools {
                 return;
             }
 
-            if ( xfer.misc_data.rel_out_id ) {
-                as.add( ( as ) => this._domainExtOut( as, xfer.out_xfer ) );
-                as.add( ( as ) => this._completeExtOut( as, xfer ) );
-            }
+            as.add( ( as ) => {
+                if ( xfer.status === 'WaitExtOut' ) {
+                    this._domainExtOut( as, xfer.out_xfer );
+                    as.add( ( as ) => this._completeExtOut( as, xfer ) );
+                }
+            } );
         } );
     }
 
