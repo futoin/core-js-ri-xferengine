@@ -33,6 +33,10 @@ const TypeSpec = {
         XferInfo : {
             type: 'map',
             fields: {
+                id : {
+                    type: 'string',
+                    optional: true,
+                },
                 src_account: 'AccountID',
                 src_limit_prefix: {
                     type: 'string',
@@ -92,6 +96,7 @@ const TypeSpec = {
 
 const BY_EXT_ID = Symbol( 'by-ext-id' );
 const BY_FEE_ID = Symbol( 'by-fee-id' );
+const BY_XFER_ID = Symbol( 'by-xfer-id' );
 const ACC_INFO = Symbol( 'get-account-info' );
 
 /**
@@ -326,31 +331,43 @@ class XferTools {
         return `${rel_ext_id}:${rel_account}`;
     }
 
-    _checkExistingExtId( as, xfer ) {
+    _checkExisting( as, xfer ) {
         const ext_id = xfer.ext_id;
 
-        //---
-        if ( !ext_id.endsWith( xfer.src_account ) &&
-            !ext_id.endsWith( xfer.dst_account )
-        ) {
-            as.error( 'InternalError', 'Invalid external ID format' );
+        if ( ext_id ) {
+            //---
+            if ( !ext_id.endsWith( xfer.src_account ) &&
+                !ext_id.endsWith( xfer.dst_account )
+            ) {
+                as.error( 'InternalError', 'Invalid external ID format' );
+            }
+
+            //---
+            const barrier = historyTimeBarrier();
+
+            if ( !xfer.orig_ts || barrier.isAfter( xfer.orig_ts ) ) {
+                as.error( 'OriginalTooOld' );
+            }
+
+            //---
+            this._ccm.db( 'xfer' )
+                .getPrepared( BY_EXT_ID, ( db ) => {
+                    const q = db.select( DB_XFERS_TABLE );
+                    q.where( 'ext_id', q.param( 'ext_id' ) );
+                    return q.prepare();
+                } )
+                .executeAssoc( as, { ext_id } );
+        } else if ( xfer.id ) {
+            this._ccm.db( 'xfer' )
+                .getPrepared( BY_XFER_ID, ( db ) => {
+                    const q = db.select( DB_XFERS_TABLE );
+                    q.where( 'uuidb64', q.param( 'id' ) );
+                    return q.prepare();
+                } )
+                .executeAssoc( as, { id: xfer.id } );
+        } else {
+            return;
         }
-
-        //---
-        const barrier = historyTimeBarrier();
-
-        if ( !xfer.orig_ts || barrier.isAfter( xfer.orig_ts ) ) {
-            as.error( 'OriginalTooOld' );
-        }
-
-        //---
-        this._ccm.db( 'xfer' )
-            .getPrepared( BY_EXT_ID, ( db ) => {
-                const q = db.select( DB_XFERS_TABLE );
-                q.where( 'ext_id', q.param( 'ext_id' ) );
-                return q.prepare();
-            } )
-            .executeAssoc( as, { ext_id } );
 
         as.add( ( as, rows ) => {
             if ( rows.length ) {
@@ -372,8 +389,8 @@ class XferTools {
                 }
 
                 xfer.id = r.uuidb64;
-                xfer.status = r.status;
-                xfer.created = r.created;
+                xfer.status = r.xfer_status;
+                xfer.created = moment.utc( r.created ).format();
                 xfer.misc_data = Object.assign(
                     xfer.misc_data,
                     JSON.parse( r.misc_data )
@@ -437,8 +454,8 @@ class XferTools {
                 as.error( "OriginalMismatch" );
             }
 
-            fee_xfer.status = r.status;
-            fee_xfer.created = r.created;
+            fee_xfer.status = r.xfer_status;
+            fee_xfer.created = moment.utc( r.created ).format();
             fee_xfer.misc_data = Object.assign(
                 fee_xfer.misc_data,
                 JSON.parse( r.misc_data )
@@ -483,7 +500,7 @@ class XferTools {
                 const r = rows[i];
                 r.balance = AmountTools.fromStorage( r.balance, r.dec_places );
                 r.reserved = AmountTools.fromStorage( r.reserved, r.dec_places );
-                r.overdraft = AmountTools.fromStorage( r.overdraft || '0', r.dec_places );
+                r.overdraft = AmountTools.fromStorage( r.overdraft, r.dec_places );
             }
 
             if ( rows[0].uuidb64 === xfer.src_account ) {
@@ -835,9 +852,7 @@ class XferTools {
         this._prepareTransit( as, xfer );
 
         // Check for previous attempts, if related external ID
-        if ( xfer.ext_id ) {
-            this._checkExistingExtId( as, xfer );
-        }
+        this._checkExisting( as, xfer );
 
         as.add( ( as ) => {
             // Insert new xfer
@@ -857,6 +872,8 @@ class XferTools {
             } else if ( xfer.user_confirm &&
                         ( xfer.status === 'WaitUser' )
             ) {
+                xfer.repeat = false;
+
                 if ( xfer.out_xfer ) {
                     xfer.status = 'WaitExtOut';
 
@@ -944,7 +961,7 @@ class XferTools {
 
         const dbxfer = this._ccm.db( 'xfer' ).newXfer();
 
-        this._startXfer( as, dbxfer, xfer );
+        as.add( ( as ) => this._startXfer( as, dbxfer, xfer ) );
         as.add( ( as ) => this._domainDbStep( as, dbxfer, xfer ) );
         as.add( ( as ) => {
             if ( xfer.repeat ) {
@@ -975,6 +992,9 @@ class XferTools {
                 }
             } );
         } );
+        as.add( ( as ) => {
+            as.success( xfer.id );
+        } );
     }
 
     _feeExtIn( as, fee_xfer ) {
@@ -986,7 +1006,7 @@ class XferTools {
             reason: fee_xfer.misc_data.reason || '',
             ext_id: fee_xfer.id,
             ext_info: fee_xfer.misc_data.info || {},
-            orig_ts : fee_xfer.created,
+            orig_ts : fee_xfer.created || moment.utc().format(),
             force : fee_xfer.force,
         } );
     }

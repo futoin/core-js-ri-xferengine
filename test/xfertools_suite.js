@@ -498,6 +498,42 @@ module.exports = function(describe, it, vars) {
                     const xferlim = ccm.iface('xfer.limits');
                     xferlim.addLimitGroup(as, 'SimpleXfer');
                     
+                    xferlim.setLimits(as, 'SimpleXfer', 'Gaming', 'I:EUR', {
+                        "bet_daily_amt" : "100",
+                        "bet_daily_cnt" : 100,
+                        "win_daily_amt" : "100",
+                        "win_daily_cnt" : 100,
+                        "profit_daily_amt" : "100",
+                        "bet_weekly_amt" : "100",
+                        "bet_weekly_cnt" : 100,
+                        "win_weekly_amt" : "100",
+                        "win_weekly_cnt" : 100,
+                        "profit_weekly_amt" : "100",
+                        "bet_monthly_amt" : "100",
+                        "bet_monthly_cnt" : 100,
+                        "win_monthly_amt" : "100",
+                        "win_monthly_cnt" : 100,
+                        "profit_monthly_amt" : "100",
+                        "bet_min_amt" : "0.01"
+                    }, {
+                        "bet_daily_amt" : "100",
+                        "bet_daily_cnt" : 100,
+                        "win_daily_amt" : "100",
+                        "win_daily_cnt" : 100,
+                        "profit_daily_amt" : "100",
+                        "bet_weekly_amt" : "100",
+                        "bet_weekly_cnt" : 100,
+                        "win_weekly_amt" : "100",
+                        "win_weekly_cnt" : 100,
+                        "profit_weekly_amt" : "100",
+                        "bet_monthly_amt" : "100",
+                        "bet_monthly_cnt" : 100,
+                        "win_monthly_amt" : "100",
+                        "win_monthly_cnt" : 100,
+                        "profit_monthly_amt" : "100",
+                        "bet_min_amt" : "10"
+                    }, false);
+                    
                     const currmgr = ccm.iface('currency.manage');
                     currmgr.setCurrency(as, 'L:XFRT', 3, 'Xfer Test Currency', 'XFT', true);
                     currmgr.setExRate(as, 'I:EUR', 'L:XFRT', '1.500', '0.05');
@@ -1365,31 +1401,7 @@ module.exports = function(describe, it, vars) {
             as.add( (as) => done() );
             as.execute(); 
         });
-        
-        it('should process user confirmation', function(done) {
-            const dxt = new class extends XferTools {
-                constructor() {
-                    super( ccm, 'Deposits' );
-                }
-            };
-            
-            as.add(
-                (as) =>
-                {
 
-                },
-                (as, err) =>
-                {
-                    console.log(as.state.test_name);
-                    console.log(err);
-                    console.log(as.state.error_info);
-                    done(as.state.last_exception || 'Fail');
-                }
-            );
-            as.add( (as) => done() );
-            as.execute(); 
-        });
-        
         it('should process extra fee', function(done) {
             const dxt = new class extends XferTools {
                 constructor() {
@@ -2221,6 +2233,133 @@ module.exports = function(describe, it, vars) {
             );
             as.add( (as) => done() );
             as.execute();            
+        });
+        
+        
+        it('should process user confirmation', function(done) {
+            const xt = new class extends XferTools {
+                constructor() {
+                    super( ccm, 'Gaming' );
+                }
+            };
+            
+            as.add(
+                (as) =>
+                {
+                    as.add( (as) => as.state.test_name = 'setup' );
+                    xt.processXfer( as, {
+                        src_account: system_account,
+                        dst_account: first_account,
+                        currency: 'I:EUR',
+                        amount: '20',
+                        type: 'Deposit',
+                    } );
+                    
+                    check_balance(as, first_account, '2000');
+                    check_balance(as, external_account, '0');
+                    
+                    as.add( (as) => as.state.test_name = 'Over check limit' );
+                    xt.processXfer( as, {
+                        src_account: first_account,
+                        src_limit_type: 'bet',
+                        dst_account: external_account,
+                        currency: 'I:EUR',
+                        amount: '11',
+                        type: 'Bet',
+                    } );
+
+                    check_balance(as, first_account, '900');
+                    check_balance(as, external_account, '1100');
+                    
+                    //---
+                    
+                    as.add( (as) => as.state.test_name = 'Under check limit 1' );
+                    xt.processXfer( as, {
+                        src_account: first_account,
+                        src_limit_prefix: 'bet',
+                        dst_account: external_account,
+                        currency: 'I:EUR',
+                        amount: '3',
+                        type: 'Bet',
+                        orig_ts: moment.utc().format(),
+                        ext_id: xt.makeExtId(first_account, 'UC1'),
+                    } );
+
+                    check_balance(as, first_account, '600');
+                    check_balance(as, external_account, '1100');
+                    
+                    as.add( (as) => as.state.test_name = 'User confirmation 1' );
+                    xt.processXfer( as, {
+                        src_account: first_account,
+                        src_limit_prefix: 'bet',
+                        dst_account: external_account,
+                        currency: 'I:EUR',
+                        amount: '3',
+                        type: 'Bet',
+                        orig_ts: moment.utc().format(),
+                        ext_id: xt.makeExtId(first_account, 'UC1'),
+                        user_confirm: true,
+                    } );
+
+                    check_balance(as, first_account, '600');
+                    check_balance(as, external_account, '1400');
+                    
+                    //---
+                    
+                    as.add( (as) => as.state.test_name = 'Under check limit 2' );
+                    xt.processXfer( as, {
+                        src_account: first_account,
+                        src_limit_prefix: 'bet',
+                        dst_account: external_account,
+                        currency: 'I:EUR',
+                        amount: '6',
+                        type: 'Bet'
+                    } );
+                    
+                    as.add( (as, id ) => {
+                        check_balance(as, first_account, '0');
+                        check_balance(as, external_account, '1400');
+
+                        as.state.test_name = 'User confirmation 2';
+                    
+                        xt.processXfer( as, {
+                            id,
+                            src_account: first_account,
+                            src_limit_prefix: 'bet',
+                            dst_account: external_account,
+                            currency: 'I:EUR',
+                            amount: '6',
+                            type: 'Bet',
+                            user_confirm: true,
+                        } );
+                    } );
+
+                    check_balance(as, first_account, '0');
+                    check_balance(as, external_account, '2000');
+                    
+                    //---
+                    
+                    as.add( (as) => as.state.test_name = 'Cleanup' );
+                    xt.processXfer( as, {
+                        src_account: external_account,
+                        dst_account: system_account,
+                        currency: 'I:EUR',
+                        amount: '20',
+                        type: 'Deposit',
+                    } );
+
+                    check_balance(as, external_account, '0');
+                },
+                (as, err) =>
+                {
+                    console.log(as.state.test_name);
+                    console.log(err);
+                    console.log(as.state.error_info);
+                    done(as.state.last_exception || 'Fail');
+                }
+            );
+            as.add( (as) => done() );
+            as.execute(); 
         });
         
     });
