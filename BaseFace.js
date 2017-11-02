@@ -8,7 +8,7 @@ const { FTN19_VERSION, PING_VERSION, specDirs } = require( './main' );
 
 /**
  * Base Face with neutral common registration functionality
- * 
+ *
  * @note Not official API
  */
 class BaseFace extends PingFace {
@@ -34,7 +34,7 @@ class BaseFace extends PingFace {
 
     /**
      * CCM registration helper
-     * 
+     *
      * @param {AsyncSteps} as - steps interface
      * @param {AdvancedCCM} ccm - CCM instance
      * @param {string} name - CCM registration name

@@ -185,7 +185,7 @@ class LimitsService extends BaseService {
 
     /**
      * Register futoin.xfers.limits interface with Executor
-     * 
+     *
      * @function LimitsService.register
      * @param {AsyncSteps} as - steps interface
      * @param {Executor} executor - executor instance

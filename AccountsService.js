@@ -614,7 +614,7 @@ class AccountsService extends BaseService {
 
     /**
      * Register futoin.xfer.accounts interface with Executor
-     * 
+     *
      * @function AccountsService.register
      * @param {AsyncSteps} as - steps interface
      * @param {Executor} executor - executor instance

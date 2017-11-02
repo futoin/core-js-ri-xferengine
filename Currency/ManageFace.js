@@ -13,7 +13,7 @@ class ManageFace extends BaseFace {
 
     /**
      * CCM registration helper
-     * 
+     *
      * @function CurrencyManageFace.register
      * @param {AsyncSteps} as - steps interface
      * @param {AdvancedCCM} ccm - CCM instance

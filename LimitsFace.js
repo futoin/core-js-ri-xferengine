@@ -12,7 +12,7 @@ class LimitsFace extends BaseFace {
 
     /**
      * CCM registration helper
-     * 
+     *
      * @function LimitsFace.register
      * @param {AsyncSteps} as - steps interface
      * @param {AdvancedCCM} ccm - CCM instance

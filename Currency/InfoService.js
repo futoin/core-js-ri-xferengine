@@ -112,7 +112,7 @@ class InfoService extends BaseService {
 
     /**
      * Register futoin.currency.manage interface with Executor
-     * 
+     *
      * @function CurrencyInfoService.register
      * @param {AsyncSteps} as - steps interface
      * @param {Executor} executor - executor instance

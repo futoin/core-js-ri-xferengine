@@ -15,7 +15,7 @@ class InfoFace extends BaseFace {
 
     /**
      * CCM registration helper
-     * 
+     *
      * @function CurrencyInfoFace.register
      * @param {AsyncSteps} as - steps interface
      * @param {AdvancedCCM} ccm - CCM instance

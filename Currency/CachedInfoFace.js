@@ -4,10 +4,10 @@ const InfoFace = require( './InfoFace' );
 
 /**
  * An efficient version of Currency/InfoFace.
- * 
+ *
  * Keeps local cache of currencies and exchange rates.
  * Listens on related event stream for changes as LIVE component.
- * 
+ *
  * @alias CurrencyCacheInfoFace
  */
 class CacheInfoFace extends InfoFace {
@@ -16,7 +16,7 @@ class CacheInfoFace extends InfoFace {
 
     /**
      * CCM registration helper
-     * 
+     *
      * @function CurrencyCacheInfoFace.register
      * @param {AsyncSteps} as - steps interface
      * @param {AdvancedCCM} ccm - CCM instance

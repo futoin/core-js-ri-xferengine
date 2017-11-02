@@ -12,7 +12,7 @@ class AccountsFace extends BaseFace {
 
     /**
      * CCM registration helper
-     * 
+     *
      * @function AccountsFace.register
      * @param {AsyncSteps} as - steps interface
      * @param {AdvancedCCM} ccm - CCM instance

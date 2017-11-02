@@ -52,7 +52,7 @@ class BaseService extends PingService {
 
     /**
      * Check value against type in spec of implemented interface
-     * 
+     *
      * @param {string} type - name of defined type
      * @param {*} val - value to check
      * @returns {boolean} result of check

@@ -9,7 +9,7 @@ const { DB_UUID_HISTORY_TABLE } = require( './main' );
 class UUIDTool {
     /**
      * Generate UUID v4
-     * 
+     *
      * @returns {Buffer} buffer of 16 items
      */
     static genBin() {
@@ -19,7 +19,7 @@ class UUIDTool {
 
     /**
      * Generate UUID v4 encoded in Base64 without padding
-     * 
+     *
      * @returns {string} 22 characters
      */
     static genB64() {
@@ -28,7 +28,7 @@ class UUIDTool {
 
     /**
      * Call on xfer to ensure whole history uniqueness (just in case)
-     * 
+     *
      * @param {XferBuilder} xfer - xfer builder object
      * @param {string} val - UUID in Base64 format without padding
      */
@@ -39,7 +39,7 @@ class UUIDTool {
 
     /**
      * Generate UUID v4 in scope of transaction
-     * 
+     *
      * @param {XferBuilder} xfer - xfer builder object
      * @returns {string} UUID encoded in Base64 without padding
      */

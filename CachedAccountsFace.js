@@ -4,7 +4,7 @@ const AccountsFace = require( './AccountsFace' );
 
 /**
  * Efficient cached AccountsFace with event-based cache invalidation
- * 
+ *
  * Keeps local cache of limits and invalidates based on LIVE events.
  */
 class CachedAccountsFace extends AccountsFace {
@@ -12,7 +12,7 @@ class CachedAccountsFace extends AccountsFace {
 
     /**
      * CCM registration helper
-     * 
+     *
      * @function CachedAccountsFace.register
      * @param {AsyncSteps} as - steps interface
      * @param {AdvancedCCM} ccm - CCM instance

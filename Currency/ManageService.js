@@ -155,7 +155,7 @@ class ManageService extends BaseService {
 
     /**
      * Register futoin.currency.manage interface with Executor
-     * 
+     *
      * @function CurrencyManageService.register
      * @param {AsyncSteps} as - steps interface
      * @param {Executor} executor - executor instance

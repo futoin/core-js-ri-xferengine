@@ -173,7 +173,7 @@ class XferTools {
             }
         } );
 
-        // 
+        //
         as.add( ( as ) => {
             const new_stats = AmountTools.prepNewStats( stats, deltas );
 
@@ -259,7 +259,7 @@ class XferTools {
             } );
         } );
 
-        // 
+        //
         as.add( ( as ) => {
             const dec_places = currency_info.dec_places;
 
@@ -998,6 +998,9 @@ class XferTools {
         as.add( ( as ) => {
             as.success( xfer.id );
         } );
+    }
+
+    processCancel( as, _xfer ) {
     }
 
     _feeExtIn( as, fee_xfer ) {
