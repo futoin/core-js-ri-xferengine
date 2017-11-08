@@ -252,16 +252,13 @@ CREATE TABLE active_xfers (
         -- Deposits
         'Deposit',
         'Withdrawal',
-        'CancelWithdrawal',
         -- Retail
         'Purchase',
-        'CancelPurchase',
         'Refund',
         'PreAuth',
         'ClearAuth',
         -- Gaming
         'Bet',
-        'CancelBet',
         'Win',
         -- Bonus
         'Bonus',

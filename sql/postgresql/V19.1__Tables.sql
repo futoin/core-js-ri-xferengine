@@ -224,16 +224,13 @@ CREATE TYPE xfer_type AS ENUM(
     -- Deposits
     'Deposit',
     'Withdrawal',
-    'CancelWithdrawal',
     -- Retail
     'Purchase',
-    'CancelPurchase',
     'Refund',
     'PreAuth',
     'ClearAuth',
     -- Gaming
     'Bet',
-    'CancelBet',
     'Win',
     -- Bonus
     'Bonus',
