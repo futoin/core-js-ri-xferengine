@@ -642,6 +642,36 @@ class XferTools {
         } );
     }
 
+    _checkCancelLimits( as, dbxfer, xfer ) {
+        as.add( ( as ) => {
+            // Check if enough balance, if not Transit account
+            if ( xfer.dst_info.acct_type !== 'Transit' &&
+                 xfer.dst_info.acct_type !== 'System' &&
+                 !AmountTools.checkXferAmount( xfer.dst_amount, xfer.dst_info )
+            ) {
+                as.error( 'NotEnoughFunds' );
+            }
+
+            if ( xfer.src_limit_prefix ) {
+                this.addStatsCancel(
+                    as, dbxfer,
+                    xfer.src_info.holder,
+                    xfer.orig_ts,
+                    xfer.src_info.currency, xfer.src_amount,
+                    xfer.src_limit_prefix, xfer.src_limit_extra || {} );
+            }
+
+            if ( xfer.dst_limit_prefix ) {
+                this.addStatsCancel(
+                    as, dbxfer,
+                    xfer.dst_info.holder,
+                    xfer.orig_ts,
+                    xfer.dst_info.currency, xfer.dst_amount,
+                    xfer.dst_limit_prefix, xfer.dst_limit_extra || {} );
+            }
+        } );
+    }
+
     _analyzeXferRisk( as, xfer ) {
         as.add( ( as ) => {
             if ( !xfer.do_risk ) {
@@ -748,19 +778,28 @@ class XferTools {
         src_q.where( 'currency_id', acct_info.currency_id );
     }
 
-    _increaseBalance( dbxfer, xfer_id, cancel=false ) {
+    _increaseBalance( dbxfer, xfer, cancel=false ) {
         const sq = dbxfer.select( DB_XFERS_TABLE, { selected: 1 } )
-            .where( 'uuidb64', xfer_id );
+            .where( 'uuidb64', xfer.id );
 
         const uq = dbxfer.update( DB_ACCOUNTS_TABLE, { affected: 1 } );
 
         if ( cancel ) {
             sq.where( 'xfer_status', 'Canceled' );
 
-            uq.set( 'balance', uq.expr( `balance + ${uq.backref( sq, 'src_amount' )}` ) );
+            if ( xfer.preauth ) {
+                uq.set( 'reserved', uq.expr( `reserved - ${uq.backref( sq, 'src_amount' )}` ) );
+            } else {
+                uq.set( 'balance', uq.expr( `balance + ${uq.backref( sq, 'src_amount' )}` ) );
+            }
+
             uq.set( 'updated', dbxfer.helpers().now() );
             uq.where( 'uuidb64', uq.backref( sq, 'src' ) );
             uq.where( 'currency_id', uq.backref( sq, 'src_currency_id' ) );
+
+            if ( xfer.preauth ) {
+                uq.where( 'reserved >=', uq.backref( sq, 'src_amount' ) );
+            }
         } else {
             sq.where( 'xfer_status', 'Done' );
 
@@ -845,7 +884,7 @@ class XferTools {
             //=========================
 
             if ( xfer.status === 'Done' ) {
-                this._increaseBalance( dbxfer, xfer.id );
+                this._increaseBalance( dbxfer, xfer );
             }
 
             //=========================
@@ -919,7 +958,7 @@ class XferTools {
                     xfer.status = 'Done';
 
                     this._completeXfer( dbxfer, xfer.id, 'WaitUser', xfer.status );
-                    this._increaseBalance( dbxfer, xfer.id );
+                    this._increaseBalance( dbxfer, xfer );
                 }
             }
         } );
@@ -946,7 +985,7 @@ class XferTools {
                 xfer.id = xfer.id || UUIDTool.genXfer( dbxfer );
                 xfer.status = xfer.status || 'Canceled';
 
-                this._checkXferLimits( as, dbxfer, xfer );
+                this._checkCancelLimits( as, dbxfer, xfer );
                 this._analyzeXferRisk( as, xfer );
                 this._createXfer( as, dbxfer, xfer );
             }
@@ -965,7 +1004,7 @@ class XferTools {
         this._completeXfer( dbxfer, xfer.in_xfer.id, 'WaitExtIn' );
 
         // optimized out
-        //this._increaseBalance( dbxfer, xfer.in_xfer.id );
+        //this._increaseBalance( dbxfer, xfer.in_xfer );
         //this._decreaseBalance( dbxfer, xfer );
 
         if ( xfer.out_xfer ) {
@@ -974,7 +1013,7 @@ class XferTools {
             this._completeXfer( dbxfer, xfer.id, 'WaitExtIn', xfer.status );
 
             // optimized out
-            //this._increaseBalance( dbxfer, xfer.id );
+            //this._increaseBalance( dbxfer, xfer );
             //this._decreaseBalance( dbxfer, xfer.out_xfer );
 
             this._completeXfer( dbxfer, xfer.out_xfer.id,
@@ -983,12 +1022,12 @@ class XferTools {
             xfer.status = 'Done';
 
             this._completeXfer( dbxfer, xfer.id, 'WaitExtIn', xfer.status );
-            this._increaseBalance( dbxfer, xfer.id );
+            this._increaseBalance( dbxfer, xfer );
 
             if ( xfer.xfer_fee ) {
                 this._decreaseBalance( dbxfer, xfer.xfer_fee );
                 this._completeXfer( dbxfer, xfer.xfer_fee.id, 'WaitExtIn', 'Done' );
-                this._increaseBalance( dbxfer, xfer.xfer_fee.id );
+                this._increaseBalance( dbxfer, xfer.xfer_fee );
             }
         }
 
@@ -1005,7 +1044,7 @@ class XferTools {
 
             this._completeXfer( dbxfer, xfer.xfer_fee.id,
                 xfer.xfer_fee.status, 'Canceled' );
-            this._increaseBalance( dbxfer, xfer.xfer_fee.id, true );
+            this._increaseBalance( dbxfer, xfer.xfer_fee, true );
         }
 
         if ( xfer.in_xfer.status === 'Done' ) {
@@ -1014,7 +1053,7 @@ class XferTools {
 
         this._completeXfer( dbxfer, xfer.in_xfer.id,
             xfer.in_xfer.status, 'Canceled' );
-        this._increaseBalance( dbxfer, xfer.in_xfer.id, true );
+        this._increaseBalance( dbxfer, xfer.in_xfer, true );
 
         dbxfer.execute( as );
     }
@@ -1026,12 +1065,12 @@ class XferTools {
             'WaitExtOut', 'Done' );
 
         // optimized out
-        //this._increaseBalance( dbxfer, xfer.id );
+        //this._increaseBalance( dbxfer, xfer );
         //this._decreaseBalance( dbxfer, xfer.out_xfer );
 
         this._completeXfer( dbxfer, xfer.out_xfer.id,
             'WaitExtOut', 'Done' );
-        this._increaseBalance( dbxfer, xfer.out_xfer.id );
+        this._increaseBalance( dbxfer, xfer.out_xfer );
 
         dbxfer.execute( as );
     }
@@ -1047,7 +1086,7 @@ class XferTools {
             xfer.out_xfer.status, 'Canceled' );
 
         // optimized out
-        //this._increaseBalance( dbxfer, xfer.out_xfer.id, true );
+        //this._increaseBalance( dbxfer, xfer.out_xfer, true );
         //this._decreaseBalance( dbxfer, xfer.id );
 
         this._completeXfer( dbxfer, xfer.id,
@@ -1056,7 +1095,7 @@ class XferTools {
         if ( ( xfer.status === 'Done' ) ||
              ( xfer.status === 'WaitExtOut' )
         ) {
-            this._increaseBalance( dbxfer, xfer.id, true );
+            this._increaseBalance( dbxfer, xfer, true );
         }
 
         dbxfer.execute( as );

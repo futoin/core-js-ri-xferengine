@@ -419,7 +419,7 @@ module.exports = function(describe, it, vars) {
                     // cancel stats
                     //---
                     const xfer5 = db.newXfer();
-                    xt.addStatsCancel( as, xfer5, holder, moment.utc(), 'I:EUR', '1.00', 'inbound' );
+                    xt.addStatsCancel( as, xfer5, holder, moment.utc().format(), 'I:EUR', '1.00', 'inbound' );
                     as.add( (as) => xfer5.execute( as ) );                                            
                     
                     // try limit again
@@ -447,13 +447,13 @@ module.exports = function(describe, it, vars) {
                     {
                         const xfer = db.newXfer();
                         xt.addStatsCancel( as, xfer, holder,
-                                           moment.utc().startOf('month').subtract(1, 'day'),
+                                           moment.utc().startOf('month').subtract(1, 'day').format(),
                                            'I:EUR', '1.00', 'inbound' );
                         xt.addStatsCancel( as, xfer, holder,
-                                           moment.utc().startOf('week').subtract(1, 'day'),
+                                           moment.utc().startOf('week').subtract(1, 'day').format(),
                                            'I:EUR', '1.00', 'inbound' );
                         xt.addStatsCancel( as, xfer, holder,
-                                           moment.utc().subtract(1, 'day'),
+                                           moment.utc().subtract(1, 'day').format(),
                                            'I:EUR', '1.00', 'inbound' );
                     }
                 },
