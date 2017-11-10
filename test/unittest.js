@@ -54,6 +54,13 @@ describe('AmountTools', function() {
         
     });
     
+    it('should set add/subtract amounts', function() {
+        expect(AmountTools.subtract('123456.75', '0.11', 2)).to.equal('123456.64');
+        expect(AmountTools.subtract('123456.75', '0.1123', 4)).to.equal('123456.6377');
+        expect(AmountTools.add('123456.75', '0.11', 2)).to.equal('123456.86');
+        expect(AmountTools.add('123456.75', '0.1123', 4)).to.equal('123456.8623');
+    });
+    
     it('should find & convert amount fields', function() {
         expect(AmountTools.convAllAmounts({
             'some_value' : '123',

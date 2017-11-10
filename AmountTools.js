@@ -82,6 +82,18 @@ class AmountTools {
         return res.times( rate ).toFixed( dec_places );
     }
 
+    static add( a, b, dec_places ) {
+        BigNumber.config( dec_places );
+        const res = new BigNumber( a, 10 );
+        return res.plus( b ).toFixed( dec_places );
+    }
+
+    static subtract( a, b, dec_places ) {
+        BigNumber.config( dec_places );
+        const res = new BigNumber( a, 10 );
+        return res.minus( b ).toFixed( dec_places );
+    }
+
     static isAmountField( field ) {
         return field.endsWith( '_amt' );
     }

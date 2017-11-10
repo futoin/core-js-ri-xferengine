@@ -2933,9 +2933,20 @@ module.exports = function(describe, it, vars) {
                         type: 'Deposit',
                         src_limit_prefix: false,
                         dst_limit_prefix: false,
+                        extra_fee: {
+                            dst_account: fee_account,
+                            currency: 'I:EUR',
+                            amount: '0.20',
+                        },
+                        xfer_fee: {
+                            dst_account: fee_account,
+                            currency: 'I:EUR',
+                            amount: '0.10',
+                        },
                     } );
 
-                    check_balance(as, first_account, '410');
+                    check_balance(as, first_account, '400');
+                    check_balance(as, fee_account, '30');
                     
                     dxt.processCancel( as, {
                         ext_id,
@@ -2947,9 +2958,20 @@ module.exports = function(describe, it, vars) {
                         type: 'Deposit',
                         src_limit_prefix: false,
                         dst_limit_prefix: false,
+                        extra_fee: {
+                            dst_account: fee_account,
+                            currency: 'I:EUR',
+                            amount: '0.20',
+                        },
+                        xfer_fee: {
+                            dst_account: fee_account,
+                            currency: 'I:EUR',
+                            amount: '0.10',
+                        },
                     } );
 
                     check_balance(as, first_account, '0');
+                    check_balance(as, fee_account, '0');
 
                     // repeat
                     dxt.processCancel( as, {
@@ -2962,9 +2984,20 @@ module.exports = function(describe, it, vars) {
                         type: 'Deposit',
                         src_limit_prefix: false,
                         dst_limit_prefix: false,
+                        extra_fee: {
+                            dst_account: fee_account,
+                            currency: 'I:EUR',
+                            amount: '0.20',
+                        },
+                        xfer_fee: {
+                            dst_account: fee_account,
+                            currency: 'I:EUR',
+                            amount: '0.10',
+                        },
                     } );
 
                     check_balance(as, first_account, '0');
+                    check_balance(as, fee_account, '0');
                     
                     //-----
                     as.add( (as) => as.state.test_name = 'simple pre-cancel ext_id' );
@@ -2980,9 +3013,20 @@ module.exports = function(describe, it, vars) {
                         type: 'Deposit',
                         src_limit_prefix: false,
                         dst_limit_prefix: false,
+                        extra_fee: {
+                            dst_account: fee_account,
+                            currency: 'I:EUR',
+                            amount: '0.20',
+                        },
+                        xfer_fee: {
+                            dst_account: fee_account,
+                            currency: 'I:EUR',
+                            amount: '0.10',
+                        },
                     } );
 
                     check_balance(as, first_account, '0');
+                    check_balance(as, fee_account, '0');
                     
                     as.add(
                         (as) => {
@@ -2996,6 +3040,16 @@ module.exports = function(describe, it, vars) {
                                 type: 'Deposit',
                                 src_limit_prefix: false,
                                 dst_limit_prefix: false,
+                                extra_fee: {
+                                    dst_account: fee_account,
+                                    currency: 'I:EUR',
+                                    amount: '0.20',
+                                },
+                                xfer_fee: {
+                                    dst_account: fee_account,
+                                    currency: 'I:EUR',
+                                    amount: '0.10',
+                                },
                             } );
                             as.add( (as) => as.error('Fail') );
                         },
@@ -3007,6 +3061,7 @@ module.exports = function(describe, it, vars) {
                     );
 
                     check_balance(as, first_account, '0');
+                    check_balance(as, fee_account, '0');
                     
                     dxt.processCancel( as, {
                         ext_id,
@@ -3018,9 +3073,20 @@ module.exports = function(describe, it, vars) {
                         type: 'Deposit',
                         src_limit_prefix: false,
                         dst_limit_prefix: false,
+                        extra_fee: {
+                            dst_account: fee_account,
+                            currency: 'I:EUR',
+                            amount: '0.20',
+                        },
+                        xfer_fee: {
+                            dst_account: fee_account,
+                            currency: 'I:EUR',
+                            amount: '0.10',
+                        },
                     } );
 
                     check_balance(as, first_account, '0');
+                    check_balance(as, fee_account, '0');
 
                     //-----
                     as.add( (as) => as.state.test_name = 'simple post-cancel id' );

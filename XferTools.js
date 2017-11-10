@@ -678,10 +678,21 @@ class XferTools {
             // Check if enough balance, if not Transit account
             if ( xfer.dst_info.acct_type !== 'Transit' &&
                  xfer.dst_info.acct_type !== 'System' &&
-                 !AmountTools.checkXferAmount( xfer.dst_amount, xfer.dst_info ) &&
                  ( xfer.status !== 'Canceled' )
             ) {
-                as.error( 'NotEnoughFunds' );
+                let cancel_amt = xfer.dst_amount;
+
+                if ( xfer.xfer_fee ) {
+                    cancel_amt = AmountTools.subtract(
+                        cancel_amt,
+                        xfer.xfer_fee.src_amount,
+                        xfer.dst_info.dec_places
+                    );
+                }
+
+                if ( !AmountTools.checkXferAmount( cancel_amt, xfer.dst_info ) ) {
+                    as.error( 'NotEnoughFunds' );
+                }
             }
 
             if ( xfer.src_limit_prefix ) {
@@ -1039,15 +1050,15 @@ class XferTools {
         const dbxfer = this._ccm.db( 'xfer' ).newXfer();
 
         if ( xfer.status === 'Done' ) {
+            if ( xfer.xfer_fee && xfer.xfer_fee.id ) {
+                this._completeCancel( as, xfer.xfer_fee );
+            }
+
             this._decreaseBalance( dbxfer, xfer, true );
         }
 
         this._completeXfer( dbxfer, xfer, 'Canceled' );
         this._increaseBalance( dbxfer, xfer, true );
-
-        if ( xfer.xfer_fee ) {
-            this._completeCancel( xfer.xfer_fee );
-        }
 
         dbxfer.execute( as );
     }
@@ -1132,10 +1143,6 @@ class XferTools {
 
         this._completeXfer( dbxfer, xfer, 'Canceled' );
 
-        if ( xfer.xfer_fee ) {
-            this._completeCancel( xfer.xfer_fee );
-        }
-
         dbxfer.execute( as );
     }
 
@@ -1210,7 +1217,9 @@ class XferTools {
                 as.add( ( as ) => this._completeCancel( as, xfer ) );
             }
 
-            if ( xfer.extra_fee && ( xfer.extra_fee.status != 'Canceled' ) ) {
+            if ( xfer.extra_fee && xfer.extra_fee.id &&
+                 ( xfer.extra_fee.status != 'Canceled' )
+            ) {
                 if ( xfer.in_xfer ) {
                     as.add( ( as ) => this._feeCancelExtIn( as, xfer.extra_fee ) );
                     as.add( ( as ) => this._completeCancelExtIn( as, xfer.extra_fee ) );
