@@ -978,28 +978,24 @@ class XferTools {
                 xfer.repeat = false;
 
                 if ( xfer.out_xfer ) {
-                    xfer.status = 'WaitExtOut';
-
-                    this._completeXfer( dbxfer, xfer.id, 'WaitUser', xfer.status );
+                    this._completeXfer( dbxfer, xfer, 'WaitExtOut' );
                     // no balance updates
-                    this._completeXfer( dbxfer, xfer.out_xfer.id,
-                        'WaitUser', xfer.status );
+                    this._completeXfer( dbxfer, xfer.out_xfer, xfer.status );
                 } else {
-                    xfer.status = 'Done';
-
-                    this._completeXfer( dbxfer, xfer.id, 'WaitUser', xfer.status );
+                    this._completeXfer( dbxfer, xfer );
                     this._increaseBalance( dbxfer, xfer );
                 }
             }
         } );
     }
 
-    _completeXfer( dbxfer, xfer_id, prev_state, next_state='Done' ) {
+    _completeXfer( dbxfer, xfer, next_state='Done' ) {
         dbxfer.update( DB_XFERS_TABLE, { affected: 1 } )
             .set( 'xfer_status', next_state )
             .set( 'updated', dbxfer.helpers().now() )
-            .where( 'uuidb64', xfer_id )
-            .where( 'xfer_status', prev_state );
+            .where( 'uuidb64', xfer.id )
+            .where( 'xfer_status', xfer.status );
+        xfer.status = next_state;
     }
 
     _cancelXfer( as, dbxfer, xfer ) {
@@ -1013,7 +1009,7 @@ class XferTools {
             // Insert new xfer
             if ( !xfer.id ) {
                 xfer.id = xfer.id || UUIDTool.genXfer( dbxfer );
-                xfer.status = xfer.status || 'Canceled';
+                xfer.status = 'Canceled';
 
                 this._checkCancelLimits( as, dbxfer, xfer );
                 this._analyzeXferRisk( as, xfer );
@@ -1024,39 +1020,34 @@ class XferTools {
 
     _completeCancel( as, xfer ) {
         const dbxfer = this._ccm.db( 'xfer' ).newXfer();
-        this._completeXfer( dbxfer, xfer.id, xfer.status, 'Canceled' );
+        this._completeXfer( dbxfer, xfer, 'Canceled' );
         dbxfer.execute( as );
     }
 
     _completeExtIn( as, xfer ) {
         const dbxfer = this._ccm.db( 'xfer' ).newXfer();
         this._decreaseBalance( dbxfer, xfer.in_xfer );
-        this._completeXfer( dbxfer, xfer.in_xfer.id, 'WaitExtIn' );
+        this._completeXfer( dbxfer, xfer.in_xfer );
 
         // optimized out
         //this._increaseBalance( dbxfer, xfer.in_xfer );
         //this._decreaseBalance( dbxfer, xfer );
 
         if ( xfer.out_xfer ) {
-            xfer.status = 'WaitExtOut';
-
-            this._completeXfer( dbxfer, xfer.id, 'WaitExtIn', xfer.status );
+            this._completeXfer( dbxfer, xfer, 'WaitExtOut' );
 
             // optimized out
             //this._increaseBalance( dbxfer, xfer );
             //this._decreaseBalance( dbxfer, xfer.out_xfer );
 
-            this._completeXfer( dbxfer, xfer.out_xfer.id,
-                'WaitExtIn', 'WaitExtOut' );
+            this._completeXfer( dbxfer, xfer.out_xfer, 'WaitExtOut' );
         } else {
-            xfer.status = 'Done';
-
-            this._completeXfer( dbxfer, xfer.id, 'WaitExtIn', xfer.status );
+            this._completeXfer( dbxfer, xfer );
             this._increaseBalance( dbxfer, xfer );
 
             if ( xfer.xfer_fee ) {
                 this._decreaseBalance( dbxfer, xfer.xfer_fee );
-                this._completeXfer( dbxfer, xfer.xfer_fee.id, 'WaitExtIn', 'Done' );
+                this._completeXfer( dbxfer, xfer.xfer_fee );
                 this._increaseBalance( dbxfer, xfer.xfer_fee );
             }
         }
@@ -1072,8 +1063,7 @@ class XferTools {
                 this._decreaseBalance( dbxfer, xfer.xfer_fee, true );
             }
 
-            this._completeXfer( dbxfer, xfer.xfer_fee.id,
-                xfer.xfer_fee.status, 'Canceled' );
+            this._completeXfer( dbxfer, xfer.xfer_fee, 'Canceled' );
             this._increaseBalance( dbxfer, xfer.xfer_fee, true );
         }
 
@@ -1081,8 +1071,7 @@ class XferTools {
             this._decreaseBalance( dbxfer, xfer.in_xfer, true );
         }
 
-        this._completeXfer( dbxfer, xfer.in_xfer.id,
-            xfer.in_xfer.status, 'Canceled' );
+        this._completeXfer( dbxfer, xfer.in_xfer, 'Canceled' );
         this._increaseBalance( dbxfer, xfer.in_xfer, true );
 
         dbxfer.execute( as );
@@ -1091,15 +1080,13 @@ class XferTools {
     _completeExtOut( as, xfer ) {
         const dbxfer = this._ccm.db( 'xfer' ).newXfer();
 
-        this._completeXfer( dbxfer, xfer.id,
-            'WaitExtOut', 'Done' );
+        this._completeXfer( dbxfer, xfer, 'Done' );
 
         // optimized out
         //this._increaseBalance( dbxfer, xfer );
         //this._decreaseBalance( dbxfer, xfer.out_xfer );
 
-        this._completeXfer( dbxfer, xfer.out_xfer.id,
-            'WaitExtOut', 'Done' );
+        this._completeXfer( dbxfer, xfer.out_xfer, 'Done' );
         this._increaseBalance( dbxfer, xfer.out_xfer );
 
         dbxfer.execute( as );
@@ -1112,15 +1099,13 @@ class XferTools {
             this._decreaseBalance( dbxfer, xfer.out_xfer, true );
         }
 
-        this._completeXfer( dbxfer, xfer.out_xfer.id,
-            xfer.out_xfer.status, 'Canceled' );
+        this._completeXfer( dbxfer, xfer.out_xfer, 'Canceled' );
 
         // optimized out
         //this._increaseBalance( dbxfer, xfer.out_xfer, true );
         //this._decreaseBalance( dbxfer, xfer.id );
 
-        this._completeXfer( dbxfer, xfer.id,
-            xfer.status, 'Canceled' );
+        this._completeXfer( dbxfer, xfer, 'Canceled' );
 
         if ( ( xfer.status === 'Done' ) ||
              ( xfer.status === 'WaitExtOut' )
@@ -1200,18 +1185,18 @@ class XferTools {
                 as.add( ( as ) => this._completeCancelExtOut( as, xfer ) );
             }
 
-            if ( xfer.extra_fee && ( xfer.extra_fee.status != 'Canceled' ) ) {
-                as.add( ( as ) => this._feeCancelExtIn( as, xfer.extra_fee ) );
-                as.add( ( as ) => this._completeCancelExtIn( as, xfer.extra_fee ) );
-            }
-
             if ( xfer.in_xfer && ( xfer.in_xfer.status != 'Canceled' ) ) {
+                if ( xfer.extra_fee && ( xfer.extra_fee.status != 'Canceled' ) ) {
+                    as.add( ( as ) => this._feeCancelExtIn( as, xfer.extra_fee ) );
+                    as.add( ( as ) => this._completeCancelExtIn( as, xfer.extra_fee ) );
+                }
+
                 as.add( ( as ) => this._domainCancelExtIn( as, xfer.in_xfer ) );
                 as.add( ( as ) => this._completeCancelExtIn( as, xfer ) );
             }
 
             if ( xfer.status != 'Canceled' ) {
-                this._completeCancel( xfer );
+                as.add( ( as ) => this._completeCancel( as, xfer ) );
             }
         } );
         as.add( ( as ) => {
