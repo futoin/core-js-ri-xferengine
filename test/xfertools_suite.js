@@ -473,6 +473,7 @@ module.exports = function(describe, it, vars) {
         let system_account;
         let first_account;
         let second_account
+        let foreign_account
         let external_account;
         let first_transit;
         let second_transit;
@@ -577,6 +578,15 @@ module.exports = function(describe, it, vars) {
                             'Second'
                         );
                         as.add( (as, id) => second_account = id );
+                        
+                        xferacct.addAccount(
+                            as,
+                            holder,
+                            'Regular',
+                            'L:XFRT',
+                            'Foreign'
+                        );
+                        as.add( (as, id) => foreign_account = id );
                         
                         xferacct.addAccount(
                             as,
@@ -2661,6 +2671,246 @@ module.exports = function(describe, it, vars) {
             );
             as.add( (as) => done() );
             as.execute(); 
+        });
+        
+        it('should repeat with changed currency', function(done) {
+            const xt = new class extends XferTools {
+                constructor() {
+                    super( ccm, 'Payments' );
+                }
+            };
+            
+            as.add(
+                (as) =>
+                {
+                    const currmgr = ccm.iface('currency.manage');
+                    currmgr.setExRate(as, 'I:EUR', 'L:XFRT', '2.05', '0.05');
+                    currmgr.setExRate(as, 'I:EUR', 'I:USD', '1.05', '0.00');
+                    currmgr.setExRate(as, 'I:USD', 'L:XFRT', '1', '0.00');
+                    
+                    const in_ext_id = xt.makeExtId( foreign_account, 'FXI1');
+                    const in_ext_id2 = xt.makeExtId( foreign_account, 'FXI2');
+                    const orig_ts = moment.utc().format();
+                    const out_ext_id = xt.makeExtId( foreign_account, 'FXO1');
+                    const out_ext_id2 = xt.makeExtId( foreign_account, 'FXO2');
+                    
+                    as.add( (as) => as.state.test_name = 'in' );
+                    xt.processXfer( as, {
+                        ext_id: in_ext_id,
+                        orig_ts: orig_ts,
+                        src_account: system_account,
+                        dst_account: foreign_account,
+                        currency: 'I:EUR',
+                        amount: '20',
+                        type: 'Generic',
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
+                    } );
+                    
+                    check_balance(as, foreign_account, '40000');
+                    
+                    currmgr.setExRate(as, 'I:EUR', 'L:XFRT', '1.500', '0.05');
+                    
+                    as.add( (as) => as.state.test_name = 'repeat in' );
+                    xt.processXfer( as, {
+                        ext_id: in_ext_id,
+                        orig_ts: orig_ts,
+                        src_account: system_account,
+                        dst_account: foreign_account,
+                        currency: 'I:EUR',
+                        amount: '20',
+                        type: 'Generic',
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
+                    } );
+                    
+                    check_balance(as, foreign_account, '40000');
+
+                    currmgr.setExRate(as, 'I:EUR', 'L:XFRT', '1.95', '0.05');
+
+                    as.add( (as) => as.state.test_name = 'out' );
+                    xt.processXfer( as, {
+                        ext_id: out_ext_id,
+                        orig_ts: orig_ts,
+                        src_account: foreign_account,
+                        dst_account: system_account,
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
+                        currency: 'I:EUR',
+                        amount: '20',
+                        type: 'Generic',
+                    } );
+
+                    check_balance(as, foreign_account, '0');
+                    
+                    currmgr.setExRate(as, 'I:EUR', 'L:XFRT', '1.5', '0.05');
+
+                    as.add( (as) => as.state.test_name = 'repeat out' );
+                    xt.processXfer( as, {
+                        ext_id: out_ext_id,
+                        orig_ts: orig_ts,
+                        src_account: foreign_account,
+                        dst_account: system_account,
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
+                        currency: 'I:EUR',
+                        amount: '20',
+                        type: 'Generic',
+                    } );
+
+                    check_balance(as, foreign_account, '0');
+                    
+                    as.add( (as) => as.state.test_name = 'in 2' );
+                    xt.processXfer( as, {
+                        ext_id: in_ext_id2,
+                        orig_ts: orig_ts,
+                        src_account: system_account,
+                        dst_account: foreign_account,
+                        currency: 'I:USD',
+                        amount: '20',
+                        type: 'Generic',
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
+                    } );
+                    
+                    check_balance(as, foreign_account, '20000');
+                    
+                    currmgr.setExRate(as, 'I:USD', 'L:XFRT', '2', '0');
+                    
+                    as.add( (as) => as.state.test_name = 'repeat in' );
+                    xt.processXfer( as, {
+                        ext_id: in_ext_id2,
+                        orig_ts: orig_ts,
+                        src_account: system_account,
+                        dst_account: foreign_account,
+                        currency: 'I:USD',
+                        amount: '20',
+                        type: 'Generic',
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
+                    } );
+                    
+                    check_balance(as, foreign_account, '20000');
+
+                    as.add( (as) => as.state.test_name = 'out 2' );
+                    xt.processXfer( as, {
+                        ext_id: out_ext_id2,
+                        orig_ts: orig_ts,
+                        src_account: foreign_account,
+                        dst_account: system_account,
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
+                        currency: 'I:USD',
+                        amount: '10',
+                        type: 'Generic',
+                    } );
+
+                    check_balance(as, foreign_account, '0');
+
+                    as.add( (as) => as.state.test_name = 'repeat out 2' );
+                    xt.processXfer( as, {
+                        ext_id: out_ext_id2,
+                        orig_ts: orig_ts,
+                        src_account: foreign_account,
+                        dst_account: system_account,
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
+                        currency: 'I:USD',
+                        amount: '10',
+                        type: 'Generic',
+                    } );
+
+                    check_balance(as, foreign_account, '0');
+                    
+                    //----
+                    as.add( (as) => as.state.test_name = 'repeat in mismatch' );
+                    as.add(
+                        (as) => {
+                            xt.processXfer( as, {
+                                ext_id: in_ext_id,
+                                orig_ts: orig_ts,
+                                src_account: system_account,
+                                dst_account: foreign_account,
+                                currency: 'I:EUR',
+                                amount: '21',
+                                type: 'Generic',
+                                src_limit_prefix: false,
+                                dst_limit_prefix: false,
+                            } );
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'OriginalMismatch' ) {
+                                as.success();
+                            }
+                        }
+                    );
+
+                    as.add( (as) => as.state.test_name = 'repeat out mismatch' );
+                    as.add(
+                        (as) => {
+                            xt.processXfer( as, {
+                                ext_id: out_ext_id,
+                                orig_ts: orig_ts,
+                                src_account: foreign_account,
+                                dst_account: system_account,
+                                src_limit_prefix: false,
+                                dst_limit_prefix: false,
+                                currency: 'I:EUR',
+                                amount: '21',
+                                type: 'Generic',
+                            } );
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'OriginalMismatch' ) {
+                                as.success();
+                            }
+                        }
+                    );
+
+
+                    as.add( (as) => as.state.test_name = 'repeat out 2 mismatch' );
+                    as.add(
+                        (as) => {
+                            xt.processXfer( as, {
+                                ext_id: out_ext_id2,
+                                orig_ts: orig_ts,
+                                src_account: foreign_account,
+                                dst_account: system_account,
+                                src_limit_prefix: false,
+                                dst_limit_prefix: false,
+                                currency: 'I:USD',
+                                amount: '11',
+                                type: 'Generic',
+                            } );
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'OriginalMismatch' ) {
+                                as.success();
+                            }
+                        }
+                    );
+                },
+                (as, err) =>
+                {
+                    console.log(as.state.test_name);
+                    console.log(err);
+                    console.log(as.state.error_info);
+                    done(as.state.last_exception || 'Fail');
+                }
+            );
+            as.add( (as) => done() );
+            as.execute(); 
+        });
+
+        it('should cancel simple', function(done) {
+            done('TODO');
+        });
+
+        it('should cancel transit', function(done) {
+            done('TODO');
         });
     });
 };

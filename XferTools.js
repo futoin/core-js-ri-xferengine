@@ -371,16 +371,45 @@ class XferTools {
                     r.src_amount, xfer.src_info.dec_places );
                 r.dst_amount = AmountTools.fromStorage(
                     r.dst_amount, xfer.dst_info.dec_places );
+                r.misc_data = JSON.parse( r.misc_data );
 
                 if ( ( xfer.src_account !== r.src ) ||
                      ( xfer.src_info.currency_id !== r.src_currency_id ) ||
-                     !AmountTools.isEqual( xfer.src_amount, r.src_amount ) ||
                      ( xfer.dst_account !== r.dst ) ||
                      ( xfer.dst_info.currency_id !== r.dst_currency_id ) ||
-                     !AmountTools.isEqual( xfer.dst_amount, r.dst_amount ) ||
                      ( xfer.type !== r.xfer_type )
                 ) {
-                    as.error( "OriginalMismatch" );
+                    as.error( "OriginalMismatch", 'Account/Currency/Type' );
+                }
+
+                if ( ( xfer.src_info.currency !== xfer.currency ) &&
+                     ( xfer.dst_info.currency !== xfer.currency )
+                ) {
+                    if ( xfer.currency !== r.misc_data.currency ) {
+                        as.error( "OriginalMismatch", 'Currency' );
+                    }
+
+                    if ( !AmountTools.isEqual( xfer.amount, r.misc_data.amount ) ) {
+                        as.error( "OriginalMismatch", 'Currency' );
+                    }
+
+                    // Make sure to use original exrate
+                    xfer.src_amount = r.src_amount;
+                    xfer.dst_amount = r.dst_amount;
+                } else if ( xfer.src_info.currency === xfer.currency ) {
+                    if ( !AmountTools.isEqual( xfer.amount, r.src_amount ) ) {
+                        as.error( "OriginalMismatch", 'Currency' );
+                    }
+
+                    // Make sure to use original exrate
+                    xfer.dst_amount = r.dst_amount;
+                } else { // if ( xfer.dst_info.currency === xfer.currency )
+                    if ( !AmountTools.isEqual( xfer.amount, r.dst_amount ) ) {
+                        as.error( "OriginalMismatch", 'Currency' );
+                    }
+
+                    // Make sure to use original exrate
+                    xfer.src_amount = r.src_amount;
                 }
 
                 xfer.id = r.uuidb64;
@@ -388,7 +417,7 @@ class XferTools {
                 xfer.created = moment.utc( r.created ).format();
                 xfer.misc_data = Object.assign(
                     xfer.misc_data,
-                    JSON.parse( r.misc_data )
+                    r.misc_data
                 );
                 xfer.repeat = true;
 
@@ -402,7 +431,7 @@ class XferTools {
 
                 if ( r.extra_fee_id ) {
                     if ( !xfer.extra_fee ) {
-                        as.error( "OriginalMismatch" );
+                        as.error( "OriginalMismatch", 'ExtraFee' );
                     }
 
                     xfer.extra_fee.id = r.extra_fee_id;
@@ -413,7 +442,7 @@ class XferTools {
 
                 if ( r.xfer_fee_id ) {
                     if ( !xfer.xfer_fee ) {
-                        as.error( "OriginalMismatch" );
+                        as.error( "OriginalMismatch", 'Fee' );
                     }
 
                     xfer.xfer_fee.id = r.xfer_fee_id;
@@ -531,6 +560,7 @@ class XferTools {
             if ( ( xfer.src_info.currency !== xfer.currency ) &&
                  ( xfer.dst_info.currency !== xfer.currency )
             ) {
+                xfer.misc_data.amount = xfer.amount;
                 xfer.misc_data.currency = xfer.currency;
             }
 
