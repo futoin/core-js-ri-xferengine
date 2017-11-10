@@ -2906,7 +2906,177 @@ module.exports = function(describe, it, vars) {
         });
 
         it('should cancel simple', function(done) {
-            done('TODO');
+            const dxt = new class extends XferTools {
+                constructor() {
+                    super( ccm, 'Deposits' );
+                }
+            };
+            
+            as.add(
+                (as) =>
+                {
+                    const db = ccm.db('xfer');
+                    const orig_ts = moment.utc().format();
+                    let xfer;
+                    let ext_id;
+                    
+                    //-----
+                    as.add( (as) => as.state.test_name = 'simple post-cancel ext_id' );
+                    ext_id = dxt.makeExtId( first_account, 'CNCL1');
+                    dxt.processXfer( as, {
+                        ext_id,
+                        orig_ts,
+                        src_account: system_account,
+                        dst_account: first_account,
+                        currency: 'I:EUR',
+                        amount: '4.10',
+                        type: 'Deposit',
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
+                    } );
+
+                    check_balance(as, first_account, '410');
+                    
+                    dxt.processCancel( as, {
+                        ext_id,
+                        orig_ts,
+                        src_account: system_account,
+                        dst_account: first_account,
+                        currency: 'I:EUR',
+                        amount: '4.10',
+                        type: 'Deposit',
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
+                    } );
+
+                    check_balance(as, first_account, '0');
+
+                    // repeat
+                    dxt.processCancel( as, {
+                        ext_id,
+                        orig_ts,
+                        src_account: system_account,
+                        dst_account: first_account,
+                        currency: 'I:EUR',
+                        amount: '4.10',
+                        type: 'Deposit',
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
+                    } );
+
+                    check_balance(as, first_account, '0');
+                    
+                    //-----
+                    as.add( (as) => as.state.test_name = 'simple pre-cancel ext_id' );
+                    ext_id = dxt.makeExtId( first_account, 'CNCL2');
+                    
+                    dxt.processCancel( as, {
+                        ext_id,
+                        orig_ts,
+                        src_account: system_account,
+                        dst_account: first_account,
+                        currency: 'I:EUR',
+                        amount: '5.00',
+                        type: 'Deposit',
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
+                    } );
+
+                    check_balance(as, first_account, '0');
+                    
+                    as.add(
+                        (as) => {
+                            dxt.processXfer( as, {
+                                ext_id,
+                                orig_ts,
+                                src_account: system_account,
+                                dst_account: first_account,
+                                currency: 'I:EUR',
+                                amount: '5.00',
+                                type: 'Deposit',
+                                src_limit_prefix: false,
+                                dst_limit_prefix: false,
+                            } );
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'AlreadyCanceled' ) {
+                                as.success();
+                            }
+                        }
+                    );
+
+                    check_balance(as, first_account, '0');
+                    
+                    dxt.processCancel( as, {
+                        ext_id,
+                        orig_ts,
+                        src_account: system_account,
+                        dst_account: first_account,
+                        currency: 'I:EUR',
+                        amount: '5.00',
+                        type: 'Deposit',
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
+                    } );
+
+                    check_balance(as, first_account, '0');
+
+                    //-----
+                    as.add( (as) => as.state.test_name = 'simple post-cancel id' );
+                    let xfer_id;
+                    dxt.processXfer( as, {
+                        src_account: system_account,
+                        dst_account: first_account,
+                        currency: 'I:EUR',
+                        amount: '4.10',
+                        type: 'Deposit',
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
+                    } );
+                    as.add( (as, id) => {
+                        xfer_id = id;
+                    } );
+
+                    check_balance(as, first_account, '410');
+                    
+                    as.add( (as) => dxt.processCancel( as, {
+                        id : xfer_id,
+                        src_account: system_account,
+                        dst_account: first_account,
+                        currency: 'I:EUR',
+                        amount: '4.10',
+                        type: 'Deposit',
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
+                    } ) );
+
+                    check_balance(as, first_account, '0');
+
+                    // repeat
+                    as.add( (as) => dxt.processCancel( as, {
+                        id : xfer_id,
+                        src_account: system_account,
+                        dst_account: first_account,
+                        currency: 'I:EUR',
+                        amount: '4.10',
+                        type: 'Deposit',
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
+                    } ) );
+
+                    check_balance(as, first_account, '0');
+                },
+                (as, err) =>
+                {
+                    console.log(as.state.test_name);
+                    console.log(err);
+                    console.log(as.state.error_info);
+                    done(as.state.last_exception || 'Fail');
+                }
+            );
+            as.add( (as) => done() );
+            as.execute();         
         });
 
         it('should cancel transit', function(done) {
