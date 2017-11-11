@@ -50,48 +50,49 @@ class AmountTools {
     static sellRate( rate, margin ) {
         BigNumber.config( RATE_PRECISSION, ROUND_HALF_UP );
         const res = new BigNumber( rate, 10 );
-        return res.minus( margin ).toString();
+        return res.minus( margin, 10 ).toString();
     }
 
     static buyRate( rate, margin ) {
         BigNumber.config( RATE_PRECISSION, ROUND_HALF_UP );
         const res = new BigNumber( rate, 10 );
-        return res.plus( margin ).toString();
+        return res.plus( margin, 10 ).toString();
     }
 
     static backRate( rate ) {
         BigNumber.config( RATE_PRECISSION, ROUND_HALF_UP );
         const res = new BigNumber( '1', 10 );
-        return res.dividedBy( rate ).toString();
+        return res.dividedBy( rate, 10 ).toString();
     }
 
     static backMargin( margin, rate ) {
         BigNumber.config( RATE_PRECISSION, ROUND_UP );
         const res = new BigNumber( margin, 10 );
-        return res.dividedBy( rate ).dividedBy( rate ).toString();
+        const rn = new BigNumber( rate, 10 );
+        return res.dividedBy( rn ).dividedBy( rn ).toString();
     }
 
     static convAmount( amt, rate, dec_places, round_up=false ) {
         if ( round_up ) {
-            BigNumber.config( dec_places, ROUND_UP );
+            BigNumber.config( RATE_PRECISSION, ROUND_UP );
         } else {
-            BigNumber.config( dec_places, ROUND_DOWN );
+            BigNumber.config( RATE_PRECISSION, ROUND_DOWN );
         }
 
         const res = new BigNumber( amt, 10 );
-        return res.times( rate ).toFixed( dec_places );
+        return res.times( rate, 10 ).toFixed( dec_places );
     }
 
     static add( a, b, dec_places ) {
         BigNumber.config( dec_places );
         const res = new BigNumber( a, 10 );
-        return res.plus( b ).toFixed( dec_places );
+        return res.plus( b, 10 ).toFixed( dec_places );
     }
 
     static subtract( a, b, dec_places ) {
         BigNumber.config( dec_places );
         const res = new BigNumber( a, 10 );
-        return res.minus( b ).toFixed( dec_places );
+        return res.minus( b, 10 ).toFixed( dec_places );
     }
 
     static isAmountField( field ) {
@@ -122,7 +123,7 @@ class AmountTools {
 
             if ( this.isAmountField( field ) ) {
                 dv = new BigNumber( dv, 10 );
-                res[ field ] = dv.plus( sv ).toString();
+                res[ field ] = dv.plus( sv, 10 ).toString();
             } else {
                 res[ field ] += sv;
             }
@@ -143,10 +144,10 @@ class AmountTools {
                 sv = new BigNumber( sv, 10 );
 
                 if ( field.endsWith( '_min_amt' ) ) {
-                    if ( sv.lessThan( lv ) ) {
+                    if ( sv.lessThan( lv, 10 ) ) {
                         return false;
                     }
-                } else if ( sv.greaterThan( lv ) ) {
+                } else if ( sv.greaterThan( lv, 10 ) ) {
                     return false;
                 }
             } else if ( sv > lv ) {
