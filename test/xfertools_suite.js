@@ -3150,6 +3150,14 @@ module.exports = function(describe, it, vars) {
                 constructor() {
                     super( ccm, 'Payments' );
                 }
+                
+                _feeExtIn( as, fee_xfer ) {
+                    as.add( (as) => {} );
+                }
+
+                _feeCancelExtIn( as, fee_xfer ) {
+                    as.add( (as) => {} );
+                }
 
                 _domainExtIn( as, _in_xfer ) {
                     as.add( (as) => {} );
@@ -3197,12 +3205,18 @@ module.exports = function(describe, it, vars) {
                         type: 'Generic',
                         src_limit_prefix: false,
                         dst_limit_prefix: false,
+                        extra_fee: {
+                            dst_account: fee_account,
+                            currency: 'I:EUR',
+                            amount: '0.20',
+                        },
                     } );
                     as.add( (as, id ) => to_cancel.push(id));
 
-                    check_balance(as, external_account, '900');
+                    check_balance(as, external_account, '880');
                     check_balance(as, first_transit, '0');
                     check_balance(as, first_account, '100');
+                    check_balance(as, fee_account, '20');
                     
                     //---
                     as.add( (as) => as.state.test_name = 'Transit Out' );
@@ -3210,16 +3224,22 @@ module.exports = function(describe, it, vars) {
                         src_account: first_account,
                         dst_account: second_transit,
                         currency: 'I:EUR',
-                        amount: '1.00',
+                        amount: '0.70',
                         type: 'Generic',
                         src_limit_prefix: false,
                         dst_limit_prefix: false,
+                        extra_fee: {
+                            dst_account: fee_account,
+                            currency: 'I:EUR',
+                            amount: '0.30',
+                        },
                     } );
                     as.add( (as, id ) => to_cancel.push(id));
 
                     check_balance(as, first_account, '0');
                     check_balance(as, second_transit, '0');
-                    check_balance(as, external_account, '1000');
+                    check_balance(as, external_account, '950');
+                    check_balance(as, fee_account, '50');
                     
                     //---
                     as.add( (as) => as.state.test_name = 'Transit In-Out' );
@@ -3231,14 +3251,31 @@ module.exports = function(describe, it, vars) {
                         type: 'Generic',
                         src_limit_prefix: false,
                         dst_limit_prefix: false,
+                        extra_fee: {
+                            dst_account: fee_account,
+                            currency: 'I:EUR',
+                            amount: '0.40',
+                        },
                     } );
                     as.add( (as, id ) => to_cancel.push(id));
 
                     check_balance(as, first_transit, '0');
                     check_balance(as, second_transit, '0');
-                    check_balance(as, external_account, '1000');
+                    check_balance(as, external_account, '910');
+                    check_balance(as, fee_account, '90');
                     
                     //---
+                    pxt.processXfer( as, {
+                        src_account: fee_account,
+                        dst_account: external_account,
+                        currency: 'I:EUR',
+                        amount: '0.90',
+                        type: 'Generic',
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
+                    } );
+                    as.add( (as, id ) => to_cancel.push(id));
+                    
                     pxt.processXfer( as, {
                         src_account: external_account,
                         dst_account: system_account,
@@ -3266,9 +3303,21 @@ module.exports = function(describe, it, vars) {
                             dst_limit_prefix: false,
                         } );
                         
+                        pxt.processCancel( as, {
+                            id: to_cancel.pop(),
+                            src_account: fee_account,
+                            dst_account: external_account,
+                            currency: 'I:EUR',
+                            amount: '0.90',
+                            type: 'Generic',
+                            src_limit_prefix: false,
+                            dst_limit_prefix: false,
+                        } );
+                        
                         check_balance(as, first_transit, '0');
                         check_balance(as, second_transit, '0');
-                        check_balance(as, external_account, '1000');
+                        check_balance(as, external_account, '910');
+                        check_balance(as, fee_account, '90');
 
                         as.add( (as) => as.state.test_name = 'Cancel In-Out' );
                         pxt.processCancel( as, {
@@ -3280,11 +3329,17 @@ module.exports = function(describe, it, vars) {
                             type: 'Generic',
                             src_limit_prefix: false,
                             dst_limit_prefix: false,
+                            extra_fee: {
+                                dst_account: fee_account,
+                                currency: 'I:EUR',
+                                amount: '0.40',
+                            },
                         } );
                         
                         check_balance(as, first_account, '0');
                         check_balance(as, second_transit, '0');
-                        check_balance(as, external_account, '1000');
+                        check_balance(as, external_account, '950');
+                        check_balance(as, fee_account, '50');
                         
                         as.add( (as) => as.state.test_name = 'Cancel Out' );
                         pxt.processCancel( as, {
@@ -3292,15 +3347,21 @@ module.exports = function(describe, it, vars) {
                             src_account: first_account,
                             dst_account: second_transit,
                             currency: 'I:EUR',
-                            amount: '1.00',
+                            amount: '0.70',
                             type: 'Generic',
                             src_limit_prefix: false,
                             dst_limit_prefix: false,
+                            extra_fee: {
+                                dst_account: fee_account,
+                                currency: 'I:EUR',
+                                amount: '0.30',
+                            },
                         } );
 
                         check_balance(as, first_transit, '0');
                         check_balance(as, first_account, '100');
-                        check_balance(as, external_account, '900');
+                        check_balance(as, external_account, '880');
+                        check_balance(as, fee_account, '20');
                         
                         
                         as.add( (as) => as.state.test_name = 'Cancel In' );
@@ -3313,11 +3374,17 @@ module.exports = function(describe, it, vars) {
                             type: 'Generic',
                             src_limit_prefix: false,
                             dst_limit_prefix: false,
+                            extra_fee: {
+                                dst_account: fee_account,
+                                currency: 'I:EUR',
+                                amount: '0.20',
+                            },
                         } );
                         
                         check_balance(as, external_account, '1000');
                         check_balance(as, first_transit, '0');
                         check_balance(as, first_account, '0');
+                        check_balance(as, fee_account, '0');
                         
                         as.add( (as) => as.state.test_name = 'Cancel Setup' );
                         pxt.processCancel( as, {

@@ -507,6 +507,16 @@ class XferTools {
                 r.dst_amount, fee_xfer.dst_info.dec_places );
 
             fee_xfer.repeat = true;
+
+            if ( fee_xfer.misc_data.rel_in_id ) {
+                fee_xfer.in_xfer.id = fee_xfer.misc_data.rel_in_id;
+
+                if ( fee_xfer.status === 'WaitExtIn' ) {
+                    fee_xfer.in_xfer.status = 'WaitExtIn';
+                } else {
+                    fee_xfer.in_xfer.status = 'Done';
+                }
+            }
         } );
     }
 
@@ -1047,36 +1057,44 @@ class XferTools {
         this._checkExisting( as, xfer );
 
         as.add( ( as ) => {
+            const extra_fee = xfer.extra_fee;
+            const in_xfer = xfer.in_xfer;
+            const out_xfer = xfer.out_xfer;
+
             // Insert new xfer
             if ( !xfer.id ) {
                 xfer.id = xfer.id || UUIDTool.genXfer( dbxfer );
                 xfer.status = 'Canceled';
 
-                if ( xfer.extra_fee ) {
-                    xfer.extra_fee.status = 'Canceled';
+                if ( extra_fee ) {
+                    extra_fee.status = 'Canceled';
                 }
 
                 if ( xfer.xfer_fee ) {
                     xfer.xfer_fee.status = 'Canceled';
                 }
 
-                if ( xfer.in_xfer ) {
-                    xfer.in_xfer.status = 'Canceled';
+                if ( in_xfer ) {
+                    in_xfer.status = 'Canceled';
                 }
 
-                if ( xfer.out_xfer ) {
-                    xfer.out_xfer.status = 'Canceled';
+                if ( out_xfer ) {
+                    out_xfer.status = 'Canceled';
                 }
 
                 this._createXfer( as, dbxfer, xfer );
             }
 
-            if ( xfer.in_xfer ) {
-                this._getAccountsInfo( as, xfer.in_xfer );
+            if ( in_xfer ) {
+                this._getAccountsInfo( as, in_xfer );
             }
 
-            if ( xfer.out_xfer ) {
-                this._getAccountsInfo( as, xfer.out_xfer );
+            if ( out_xfer ) {
+                this._getAccountsInfo( as, out_xfer );
+            }
+
+            if ( extra_fee && extra_fee.in_xfer ) {
+                this._getAccountsInfo( as, extra_fee.in_xfer );
             }
 
             this._checkCancelLimits( as, dbxfer, xfer );
@@ -1255,20 +1273,23 @@ class XferTools {
                 as.add( ( as ) => this._completeCancel( as, xfer ) );
             }
 
-            if ( xfer.extra_fee && xfer.extra_fee.id &&
-                 ( xfer.extra_fee.status != 'Canceled' )
-            ) {
-                if ( xfer.in_xfer ) {
-                    as.add( ( as ) => this._feeCancelExtIn( as, xfer.extra_fee ) );
-                    as.add( ( as ) => this._completeCancelExtIn( as, xfer.extra_fee ) );
-                } else {
-                    as.add( ( as ) => this._completeCancel( as, xfer.extra_fee ) );
-                }
-            }
 
             if ( xfer.in_xfer && ( xfer.in_xfer.status != 'Canceled' ) ) {
                 as.add( ( as ) => this._domainCancelExtIn( as, xfer.in_xfer ) );
                 as.add( ( as ) => this._completeCancelExtIn( as, xfer ) );
+            }
+
+            const extra_fee = xfer.extra_fee;
+
+            if ( extra_fee && extra_fee.id ) {
+                if ( extra_fee.status != 'Canceled' ) {
+                    as.add( ( as ) => this._completeCancel( as, extra_fee ) );
+                }
+
+                if ( extra_fee.in_xfer && ( extra_fee.in_xfer.status != 'Canceled' ) ) {
+                    as.add( ( as ) => this._feeCancelExtIn( as, extra_fee ) );
+                    as.add( ( as ) => this._completeCancelExtIn( as, extra_fee ) );
+                }
             }
         } );
         as.add( ( as ) => {
