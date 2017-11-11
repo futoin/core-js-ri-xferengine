@@ -36,7 +36,9 @@ class AccountsService extends BaseService {
         as.add(
             ( as ) => {
                 const p = reqinfo.params();
-                const db = reqinfo.executor().ccm().db( 'xfer' );
+                const ccm = reqinfo.executor().ccm();
+                const db = ccm.db( 'xfer' );
+                const evtgen = ccm.iface( 'xfer.evtgen' );
 
                 const xfer = db.newXfer();
                 const now = xfer.helpers().now();
@@ -60,6 +62,8 @@ class AccountsService extends BaseService {
                     updated: now,
                 } );
 
+                evtgen.addXferEvent( xfer, 'AH_NEW', Object.assign( { uuidb64 }, p ) );
+
                 xfer.execute( as );
 
                 as.add( ( as ) => reqinfo.result( uuidb64 ) );
@@ -80,7 +84,9 @@ class AccountsService extends BaseService {
         as.add(
             ( as ) => {
                 const p = reqinfo.params();
-                const db = reqinfo.executor().ccm().db( 'xfer' );
+                const ccm = reqinfo.executor().ccm();
+                const db = ccm.db( 'xfer' );
+                const evtgen = ccm.iface( 'xfer.evtgen' );
 
                 const xfer = db.newXfer();
                 let sq;
@@ -116,6 +122,8 @@ class AccountsService extends BaseService {
 
                 iq.set( toset ).where( 'uuidb64', p.id );
                 iq.set( 'updated', xfer.helpers().now() );
+
+                evtgen.addXferEvent( xfer, 'AH_UPD', p );
 
                 xfer.execute( as );
 
@@ -191,7 +199,9 @@ class AccountsService extends BaseService {
         as.add(
             ( as ) => {
                 const p = reqinfo.params();
-                const db = reqinfo.executor().ccm().db( 'xfer' );
+                const ccm = reqinfo.executor().ccm();
+                const db = ccm.db( 'xfer' );
+                const evtgen = ccm.iface( 'xfer.evtgen' );
 
                 //---
                 db.select( DB_ACCOUNT_HOLDERS_TABLE )
@@ -229,6 +239,9 @@ class AccountsService extends BaseService {
                     rel_uuidb64: p.rel_id,
                     ext_acct_id: p.ext_id,
                 } );
+
+                evtgen.addXferEvent( xfer, 'ACCT_NEW', Object.assign( { uuidb64 }, p ) );
+
                 xfer.execute( as );
 
                 as.add( ( as ) => reqinfo.result( uuidb64 ) );
@@ -242,35 +255,45 @@ class AccountsService extends BaseService {
     }
 
     updateAccount( as, reqinfo ) {
-        const p = reqinfo.params();
-        const db = reqinfo.executor().ccm().db( 'xfer' );
+        as.add(
+            ( as ) => {
+                const p = reqinfo.params();
+                const ccm = reqinfo.executor().ccm();
+                const db = ccm.db( 'xfer' );
+                const evtgen = ccm.iface( 'xfer.evtgen' );
 
-        const q = db.update( DB_ACCOUNTS_TABLE );
-        q.set( 'updated', q.helpers().now() );
-        q.where( 'uuidb64', p.id );
+                const xfer = db.newXfer();
+                const q = xfer.update( DB_ACCOUNTS_TABLE, { affected: 1 } );
+                q.set( 'updated', q.helpers().now() );
+                q.where( 'uuidb64', p.id );
 
-        if ( p.alias !== null ) {
-            q.set( 'acct_alias', p.alias );
-        }
+                if ( p.alias !== null ) {
+                    q.set( 'acct_alias', p.alias );
+                }
 
-        if ( p.enabled !== null ) {
-            q.set( 'enabled', p.enabled ? 'Y' : 'N' );
-        }
+                if ( p.enabled !== null ) {
+                    q.set( 'enabled', p.enabled ? 'Y' : 'N' );
+                }
 
-        q.execute( as );
+                evtgen.addXferEvent( xfer, 'ACCT_UPD', p );
 
-        as.add( ( as, { affected } ) => {
-            if ( affected !== 1 ) {
-                as.error( 'UnknownAccountID' );
+                xfer.execute( as );
+
+                reqinfo.result( true );
+            },
+            ( as, err ) => {
+                if ( err === 'XferCondition' ) {
+                    as.error( 'UnknownAccountID' );
+                }
             }
-
-            reqinfo.result( true );
-        } );
+        );
     }
 
     setOverdraft( as, reqinfo ) {
         const p = reqinfo.params();
-        const db = reqinfo.executor().ccm().db( 'xfer' );
+        const ccm = reqinfo.executor().ccm();
+        const db = ccm.db( 'xfer' );
+        const evtgen = ccm.iface( 'xfer.evtgen' );
 
         db.select( DB_ACCOUNTS_VIEW )
             .where( 'uuidb64', p.id )
@@ -295,6 +318,7 @@ class AccountsService extends BaseService {
                     uuidb64 : p.id,
                     currency_id : acct.currency_id,
                 } );
+            evtgen.addXferEvent( xfer, 'ACCT_UPD', p );
             xfer.execute( as );
 
             as.add( ( as ) => reqinfo.result( true ) );
@@ -380,6 +404,7 @@ class AccountsService extends BaseService {
 
     convertAccount( as, _reqinfo ) {
         as.error( 'NotImplemented' );
+        // evtgen.addXferEvent( xfer, 'ACCT_CONV', p );
     }
 
     //=============
