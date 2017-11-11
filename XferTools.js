@@ -423,6 +423,12 @@ class XferTools {
 
                 if ( xfer.misc_data.rel_in_id ) {
                     xfer.in_xfer.id = xfer.misc_data.rel_in_id;
+
+                    if ( xfer.status === 'WaitExtIn' ) {
+                        xfer.in_xfer.status = 'WaitExtIn';
+                    } else {
+                        xfer.in_xfer.status = 'Done';
+                    }
                 }
 
                 if ( xfer.misc_data.rel_out_id ) {
@@ -780,7 +786,11 @@ class XferTools {
     _decreaseBalance( dbxfer, xfer, cancel=false ) {
         let acct_info;
         let account;
-        let amount;
+        let q_amt;
+
+        const xfer_q = dbxfer.select( DB_XFERS_TABLE, { selected: 1 } )
+            .where( 'uuidb64', xfer.id );
+        const acct_q = dbxfer.update( DB_ACCOUNTS_TABLE, { affected: 1 } );
 
         if ( cancel ) {
             if ( xfer.preauth ) {
@@ -789,73 +799,72 @@ class XferTools {
 
             acct_info = xfer.dst_info;
             account = xfer.dst_account;
-            amount = xfer.dst_amount;
+
+            xfer_q.get( 'dst_amount' );
+            q_amt = acct_q.backref( xfer_q, 'dst_amount' );
         } else {
             acct_info = xfer.src_info;
             account = xfer.src_account;
-            amount = xfer.src_amount;
+
+            xfer_q.get( 'src_amount' );
+            q_amt = acct_q.backref( xfer_q, 'src_amount' );
         }
 
         const q_zero = dbxfer.escape( '0' );
-        const q_amt = dbxfer.escape(
-            AmountTools.toStorage( amount, acct_info.dec_places )
-        );
 
-        // Source Account
-        const src_q = dbxfer.update( DB_ACCOUNTS_TABLE, { affected: 1 } );
-
-        src_q.set( 'updated', dbxfer.helpers().now() );
+        acct_q.set( 'updated', dbxfer.helpers().now() );
 
         if ( xfer.preauth ) {
-            src_q.set( 'reserved', dbxfer.expr( `reserved + ${q_amt}` ) );
+            acct_q.set( 'reserved', dbxfer.expr( `reserved + ${q_amt}` ) );
         } else {
-            src_q.set( 'balance', dbxfer.expr( `balance - ${q_amt}` ) );
+            acct_q.set( 'balance', dbxfer.expr( `balance - ${q_amt}` ) );
         }
 
-        src_q.where( 'uuidb64', account );
+        acct_q.where( 'uuidb64', account );
 
         if ( acct_info.acct_type !== 'System' ) {
-            src_q.where( `(balance + COALESCE(overdraft, ${q_zero}) - reserved - ${q_amt}) >= 0` );
+            acct_q.where( `(balance + COALESCE(overdraft, ${q_zero}) - reserved - ${q_amt}) >= 0` );
         }
 
-        src_q.where( 'currency_id', acct_info.currency_id );
+        acct_q.where( 'currency_id', acct_info.currency_id );
     }
 
     _increaseBalance( dbxfer, xfer, cancel=false ) {
-        const sq = dbxfer.select( DB_XFERS_TABLE, { selected: 1 } )
+        const xfer_q = dbxfer.select( DB_XFERS_TABLE, { selected: 1 } )
             .where( 'uuidb64', xfer.id );
 
-        const uq = dbxfer.update( DB_ACCOUNTS_TABLE, { affected: 1 } );
+        const acct_q = dbxfer.update( DB_ACCOUNTS_TABLE, { affected: 1 } );
 
         if ( cancel ) {
-            sq.where( 'xfer_status', 'Canceled' );
+            xfer_q.where( 'xfer_status', 'Canceled' );
 
             if ( xfer.preauth ) {
-                uq.set( 'reserved', uq.expr( `reserved - ${uq.backref( sq, 'src_amount' )}` ) );
+                acct_q.set( 'reserved', acct_q.expr( `reserved - ${acct_q.backref( xfer_q, 'src_amount' )}` ) );
             } else {
-                uq.set( 'balance', uq.expr( `balance + ${uq.backref( sq, 'src_amount' )}` ) );
+                acct_q.set( 'balance', acct_q.expr( `balance + ${acct_q.backref( xfer_q, 'src_amount' )}` ) );
             }
 
-            uq.set( 'updated', dbxfer.helpers().now() );
-            uq.where( 'uuidb64', uq.backref( sq, 'src' ) );
-            uq.where( 'currency_id', uq.backref( sq, 'src_currency_id' ) );
+            acct_q.set( 'updated', dbxfer.helpers().now() );
+            acct_q.where( 'uuidb64', acct_q.backref( xfer_q, 'src' ) );
+            acct_q.where( 'currency_id', acct_q.backref( xfer_q, 'src_currency_id' ) );
 
             if ( xfer.preauth ) {
-                uq.where( 'reserved >=', uq.backref( sq, 'src_amount' ) );
+                acct_q.where( 'reserved >=', acct_q.backref( xfer_q, 'src_amount' ) );
             }
         } else {
-            sq.where( 'xfer_status', 'Done' );
+            xfer_q.where( 'xfer_status', 'Done' );
 
-            uq.set( 'balance', uq.expr( `balance + ${uq.backref( sq, 'dst_amount' )}` ) );
-            uq.set( 'updated', dbxfer.helpers().now() );
-            uq.where( 'uuidb64', uq.backref( sq, 'dst' ) );
-            uq.where( 'currency_id', uq.backref( sq, 'dst_currency_id' ) );
+            acct_q.set( 'balance', acct_q.expr( `balance + ${acct_q.backref( xfer_q, 'dst_amount' )}` ) );
+            acct_q.set( 'updated', dbxfer.helpers().now() );
+            acct_q.where( 'uuidb64', acct_q.backref( xfer_q, 'dst' ) );
+            acct_q.where( 'currency_id', acct_q.backref( xfer_q, 'dst_currency_id' ) );
         }
     }
 
     _createXfer( as, dbxfer, xfer ) {
         as.add( ( as ) => {
             let cancel = ( xfer.status === 'Canceled' );
+            let decrease_now = false;
 
             if ( xfer.do_check && !xfer.user_confirm && !cancel ) {
                 xfer.status = 'WaitUser';
@@ -870,7 +879,7 @@ class XferTools {
             ) {
                 // pass only on out
             } else {
-                this._decreaseBalance( dbxfer, xfer );
+                decrease_now = true;
             }
 
             if ( xfer.out_xfer && ( xfer.status === 'Done' ) ) {
@@ -927,6 +936,9 @@ class XferTools {
             }
 
             //=========================
+            if ( decrease_now ) {
+                this._decreaseBalance( dbxfer, xfer );
+            }
 
             if ( xfer.status === 'Done' ) {
                 this._increaseBalance( dbxfer, xfer );
@@ -1023,6 +1035,7 @@ class XferTools {
 
         this._getAccountsInfo( as, xfer );
         this._convXferAmounts( as, xfer );
+        this._prepareTransit( as, xfer );
         this._checkExisting( as, xfer );
 
         as.add( ( as ) => {
@@ -1039,7 +1052,23 @@ class XferTools {
                     xfer.fee_xfer.status = 'Canceled';
                 }
 
+                if ( xfer.in_xfer ) {
+                    xfer.in_xfer.status = 'Canceled';
+                }
+
+                if ( xfer.out_xfer ) {
+                    xfer.out_xfer.status = 'Canceled';
+                }
+
                 this._createXfer( as, dbxfer, xfer );
+            }
+
+            if ( xfer.in_xfer ) {
+                this._getAccountsInfo( as, xfer.in_xfer );
+            }
+
+            if ( xfer.out_xfer ) {
+                this._getAccountsInfo( as, xfer.out_xfer );
             }
 
             this._checkCancelLimits( as, dbxfer, xfer );
@@ -1124,6 +1153,7 @@ class XferTools {
 
     _completeCancelExtOut( as, xfer ) {
         const dbxfer = this._ccm.db( 'xfer' ).newXfer();
+        const xfer_status = xfer.status;
 
         if ( xfer.out_xfer.status === 'Done' ) {
             this._decreaseBalance( dbxfer, xfer.out_xfer, true );
@@ -1135,13 +1165,13 @@ class XferTools {
         //this._increaseBalance( dbxfer, xfer.out_xfer, true );
         //this._decreaseBalance( dbxfer, xfer, true );
 
-        if ( ( xfer.status === 'Done' ) ||
-             ( xfer.status === 'WaitExtOut' )
+        this._completeXfer( dbxfer, xfer, 'Canceled' );
+
+        if ( ( xfer_status === 'Done' ) ||
+             ( xfer_status === 'WaitExtOut' )
         ) {
             this._increaseBalance( dbxfer, xfer, true );
         }
-
-        this._completeXfer( dbxfer, xfer, 'Canceled' );
 
         dbxfer.execute( as );
     }

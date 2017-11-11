@@ -824,7 +824,7 @@ module.exports = function(describe, it, vars) {
                     check_balance(as, external_account, '1000');
                     
                     //--
-                    as.add( (as) => as.state.test_name = 'Transit Int' );
+                    as.add( (as) => as.state.test_name = 'Transit In' );
                     pxt.processXfer( as, {
                         src_account: first_transit,
                         dst_account: first_account,
@@ -3146,7 +3146,204 @@ module.exports = function(describe, it, vars) {
         });
 
         it('should cancel transit', function(done) {
-            done('TODO');
+            const pxt = new class extends XferTools {
+                constructor() {
+                    super( ccm, 'Payments' );
+                }
+
+                _domainExtIn( as, _in_xfer ) {
+                    as.add( (as) => {} );
+                }
+
+                _domainExtOut( as, _out_xfer ) {
+                    as.add( (as) => {} );
+                }
+                
+                _domainCancelExtIn( as, _in_xfer ) {
+                    as.add( (as) => {} );
+                }
+
+                _domainCancelExtOut( as, _out_xfer ) {
+                    as.add( (as) => {} );
+                }
+            };
+            
+            as.add(
+                (as) =>
+                {
+                    const db = ccm.db('xfer');
+                    const to_cancel = [];
+                    
+                    pxt.processXfer( as, {
+                        src_account: system_account,
+                        dst_account: external_account,
+                        currency: 'I:EUR',
+                        amount: '10.00',
+                        type: 'Generic',
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
+                    } );
+                    as.add( (as, id ) => to_cancel.push(id));
+                    
+                    check_balance(as, external_account, '1000');
+                    
+                    //--
+                    as.add( (as) => as.state.test_name = 'Transit In' );
+                    pxt.processXfer( as, {
+                        src_account: first_transit,
+                        dst_account: first_account,
+                        currency: 'I:EUR',
+                        amount: '1.00',
+                        type: 'Generic',
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
+                    } );
+                    as.add( (as, id ) => to_cancel.push(id));
+
+                    check_balance(as, external_account, '900');
+                    check_balance(as, first_transit, '0');
+                    check_balance(as, first_account, '100');
+                    
+                    //---
+                    as.add( (as) => as.state.test_name = 'Transit Out' );
+                    pxt.processXfer( as, {
+                        src_account: first_account,
+                        dst_account: second_transit,
+                        currency: 'I:EUR',
+                        amount: '1.00',
+                        type: 'Generic',
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
+                    } );
+                    as.add( (as, id ) => to_cancel.push(id));
+
+                    check_balance(as, first_account, '0');
+                    check_balance(as, second_transit, '0');
+                    check_balance(as, external_account, '1000');
+                    
+                    //---
+                    as.add( (as) => as.state.test_name = 'Transit In-Out' );
+                    pxt.processXfer( as, {
+                        src_account: first_transit,
+                        dst_account: second_transit,
+                        currency: 'I:EUR',
+                        amount: '1.00',
+                        type: 'Generic',
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
+                    } );
+                    as.add( (as, id ) => to_cancel.push(id));
+
+                    check_balance(as, first_transit, '0');
+                    check_balance(as, second_transit, '0');
+                    check_balance(as, external_account, '1000');
+                    
+                    //---
+                    pxt.processXfer( as, {
+                        src_account: external_account,
+                        dst_account: system_account,
+                        currency: 'I:EUR',
+                        amount: '10.00',
+                        type: 'Generic',
+                        src_limit_prefix: false,
+                        dst_limit_prefix: false,
+                    } );
+                    as.add( (as, id ) => to_cancel.push(id));
+                    
+                    check_balance(as, external_account, '0');
+
+                    //---
+                    as.add((as) => {
+                        as.add( (as) => as.state.test_name = 'Cancel cleanup' );
+                        pxt.processCancel( as, {
+                            id: to_cancel.pop(),
+                            src_account: external_account,
+                            dst_account: system_account,
+                            currency: 'I:EUR',
+                            amount: '10.00',
+                            type: 'Generic',
+                            src_limit_prefix: false,
+                            dst_limit_prefix: false,
+                        } );
+                        
+                        check_balance(as, first_transit, '0');
+                        check_balance(as, second_transit, '0');
+                        check_balance(as, external_account, '1000');
+
+                        as.add( (as) => as.state.test_name = 'Cancel In-Out' );
+                        pxt.processCancel( as, {
+                            id: to_cancel.pop(),
+                            src_account: first_transit,
+                            dst_account: second_transit,
+                            currency: 'I:EUR',
+                            amount: '1.00',
+                            type: 'Generic',
+                            src_limit_prefix: false,
+                            dst_limit_prefix: false,
+                        } );
+                        
+                        check_balance(as, first_account, '0');
+                        check_balance(as, second_transit, '0');
+                        check_balance(as, external_account, '1000');
+                        
+                        as.add( (as) => as.state.test_name = 'Cancel Out' );
+                        pxt.processCancel( as, {
+                            id: to_cancel.pop(),
+                            src_account: first_account,
+                            dst_account: second_transit,
+                            currency: 'I:EUR',
+                            amount: '1.00',
+                            type: 'Generic',
+                            src_limit_prefix: false,
+                            dst_limit_prefix: false,
+                        } );
+
+                        check_balance(as, first_transit, '0');
+                        check_balance(as, first_account, '100');
+                        check_balance(as, external_account, '900');
+                        
+                        
+                        as.add( (as) => as.state.test_name = 'Cancel In' );
+                        pxt.processCancel( as, {
+                            id: to_cancel.pop(),
+                            src_account: first_transit,
+                            dst_account: first_account,
+                            currency: 'I:EUR',
+                            amount: '1.00',
+                            type: 'Generic',
+                            src_limit_prefix: false,
+                            dst_limit_prefix: false,
+                        } );
+                        
+                        check_balance(as, external_account, '1000');
+                        check_balance(as, first_transit, '0');
+                        check_balance(as, first_account, '0');
+                        
+                        as.add( (as) => as.state.test_name = 'Cancel Setup' );
+                        pxt.processCancel( as, {
+                            id: to_cancel.pop(),
+                            src_account: system_account,
+                            dst_account: external_account,
+                            currency: 'I:EUR',
+                            amount: '10.00',
+                            type: 'Generic',
+                            src_limit_prefix: false,
+                            dst_limit_prefix: false,
+                        } );
+                        
+                        check_balance(as, external_account, '0');
+                    });
+                },
+                (as, err) =>
+                {
+                    console.log(as.state.test_name);
+                    console.log(err);
+                    console.log(as.state.error_info);
+                    done(as.state.last_exception || 'Fail');
+                }
+            );
+            as.add( (as) => done() );
+            as.execute();
         });
     });
 };
