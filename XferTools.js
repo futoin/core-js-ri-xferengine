@@ -645,10 +645,21 @@ class XferTools {
         as.add( ( as ) => {
             // Check if enough balance, if not Transit account
             if ( xfer.src_info.acct_type !== 'Transit' &&
-                 xfer.src_info.acct_type !== 'System' &&
-                 !AmountTools.checkXferAmount( xfer.src_amount, xfer.src_info )
+                 xfer.src_info.acct_type !== 'System'
             ) {
-                as.error( 'NotEnoughFunds' );
+                let req_amt = xfer.src_amount;
+
+                if ( xfer.extra_fee ) {
+                    req_amt = AmountTools.add(
+                        req_amt,
+                        xfer.extra_fee.src_amount,
+                        xfer.src_info.dec_places
+                    );
+                }
+
+                if ( !AmountTools.checkXferAmount( req_amt, xfer.src_info ) ) {
+                    as.error( 'NotEnoughFunds' );
+                }
             }
 
             if ( xfer.src_limit_prefix ) {
@@ -886,14 +897,6 @@ class XferTools {
                 xfer.status = 'WaitExtOut';
             }
 
-            // Extra Fee
-            if ( xfer.extra_fee && !cancel ) {
-                xfer.extra_fee.type = 'Fee';
-                xfer.extra_fee.src_account = xfer.src_account;
-                xfer.extra_fee.force = xfer.force;
-                this._startXfer( as, dbxfer, xfer.extra_fee );
-            }
-
             //=========================
 
             const q_now = dbxfer.helpers().now();
@@ -924,15 +927,12 @@ class XferTools {
             }
 
             if ( xfer.extra_fee && !cancel ) {
-                // Fee ID gets generated in async step
-                as.add( ( as ) => {
-                    if ( xfer.extra_fee.dst_info.acct_type !== 'Transit' ) {
-                        xfer_q.set( 'extra_fee_id', xfer.extra_fee.id );
-                    } else {
-                        as.error( 'InternalError',
-                            'Transit Extra Fee destination is not allowed' );
-                    }
-                } );
+                if ( xfer.extra_fee.dst_info.acct_type !== 'Transit' ) {
+                    xfer_q.set( 'extra_fee_id', xfer.extra_fee.id );
+                } else {
+                    as.error( 'InternalError',
+                        'Transit Extra Fee destination is not allowed' );
+                }
             }
 
             //=========================
@@ -987,8 +987,16 @@ class XferTools {
         as.add( ( as ) => {
             // Insert new xfer
             if ( !xfer.id ) {
-                xfer.id = xfer.id || UUIDTool.genXfer( dbxfer );
+                xfer.id = UUIDTool.genXfer( dbxfer );
                 xfer.status = xfer.status || 'Done';
+
+                // Extra Fee
+                if ( xfer.extra_fee ) {
+                    xfer.extra_fee.type = 'Fee';
+                    xfer.extra_fee.src_account = xfer.src_account;
+                    xfer.extra_fee.force = xfer.force;
+                    this._startXfer( as, dbxfer, xfer.extra_fee );
+                }
 
                 this._checkXferLimits( as, dbxfer, xfer );
                 this._analyzeXferRisk( as, xfer );
@@ -1048,8 +1056,8 @@ class XferTools {
                     xfer.extra_fee.status = 'Canceled';
                 }
 
-                if ( xfer.fee_xfer ) {
-                    xfer.fee_xfer.status = 'Canceled';
+                if ( xfer.xfer_fee ) {
+                    xfer.xfer_fee.status = 'Canceled';
                 }
 
                 if ( xfer.in_xfer ) {
