@@ -3332,6 +3332,21 @@ module.exports = function(describe, it, vars) {
                         } );
                         
                         check_balance(as, external_account, '0');
+                        
+                        as.add( (as) => as.state.test_name = 'Pre-Cancel In-Out' );
+                        pxt.processCancel( as, {
+                            src_account: first_transit,
+                            dst_account: second_transit,
+                            currency: 'I:EUR',
+                            amount: '100.00',
+                            type: 'Generic',
+                            src_limit_prefix: false,
+                            dst_limit_prefix: false,
+                        } );
+
+                        check_balance(as, external_account, '0');
+                        check_balance(as, first_transit, '0');
+                        check_balance(as, second_transit, '0');
                     });
                 },
                 (as, err) =>
