@@ -534,6 +534,23 @@ module.exports = function(describe, it, vars) {
                         "profit_monthly_amt" : "100",
                         "bet_min_amt" : "10"
                     }, false);
+                    xferlim.setLimits(as, 'SimpleXfer', 'Deposits', 'I:EUR', {
+                        "deposit_daily_amt" : "100.00",
+                        "deposit_daily_cnt" : 10,
+                        "withdrawal_daily_amt" : "100.00",
+                        "withdrawal_daily_cnt" : 10,
+                        "deposit_weekly_amt" : "100.00",
+                        "deposit_weekly_cnt" : 20,
+                        "withdrawal_weekly_amt" : "100.00",
+                        "withdrawal_weekly_cnt" : 20,
+                        "deposit_monthly_amt" : "100.00",
+                        "deposit_monthly_cnt" : 30,
+                        "withdrawal_monthly_amt" : "100.00",
+                        "withdrawal_monthly_cnt" : 30,
+                        "deposit_min_amt" : "0.10",
+                        "withdrawal_min_amt" : "0.10",
+                    }, false, false );
+                    
                     
                     const currmgr = ccm.iface('currency.manage');
                     currmgr.setCurrency(as, 'L:XFRT', 3, 'Xfer Test Currency', 'XFT', true);
@@ -1328,12 +1345,56 @@ module.exports = function(describe, it, vars) {
                         }
                     );
                     
+                    as.add(
+                        (as) => {
+                            tmpxt._domainCancelExtIn(as);
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'NotImplemented' ) {
+                                as.success();
+                            }
+                        }
+                    );
+                    
+                    as.add(
+                        (as) => {
+                            tmpxt._domainCancelExtOut(as);
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'NotImplemented' ) {
+                                as.success();
+                            }
+                        }
+                    );
+                    
+                    
                     //=================
                     as.add( (as) => as.state.test_name = 'Invalid xfer data' );
                     
                     as.add(
                         (as) => {
                             dxt.processXfer( as, {} );
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'InternalError' ) {
+                                expect(as.state.error_info).to.equal(
+                                    'Invalid xfer data'
+                                );
+                                as.success();
+                            }
+                        }
+                    );
+                    
+                    
+                    //=================
+                    as.add( (as) => as.state.test_name = 'Invalid xfer data' );
+                    
+                    as.add(
+                        (as) => {
+                            dxt.processCancel( as, {} );
                             as.add( (as) => as.error('Fail') );
                         },
                         (as, err) => {
@@ -3148,7 +3209,7 @@ module.exports = function(describe, it, vars) {
         it('should cancel transit', function(done) {
             const pxt = new class extends XferTools {
                 constructor() {
-                    super( ccm, 'Payments' );
+                    super( ccm, 'Deposits' );
                 }
                 
                 _feeExtIn( as, fee_xfer ) {
@@ -3204,7 +3265,7 @@ module.exports = function(describe, it, vars) {
                         amount: '1.00',
                         type: 'Generic',
                         src_limit_prefix: false,
-                        dst_limit_prefix: false,
+                        dst_limit_prefix: 'deposit',
                         extra_fee: {
                             dst_account: fee_account,
                             currency: 'I:EUR',
@@ -3226,7 +3287,7 @@ module.exports = function(describe, it, vars) {
                         currency: 'I:EUR',
                         amount: '0.70',
                         type: 'Generic',
-                        src_limit_prefix: false,
+                        src_limit_prefix: 'withdrawal',
                         dst_limit_prefix: false,
                         extra_fee: {
                             dst_account: fee_account,
@@ -3349,7 +3410,7 @@ module.exports = function(describe, it, vars) {
                             currency: 'I:EUR',
                             amount: '0.70',
                             type: 'Generic',
-                            src_limit_prefix: false,
+                            src_limit_prefix: 'withdrawal',
                             dst_limit_prefix: false,
                             extra_fee: {
                                 dst_account: fee_account,
@@ -3373,7 +3434,7 @@ module.exports = function(describe, it, vars) {
                             amount: '1.00',
                             type: 'Generic',
                             src_limit_prefix: false,
-                            dst_limit_prefix: false,
+                            dst_limit_prefix: 'deposit',
                             extra_fee: {
                                 dst_account: fee_account,
                                 currency: 'I:EUR',
