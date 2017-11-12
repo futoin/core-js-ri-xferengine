@@ -7,6 +7,7 @@ const {
     DB_LIMIT_GROUPS_TABLE,
     DB_DOMAIN_LIMITS_TABLE,
     DB_CURRENCY_TABLE,
+    EVTGEN_ALIAS,
 } = require( './main' );
 
 const SYM_GETLIMGRP = Symbol( 'getLimitGroups' );
@@ -21,13 +22,23 @@ class LimitsService extends BaseService {
     }
 
     addLimitGroup( as, reqinfo ) {
-        const db = reqinfo.executor().ccm().db( 'xfer' );
+        const ccm = reqinfo.executor().ccm();
+        const db = ccm.db( 'xfer' );
+        const evtgen = ccm.iface( EVTGEN_ALIAS );
 
         as.add(
             ( as ) => {
+                const xfer = db.newXfer();
+                const p = reqinfo.params();
+
                 db.insert( DB_LIMIT_GROUPS_TABLE )
-                    .set( 'group_name', reqinfo.params().group )
+                    .set( 'group_name', p.group )
                     .execute( as );
+
+                evtgen.addXferEvent( xfer, 'LIM_ADD', p );
+
+                xfer.execute( as );
+
                 as.add( ( as ) => reqinfo.result( true ) );
             },
             ( as, res ) => {
@@ -91,7 +102,9 @@ class LimitsService extends BaseService {
 
     setLimits( as, reqinfo ) {
         const p = reqinfo.params();
-        const db = reqinfo.executor().ccm().db( 'xfer' );
+        const ccm = reqinfo.executor().ccm();
+        const db = ccm.db( 'xfer' );
+        const evtgen = ccm.iface( EVTGEN_ALIAS );
 
         let lim_id;
         let currency_id;
@@ -160,18 +173,21 @@ class LimitsService extends BaseService {
 
                 toset.currency_id = currency_id;
 
+                const xfer = db.newXfer();
+
                 if ( retry ) {
-                    const xfer = db.newXfer();
                     xfer.update( DB_DOMAIN_LIMITS_TABLE, { affected: 1 } )
                         .set( toset )
                         .where( cond );
-                    xfer.execute( as );
                 } else {
-                    db.insert( DB_DOMAIN_LIMITS_TABLE )
+                    xfer.insert( DB_DOMAIN_LIMITS_TABLE )
                         .set( toset )
-                        .set( cond )
-                        .execute( as );
+                        .set( cond );
                 }
+
+                evtgen.addXferEvent( xfer, 'LIM_SET', p );
+
+                xfer.execute( as );
 
                 as.add( ( as ) => as.break() );
             },

@@ -108,6 +108,10 @@ class AccountsService extends BaseService {
 
                 if ( p.enabled !== null ) {
                     toset.enabled = p.enabled ? 'Y' : 'N';
+
+                    if ( !p.enabled ) {
+                        evtgen.addXferEvent( xfer, 'AH_BLOCK', { id: p.id } );
+                    }
                 }
 
                 if ( p.kyc !== null ) {
