@@ -16,7 +16,7 @@ class WithdrawService extends BaseService {
         const p_extra_fee = p.extra_fee;
         let extra_fee = null;
 
-        if ( extra_fee ) {
+        if ( p_extra_fee ) {
             extra_fee = {
                 dst_account: p_extra_fee.rel_account,
                 amount: p_extra_fee.amount,
