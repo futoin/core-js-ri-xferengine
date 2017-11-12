@@ -2508,19 +2508,30 @@ module.exports = function(describe, it, vars) {
                     check_balance(as, external_account, '1100');
                     
                     //---
+                    let xfer;
                     
                     as.add( (as) => as.state.test_name = 'Under check limit 1' );
-                    xt.processXfer( as, {
-                        src_account: first_account,
-                        src_limit_prefix: 'bet',
-                        dst_account: external_account,
-                        dst_limit_prefix: false,
-                        currency: 'I:EUR',
-                        amount: '3',
-                        type: 'Bet',
-                        orig_ts: moment.utc().format(),
-                        ext_id: xt.makeExtId(first_account, 'UC1'),
-                    } );
+                    as.add(
+                        (as) => {
+                            xt.processXfer( as, {
+                                src_account: first_account,
+                                src_limit_prefix: 'bet',
+                                dst_account: external_account,
+                                dst_limit_prefix: false,
+                                currency: 'I:EUR',
+                                amount: '3',
+                                type: 'Bet',
+                                orig_ts: moment.utc().format(),
+                                ext_id: xt.makeExtId(first_account, 'UC1'),
+                            } );
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'WaitUser' ) {
+                                as.success();
+                            }
+                        }
+                    );
 
                     check_balance(as, first_account, '600');
                     check_balance(as, external_account, '1100');
@@ -2545,24 +2556,34 @@ module.exports = function(describe, it, vars) {
                     //---
                     
                     as.add( (as) => as.state.test_name = 'Under check limit 2' );
-                    xt.processXfer( as, {
-                        src_account: first_account,
-                        src_limit_prefix: 'bet',
-                        dst_account: external_account,
-                        dst_limit_prefix: false,
-                        currency: 'I:EUR',
-                        amount: '4',
-                        type: 'Bet'
-                    } );
+                    as.add(
+                        (as) => {
+                            xt.processXfer( as, xfer = {
+                                src_account: first_account,
+                                src_limit_prefix: 'bet',
+                                dst_account: external_account,
+                                dst_limit_prefix: false,
+                                currency: 'I:EUR',
+                                amount: '4',
+                                type: 'Bet'
+                            } );
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'WaitUser' ) {
+                                as.success();
+                            }
+                        }
+                    );
                     
-                    as.add( (as, id ) => {
+                    as.add( (as ) => {
                         check_balance(as, first_account, '200');
                         check_balance(as, external_account, '1400');
 
                         as.state.test_name = 'User confirmation 2';
                     
                         xt.processXfer( as, {
-                            id,
+                            id: xfer.id,
                             src_account: first_account,
                             src_limit_prefix: 'bet',
                             dst_account: external_account,
@@ -2580,15 +2601,25 @@ module.exports = function(describe, it, vars) {
                     //---
                     
                     as.add( (as) => as.state.test_name = 'Under check limit 3' );
-                    xt.processXfer( as, {
-                        src_account: first_account,
-                        src_limit_prefix: 'bet',
-                        dst_account: second_transit,
-                        dst_limit_prefix: false,
-                        currency: 'I:EUR',
-                        amount: '2',
-                        type: 'Bet'
-                    } );
+                    as.add(
+                        (as) => {
+                            xt.processXfer( as, xfer = {
+                                src_account: first_account,
+                                src_limit_prefix: 'bet',
+                                dst_account: second_transit,
+                                dst_limit_prefix: false,
+                                currency: 'I:EUR',
+                                amount: '2',
+                                type: 'Bet'
+                            } );
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'WaitUser' ) {
+                                as.success();
+                            }
+                        }
+                    );
                     
                     as.add( (as, id ) => {
                         check_balance(as, first_account, '0');
@@ -2597,7 +2628,7 @@ module.exports = function(describe, it, vars) {
                         as.state.test_name = 'User confirmation 3';
                     
                         xt.processXfer( as, {
-                            id,
+                            id: xfer.id,
                             src_account: first_account,
                             src_limit_prefix: 'bet',
                             dst_account: second_transit,

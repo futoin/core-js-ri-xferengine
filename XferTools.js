@@ -1276,7 +1276,7 @@ class XferTools {
             }
 
             if ( xfer.status === ST_WAIT_USER ) {
-                return;
+                as.error( ST_WAIT_USER, 'User confirmation is required' );
             }
 
             as.add( ( as ) => {
