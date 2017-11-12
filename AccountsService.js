@@ -280,6 +280,10 @@ class AccountsService extends BaseService {
 
                 if ( p.enabled !== null ) {
                     q.set( 'enabled', p.enabled ? 'Y' : 'N' );
+
+                    if ( !p.enabled ) {
+                        evtgen.addXferEvent( xfer, 'ACCT_CLOSE', { id: p.id } );
+                    }
                 }
 
                 evtgen.addXferEvent( xfer, 'ACCT_UPD', p );
