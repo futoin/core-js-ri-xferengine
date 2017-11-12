@@ -942,17 +942,34 @@ class XferTools {
                 xfer_status: xfer.status,
             } );
 
+            const xfer_event = {
+                id: xfer.id,
+                src : xfer.src_account,
+                src_amount : xfer.src_amount,
+                src_currency : xfer.src_info.currency,
+                dst : xfer.dst_account,
+                dst_amount : xfer.dst_amount,
+                dst_currency : xfer.dst_info.currency,
+                amount: xfer.amount,
+                currency: xfer.currency,
+                type: xfer.type,
+                status: xfer.status,
+            };
+
             if ( xfer.ext_id ) {
                 xfer_q.set( 'ext_id', xfer.ext_id );
+                xfer_event.ext_id = xfer.ext_id;
             }
 
             if ( xfer.misc_data ) {
                 xfer_q.set( 'misc_data', JSON.stringify( xfer.misc_data ) );
+                xfer_event.misc_data = xfer.misc_data;
             }
 
             if ( xfer.extra_fee && !cancel ) {
                 if ( xfer.extra_fee.dst_info.acct_type !== ACCT_TRANSIT ) {
                     xfer_q.set( 'extra_fee_id', xfer.extra_fee.id );
+                    xfer_event.extra_fee_id = xfer.extra_fee.id;
                 } else {
                     as.error( 'InternalError',
                         'Transit Extra Fee destination is not allowed' );
@@ -986,6 +1003,7 @@ class XferTools {
                 this._startXfer( as, dbxfer, xfer.xfer_fee );
 
                 xfer_q.set( 'xfer_fee_id', xfer.xfer_fee.id );
+                xfer_event.xfer_fee_id = xfer.xfer_fee.id;
 
                 // Fee ID gets generated in async step
                 as.add( ( as ) => {
@@ -998,19 +1016,7 @@ class XferTools {
 
             //---
             this._ccm.iface( EVTGEN_ALIAS )
-                .addXferEvent( dbxfer, 'XFER_NEW', {
-                    id: xfer.id,
-                    src : xfer.src_account,
-                    src_amount : xfer.src_amount,
-                    src_currency : xfer.src_info.currency,
-                    dst : xfer.dst_account,
-                    dst_amount : xfer.dst_amount,
-                    dst_currency : xfer.dst_info.currency,
-                    amount: xfer.amount,
-                    currency: xfer.currency,
-                    type: xfer.type,
-                    status: xfer.status,
-                } );
+                .addXferEvent( dbxfer, 'XFER_NEW', xfer_event );
         } );
     }
 
