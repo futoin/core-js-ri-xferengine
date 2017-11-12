@@ -48,22 +48,6 @@
         "OriginalMismatch"
       ]
     },
-    "completeWithdrawal": {
-      "params": {
-        "ref_id": "XferID",
-        "ext_id": "XferExtID",
-        "ext_info": "XferExtInfo",
-        "orig_ts": "XferTimestamp"
-      },
-      "result": "boolean",
-      "throws": [
-        "UnknownXferID",
-        "AlreadyCanceled",
-        "NotConfirmed",
-        "OriginalTooOld",
-        "OriginalMismatch"
-      ]
-    },
     "cancelWithdrawal": {
       "params": {
         "ref_id": "XferID",
