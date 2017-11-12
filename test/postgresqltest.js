@@ -2,9 +2,10 @@
 
 const child_process = require('child_process');
 const $as = require('futoin-asyncsteps');
-const AdvancedCCM = require('futoin-invoker/AdvancedCCM');
 const DBAutoConfig = require('futoin-database/AutoConfig');
 const integration_suite = require('./integrationsuite');
+
+const XferCCM = require( '../XferCCM' );
 
 const DB_PORT = process.env.POSTGRESQL_PORT || '5434';
 
@@ -12,7 +13,7 @@ describe('PostgreSQL', function(){
     
     before(function(done){
         this.timeout(30e3);
-        const ccm = new AdvancedCCM();
+        const ccm = new XferCCM();
 
         $as().add(
             (as) => {
@@ -65,7 +66,7 @@ describe('PostgreSQL', function(){
     };
     
     beforeEach('specific', function(){
-        const ccm = new AdvancedCCM();
+        const ccm = new XferCCM();
         const as = $as();
         vars.ccm = ccm;
         vars.as = as;

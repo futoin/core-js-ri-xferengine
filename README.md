@@ -96,6 +96,15 @@ The concept is described in FutoIn specification: [FTN19: FutoIn Interface - Tra
 <dt><a href="#UUIDTool">UUIDTool</a></dt>
 <dd><p>Common tool for UUID generation and use in transactions</p>
 </dd>
+<dt><a href="#WithdrawFace">WithdrawFace</a></dt>
+<dd><p>Witdrawals Face</p>
+</dd>
+<dt><a href="#WithdrawService">WithdrawService</a></dt>
+<dd><p>Withdrawals Service</p>
+</dd>
+<dt><a href="#XferCCM">XferCCM</a></dt>
+<dd><p>Special CCM implementation for XferCore</p>
+</dd>
 <dt><a href="#CurrencyCacheInfoFace">CurrencyCacheInfoFace</a></dt>
 <dd><p>An efficient version of Currency/InfoFace.</p>
 <p>Keeps local cache of currencies and exchange rates.
@@ -413,6 +422,41 @@ Generate UUID v4 in scope of transaction
 | --- | --- | --- |
 | xfer | <code>XferBuilder</code> | xfer builder object |
 
+<a name="WithdrawFace"></a>
+
+## WithdrawFace
+Witdrawals Face
+
+**Kind**: global class  
+<a name="WithdrawFace.register"></a>
+
+### WithdrawFace.register(as, ccm, name, endpoint, [credentials], [options])
+CCM registration helper
+
+**Kind**: static method of [<code>WithdrawFace</code>](#WithdrawFace)  
+
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| as | <code>AsyncSteps</code> |  | steps interface |
+| ccm | <code>AdvancedCCM</code> |  | CCM instance |
+| name | <code>string</code> |  | CCM registration name |
+| endpoint | <code>\*</code> |  | see AdvancedCCM#register |
+| [credentials] | <code>\*</code> | <code></code> | see AdvancedCCM#register |
+| [options] | <code>object</code> | <code>{}</code> | interface options |
+| [options.version] | <code>string</code> | <code>&quot;&lt;latest&gt;&quot;</code> | interface version to use |
+
+<a name="WithdrawService"></a>
+
+## WithdrawService
+Withdrawals Service
+
+**Kind**: global class  
+<a name="XferCCM"></a>
+
+## XferCCM
+Special CCM implementation for XferCore
+
+**Kind**: global class  
 <a name="CurrencyCacheInfoFace"></a>
 
 ## CurrencyCacheInfoFace
