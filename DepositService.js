@@ -1,15 +1,15 @@
 'use strict';
 
 const BaseService = require( './BaseService' );
-const DepositsFace = require( './DepositsFace' );
+const DepositFace = require( './DepositFace' );
 const XferTools = require( './XferTools' );
 
 /**
  * Deposits Service
  */
-class DepositsService extends BaseService {
+class DepositService extends BaseService {
     static get IFACE_IMPL() {
-        return DepositsFace;
+        return DepositFace;
     }
 
     preDepositCheck( as, reqinfo ) {
@@ -71,12 +71,12 @@ class DepositsService extends BaseService {
 
     /**
      * Register futoin.xfers.deposit interface with Executor
-     * @alias DepositsService.register
+     * @alias DepositService.register
      * @param {AsyncSteps} as - steps interface
      * @param {Executor} executor - executor instance
      * @param {object} options - implementation defined options
-     * @returns {DepositsService} instance
+     * @returns {DepositService} instance
      */
 }
 
-module.exports = DepositsService;
+module.exports = DepositService;

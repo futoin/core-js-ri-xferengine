@@ -28,8 +28,8 @@ module.exports = function(describe, it, vars) {
         const AccountsFace = require('../AccountsFace');
         const AccountsService = require('../AccountsService');
 
-        const DepositsFace = require('../DepositsFace');
-        const DepositsService = require('../DepositsService');
+        const DepositFace = require('../DepositFace');
+        const DepositService = require('../DepositService');
         
         let system_account;
         let fee_account;
@@ -48,8 +48,8 @@ module.exports = function(describe, it, vars) {
                     AccountsService.register(as, executor);
                     AccountsFace.register(as, ccm, 'xfer.accounts', executor);
 
-                    DepositsService.register(as, executor);
-                    DepositsFace.register(as, ccm, 'xfer.deposits', executor);
+                    DepositService.register(as, executor);
+                    DepositFace.register(as, ccm, 'xfer.deposits', executor);
                 },
                 (as, err) => {
                     console.log(err);

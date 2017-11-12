@@ -81,10 +81,10 @@ The concept is described in FutoIn specification: [FTN19: FutoIn Interface - Tra
 <dd><p>Efficient cached LimitsFace with event-based cache invalidation</p>
 <p>Keeps local cache of limits and invalidates based on LIVE events.</p>
 </dd>
-<dt><a href="#DepositsFace">DepositsFace</a></dt>
+<dt><a href="#DepositFace">DepositFace</a></dt>
 <dd><p>Deposits Face</p>
 </dd>
-<dt><a href="#DepositsService">DepositsService</a></dt>
+<dt><a href="#DepositService">DepositService</a></dt>
 <dd><p>Deposits Service</p>
 </dd>
 <dt><a href="#LimitsFace">LimitsFace</a></dt>
@@ -290,18 +290,18 @@ CCM registration helper
 | [options] | <code>object</code> | <code>{}</code> | interface options |
 | [options.version] | <code>string</code> | <code>&quot;&lt;latest&gt;&quot;</code> | interface version to use |
 
-<a name="DepositsFace"></a>
+<a name="DepositFace"></a>
 
-## DepositsFace
+## DepositFace
 Deposits Face
 
 **Kind**: global class  
-<a name="DepositsFace.register"></a>
+<a name="DepositFace.register"></a>
 
-### DepositsFace.register(as, ccm, name, endpoint, [credentials], [options])
+### DepositFace.register(as, ccm, name, endpoint, [credentials], [options])
 CCM registration helper
 
-**Kind**: static method of [<code>DepositsFace</code>](#DepositsFace)  
+**Kind**: static method of [<code>DepositFace</code>](#DepositFace)  
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -313,9 +313,9 @@ CCM registration helper
 | [options] | <code>object</code> | <code>{}</code> | interface options |
 | [options.version] | <code>string</code> | <code>&quot;&lt;latest&gt;&quot;</code> | interface version to use |
 
-<a name="DepositsService"></a>
+<a name="DepositService"></a>
 
-## DepositsService
+## DepositService
 Deposits Service
 
 **Kind**: global class  
