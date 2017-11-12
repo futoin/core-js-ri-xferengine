@@ -87,6 +87,9 @@ The concept is described in FutoIn specification: [FTN19: FutoIn Interface - Tra
 <dt><a href="#DepositService">DepositService</a></dt>
 <dd><p>Deposits Service</p>
 </dd>
+<dt><a href="#DepositTools">DepositTools</a></dt>
+<dd><p>XferTools with focus on Deposits use case</p>
+</dd>
 <dt><a href="#LimitsFace">LimitsFace</a></dt>
 <dd><p>Limits Face</p>
 </dd>
@@ -326,6 +329,12 @@ CCM registration helper
 
 ## DepositService
 Deposits Service
+
+**Kind**: global class  
+<a name="DepositTools"></a>
+
+## DepositTools
+XferTools with focus on Deposits use case
 
 **Kind**: global class  
 <a name="LimitsFace"></a>

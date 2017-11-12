@@ -2,7 +2,7 @@
 
 const BaseService = require( './BaseService' );
 const DepositFace = require( './DepositFace' );
-const XferTools = require( './XferTools' );
+const DepositTools = require( './DepositTools' );
 
 /**
  * Deposits Service
@@ -14,7 +14,7 @@ class DepositService extends BaseService {
 
     preDepositCheck( as, reqinfo ) {
         const ccm = reqinfo.executor().ccm();
-        const xt = new XferTools( ccm, 'Deposits' );
+        const xt = new DepositTools( ccm );
         const p = reqinfo.params();
 
         xt.processXfer( as, {
@@ -33,7 +33,7 @@ class DepositService extends BaseService {
 
     onDeposit( as, reqinfo ) {
         const ccm = reqinfo.executor().ccm();
-        const xt = new XferTools( ccm, 'Deposits' );
+        const xt = new DepositTools( ccm );
         const p = reqinfo.params();
 
         const p_fee = p.fee;
@@ -45,9 +45,7 @@ class DepositService extends BaseService {
                 amount: p_fee.amount,
                 currency: p_fee.currency,
                 misc_data: {
-                    ext_info: {
-                        reason: p_fee.reason,
-                    },
+                    reason: p_fee.reason,
                 },
             };
         }

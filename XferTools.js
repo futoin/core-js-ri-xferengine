@@ -63,6 +63,10 @@ const TypeSpec = {
                     type: 'boolean',
                     optional: true,
                 },
+                reject_mode: {
+                    type: 'boolean',
+                    optional: true,
+                },
                 noop: {
                     type: 'boolean',
                     optional: true,
@@ -383,98 +387,104 @@ class XferTools {
         }
 
         as.add( ( as, rows ) => {
-            if ( rows.length ) {
-                const r = rows[0];
-                r.src_amount = AmountTools.fromStorage(
-                    r.src_amount, xfer.src_info.dec_places );
-                r.dst_amount = AmountTools.fromStorage(
-                    r.dst_amount, xfer.dst_info.dec_places );
-                r.misc_data = JSON.parse( r.misc_data );
-
-                if ( ( xfer.src_account !== r.src ) ||
-                     ( xfer.src_info.currency_id !== r.src_currency_id ) ||
-                     ( xfer.dst_account !== r.dst ) ||
-                     ( xfer.dst_info.currency_id !== r.dst_currency_id ) ||
-                     ( xfer.type !== r.xfer_type )
-                ) {
-                    as.error( "OriginalMismatch", 'Account/Currency/Type' );
+            if ( rows.length <= 0 ) {
+                if ( xfer.user_confirm || xfer.reject_mode ) {
+                    as.error( 'UnknownXferID' );
                 }
 
-                if ( ( xfer.src_info.currency !== xfer.currency ) &&
-                     ( xfer.dst_info.currency !== xfer.currency )
-                ) {
-                    if ( xfer.currency !== r.misc_data.currency ) {
-                        as.error( "OriginalMismatch", 'Currency' );
-                    }
+                return;
+            }
 
-                    if ( !AmountTools.isEqual( xfer.amount, r.misc_data.amount ) ) {
-                        as.error( "OriginalMismatch", 'Currency' );
-                    }
+            const r = rows[0];
+            r.src_amount = AmountTools.fromStorage(
+                r.src_amount, xfer.src_info.dec_places );
+            r.dst_amount = AmountTools.fromStorage(
+                r.dst_amount, xfer.dst_info.dec_places );
+            r.misc_data = JSON.parse( r.misc_data );
 
-                    // Make sure to use original exrate
-                    xfer.src_amount = r.src_amount;
-                    xfer.dst_amount = r.dst_amount;
-                } else if ( xfer.src_info.currency === xfer.currency ) {
-                    if ( !AmountTools.isEqual( xfer.amount, r.src_amount ) ) {
-                        as.error( "OriginalMismatch", 'Currency' );
-                    }
+            if ( ( xfer.src_account !== r.src ) ||
+                    ( xfer.src_info.currency_id !== r.src_currency_id ) ||
+                    ( xfer.dst_account !== r.dst ) ||
+                    ( xfer.dst_info.currency_id !== r.dst_currency_id ) ||
+                    ( xfer.type !== r.xfer_type )
+            ) {
+                as.error( "OriginalMismatch", 'Account/Currency/Type' );
+            }
 
-                    // Make sure to use original exrate
-                    xfer.dst_amount = r.dst_amount;
-                } else { // if ( xfer.dst_info.currency === xfer.currency )
-                    if ( !AmountTools.isEqual( xfer.amount, r.dst_amount ) ) {
-                        as.error( "OriginalMismatch", 'Currency' );
-                    }
-
-                    // Make sure to use original exrate
-                    xfer.src_amount = r.src_amount;
+            if ( ( xfer.src_info.currency !== xfer.currency ) &&
+                    ( xfer.dst_info.currency !== xfer.currency )
+            ) {
+                if ( xfer.currency !== r.misc_data.currency ) {
+                    as.error( "OriginalMismatch", 'Currency' );
                 }
 
-                xfer.id = r.uuidb64;
-                xfer.status = r.xfer_status;
-                xfer.created = moment.utc( r.created ).format();
-                xfer.misc_data = Object.assign(
-                    xfer.misc_data,
-                    r.misc_data
-                );
-                xfer.repeat = true;
-
-                if ( xfer.misc_data.rel_in_id ) {
-                    xfer.in_xfer.id = xfer.misc_data.rel_in_id;
-
-                    if ( xfer.status === ST_WAIT_EXT_IN ) {
-                        xfer.in_xfer.status = ST_WAIT_EXT_IN;
-                    } else {
-                        xfer.in_xfer.status = ST_DONE;
-                    }
+                if ( !AmountTools.isEqual( xfer.amount, r.misc_data.amount ) ) {
+                    as.error( "OriginalMismatch", 'Currency' );
                 }
 
-                if ( xfer.misc_data.rel_out_id ) {
-                    xfer.out_xfer.id = xfer.misc_data.rel_out_id;
-                    xfer.out_xfer.status = xfer.status;
+                // Make sure to use original exrate
+                xfer.src_amount = r.src_amount;
+                xfer.dst_amount = r.dst_amount;
+            } else if ( xfer.src_info.currency === xfer.currency ) {
+                if ( !AmountTools.isEqual( xfer.amount, r.src_amount ) ) {
+                    as.error( "OriginalMismatch", 'Currency' );
                 }
 
-                if ( r.extra_fee_id ) {
-                    if ( !xfer.extra_fee ) {
-                        as.error( "OriginalMismatch", 'ExtraFee' );
-                    }
-
-                    xfer.extra_fee.id = r.extra_fee_id;
-                    xfer.extra_fee.src_account = xfer.src_account;
-                    xfer.extra_fee.force = xfer.force;
-                    this._readFeeXfer( as, xfer.extra_fee );
+                // Make sure to use original exrate
+                xfer.dst_amount = r.dst_amount;
+            } else { // if ( xfer.dst_info.currency === xfer.currency )
+                if ( !AmountTools.isEqual( xfer.amount, r.dst_amount ) ) {
+                    as.error( "OriginalMismatch", 'Currency' );
                 }
 
-                if ( r.xfer_fee_id ) {
-                    if ( !xfer.xfer_fee ) {
-                        as.error( "OriginalMismatch", 'Fee' );
-                    }
+                // Make sure to use original exrate
+                xfer.src_amount = r.src_amount;
+            }
 
-                    xfer.xfer_fee.id = r.xfer_fee_id;
-                    xfer.xfer_fee.src_account = xfer.dst_account;
-                    xfer.xfer_fee.force = xfer.force;
-                    this._readFeeXfer( as, xfer.xfer_fee );
+            xfer.id = r.uuidb64;
+            xfer.status = r.xfer_status;
+            xfer.created = moment.utc( r.created ).format();
+            xfer.misc_data = Object.assign(
+                xfer.misc_data,
+                r.misc_data
+            );
+            xfer.repeat = true;
+
+            if ( xfer.misc_data.rel_in_id ) {
+                xfer.in_xfer.id = xfer.misc_data.rel_in_id;
+
+                if ( xfer.status === ST_WAIT_EXT_IN ) {
+                    xfer.in_xfer.status = ST_WAIT_EXT_IN;
+                } else {
+                    xfer.in_xfer.status = ST_DONE;
                 }
+            }
+
+            if ( xfer.misc_data.rel_out_id ) {
+                xfer.out_xfer.id = xfer.misc_data.rel_out_id;
+                xfer.out_xfer.status = xfer.status;
+            }
+
+            if ( r.extra_fee_id ) {
+                if ( !xfer.extra_fee ) {
+                    as.error( "OriginalMismatch", 'ExtraFee' );
+                }
+
+                xfer.extra_fee.id = r.extra_fee_id;
+                xfer.extra_fee.src_account = xfer.src_account;
+                xfer.extra_fee.force = xfer.force;
+                this._readFeeXfer( as, xfer.extra_fee );
+            }
+
+            if ( r.xfer_fee_id ) {
+                if ( !xfer.xfer_fee ) {
+                    as.error( "OriginalMismatch", 'Fee' );
+                }
+
+                xfer.xfer_fee.id = r.xfer_fee_id;
+                xfer.xfer_fee.src_account = xfer.dst_account;
+                xfer.xfer_fee.force = xfer.force;
+                this._readFeeXfer( as, xfer.xfer_fee );
             }
         } );
     }
@@ -1319,9 +1329,11 @@ class XferTools {
         }
 
         as.add( ( as ) => {
-            if ( xfer.repeat ) {
-                assert( dbxfer._query_list.length === 0 );
-            } else {
+            if ( xfer.reject_mode && ( xfer.status !== ST_WAIT_USER ) ) {
+                as.error( 'AlreadyCompleted' );
+            }
+
+            if ( !xfer.repeat || ( dbxfer._query_list.length > 0 ) ) {
                 dbxfer.executeAssoc( as );
             }
         } );

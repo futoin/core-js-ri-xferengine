@@ -30,6 +30,8 @@ module.exports = function(describe, it, vars) {
 
         const DepositFace = require('../DepositFace');
         const DepositService = require('../DepositService');
+        const WithdrawFace = require('../WithdrawFace');
+        const WithdrawService = require('../WithdrawService');
         
         let system_account;
         let fee_account;
@@ -50,6 +52,9 @@ module.exports = function(describe, it, vars) {
 
                     DepositService.register(as, executor);
                     DepositFace.register(as, ccm, 'xfer.deposits', executor);
+                    
+                    WithdrawService.register(as, executor);
+                    WithdrawFace.register(as, ccm, 'xfer.withdrawals', executor);
                 },
                 (as, err) => {
                     console.log(err);
@@ -72,18 +77,33 @@ module.exports = function(describe, it, vars) {
                         "deposit_daily_amt" : "1.00",
                         "deposit_daily_cnt" : 2,
                         "withdrawal_daily_amt" : "1.00",
-                        "withdrawal_daily_cnt" : 2,
+                        "withdrawal_daily_cnt" : 4,
                         "deposit_weekly_amt" : "1.00",
                         "deposit_weekly_cnt" : 2,
                         "withdrawal_weekly_amt" : "1.00",
-                        "withdrawal_weekly_cnt" : 2,
+                        "withdrawal_weekly_cnt" : 4,
                         "deposit_monthly_amt" : "1.00",
                         "deposit_monthly_cnt" : 2,
                         "withdrawal_monthly_amt" : "1.00",
-                        "withdrawal_monthly_cnt" : 2,
+                        "withdrawal_monthly_cnt" : 4,
                         "deposit_min_amt" : "0.10",
-                        "withdrawal_min_amt" : "0.10"
-                    }, false, false );
+                        "withdrawal_min_amt" : "0.01"
+                    }, {
+                        "deposit_daily_amt" : "1.00",
+                        "deposit_daily_cnt" : 2,
+                        "withdrawal_daily_amt" : "0.50",
+                        "withdrawal_daily_cnt" : 4,
+                        "deposit_weekly_amt" : "1.00",
+                        "deposit_weekly_cnt" : 2,
+                        "withdrawal_weekly_amt" : "1.00",
+                        "withdrawal_weekly_cnt" : 4,
+                        "deposit_monthly_amt" : "1.00",
+                        "deposit_monthly_cnt" : 2,
+                        "withdrawal_monthly_amt" : "1.00",
+                        "withdrawal_monthly_cnt" : 4,
+                        "deposit_min_amt" : "0.10",
+                        "withdrawal_min_amt" : "0.01"
+                    }, false );
                     
                     
                     //--
@@ -218,6 +238,174 @@ module.exports = function(describe, it, vars) {
                         },
                         (as, err) => {
                             if (err === 'LimitReject') {
+                                as.success();
+                            }
+                        }
+                    );
+                },
+                (as, err) =>
+                {
+                    console.log(as.state.test_name);
+                    console.log(err);
+                    console.log(as.state.error_info);
+                    done(as.state.last_exception || 'Fail');
+                }
+            );
+            as.add( (as) => done() );
+            as.execute();
+        });
+        
+        it ('should process withdraw', function(done) {
+            as.add(
+                (as) =>
+                {
+                    const withdraw = ccm.iface('xfer.withdrawals');
+                    
+                    as.add( (as) => as.state.test_name = `Start withdraw #1` );
+                    withdraw.startWithdrawal( as,
+                        user_account,
+                        system_account,
+                        'I:EUR',
+                        '0.10',
+                        {
+                            rel_account: fee_account,
+                            currency: 'I:EUR',
+                            amount: '0.01',
+                            reason: 'System fee',
+                        }
+                    );
+                    
+                    as.add( (as, res) => {
+                        expect( res.xfer_id ).to.be.ok;
+                        expect( res.wait_user ).to.be.false;
+                    });
+                    
+                    as.add( (as) => as.state.test_name = `Start withdraw #2` );
+                    withdraw.startWithdrawal( as,
+                        user_account,
+                        system_account,
+                        'I:EUR',
+                        '0.80',
+                    );
+                    
+                    as.add( (as, res) => {
+                        expect( res.xfer_id ).to.be.ok;
+                        expect( res.wait_user ).to.be.true;
+                        
+                        as.add( (as) => as.state.test_name = `Reject withdraw #2` );
+                        withdraw.rejectWithdrawal( as,
+                            res.xfer_id,
+                            user_account,
+                            system_account,
+                            'I:EUR',
+                            '0.80',
+                            moment.utc().format(),
+                        );
+                    });
+                    
+                    as.add(
+                        (as) => {
+                            as.add( (as) => as.state.test_name = 'Start withdraw #3' );
+                            withdraw.startWithdrawal( as,
+                                user_account,
+                                system_account,
+                                'I:EUR',
+                                '1.00',
+                            );
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if (err === 'NotEnoughFunds') {
+                                as.success();
+                            }
+                        }
+                    );
+                    
+                    
+                    as.add( (as) => as.state.test_name = `Start withdraw #4` );
+                    withdraw.startWithdrawal( as,
+                        user_account,
+                        system_account,
+                        'I:EUR',
+                        '0.80',
+                    );
+                    
+                    
+                    as.add( (as, res) => {
+                        expect( res.xfer_id ).to.be.ok;
+                        expect( res.wait_user ).to.be.true;
+                        
+                        as.add( (as) => as.state.test_name = `Confirm withdraw #4` );
+                        withdraw.confirmWithdrawal( as,
+                            res.xfer_id,
+                            user_account,
+                            system_account,
+                            'I:EUR',
+                            '0.80',
+                            moment.utc().format(),
+                        );
+                        
+                        as.add(
+                            (as) => {
+                                as.add( (as) => as.state.test_name = 'Reject withdraw #4' );
+                                withdraw.rejectWithdrawal( as,
+                                    res.xfer_id,
+                                    user_account,
+                                    system_account,
+                                    'I:EUR',
+                                    '0.80',
+                                    moment.utc().format(),
+                                );
+                                as.add( (as) => as.error('Fail') );
+                            },
+                            (as, err) => {
+                                if (err === 'AlreadyCompleted') {
+                                    as.success();
+                                }
+                            }
+                        );
+                    });
+                    
+                    as.add(
+                        (as) => {
+                            as.add( (as) => as.state.test_name = 'Start withdraw #5' );
+                            withdraw.startWithdrawal( as,
+                                user_account,
+                                system_account,
+                                'I:EUR',
+                                '0.07',
+                                {
+                                    rel_account: fee_account,
+                                    currency: 'I:EUR',
+                                    amount: '0.01',
+                                    reason: 'System fee',
+                                }
+                            );
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if (err === 'LimitReject') {
+                                as.success();
+                            }
+                        }
+                    );
+                    
+                    
+                    as.add(
+                        (as) => {
+                            as.add( (as) => as.state.test_name = 'Confirm unknown' );
+                            withdraw.confirmWithdrawal( as,
+                                'aaaaaaaaaaaaaaaaaaaaaa',
+                                user_account,
+                                system_account,
+                                'I:EUR',
+                                '0.80',
+                                moment.utc().format(),
+                            );
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if (err === 'UnknownXferID') {
                                 as.success();
                             }
                         }

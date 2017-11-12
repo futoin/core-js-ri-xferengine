@@ -13,32 +13,35 @@
         "rel_account": "AccountID",
         "currency": "CurrencyCode",
         "amount": "Amount",
-        "fee": {
+        "extra_fee": {
           "type": "Fee",
           "default": null
         }
       },
       "result": {
         "xfer_id": "XferID",
-        "wait_check": "boolean"
+        "wait_user": "boolean"
       },
       "throws": [
         "UnknownAccountID",
         "CurrencyMismatch",
         "InvalidAmount",
         "LimitReject",
-        "AlreadyCanceled",
-        "OriginalTooOld",
-        "OriginalMismatch"
+        "NotEnoughFunds"
       ]
     },
     "confirmWithdrawal": {
       "params": {
+        "xfer_id": "XferID",
         "account": "AccountID",
+        "rel_account": "AccountID",
         "currency": "CurrencyCode",
         "amount": "Amount",
-        "xfer_id": "XferID",
-        "orig_ts": "XferTimestamp"
+        "orig_ts": "XferTimestamp",
+        "extra_fee": {
+          "type": "Fee",
+          "default": null
+        }
       },
       "result": "boolean",
       "throws": [
@@ -48,11 +51,18 @@
         "OriginalMismatch"
       ]
     },
-    "cancelWithdrawal": {
+    "rejectWithdrawal": {
       "params": {
-        "ref_id": "XferID",
-        "reason": "Reason",
-        "orig_ts": "XferTimestamp"
+        "xfer_id": "XferID",
+        "account": "AccountID",
+        "rel_account": "AccountID",
+        "currency": "CurrencyCode",
+        "amount": "Amount",
+        "orig_ts": "XferTimestamp",
+        "extra_fee": {
+          "type": "Fee",
+          "default": null
+        }
       },
       "result": "boolean",
       "throws": [
