@@ -63,6 +63,10 @@ const TypeSpec = {
                     type: 'boolean',
                     optional: true,
                 },
+                noop: {
+                    type: 'boolean',
+                    optional: true,
+                },
                 type: 'string',
 
                 ext_id : {
@@ -1257,6 +1261,12 @@ class XferTools {
 
         as.add( ( as ) => this._startXfer( as, dbxfer, xfer ) );
         as.add( ( as ) => this._domainDbStep( as, dbxfer, xfer ) );
+
+        if ( xfer.noop ) {
+            as.add( ( as ) => as.success( 'NOOP' ) );
+            return;
+        }
+
         as.add( ( as ) => {
             if ( xfer.repeat ) {
                 assert( dbxfer._query_list.length === 0 );
@@ -1302,6 +1312,12 @@ class XferTools {
 
         as.add( ( as ) => this._cancelXfer( as, dbxfer, xfer ) );
         as.add( ( as ) => this._domainDbCancelStep( as, dbxfer, xfer ) );
+
+        if ( xfer.noop ) {
+            as.add( ( as ) => as.success( 'NOOP' ) );
+            return;
+        }
+
         as.add( ( as ) => {
             if ( xfer.repeat ) {
                 assert( dbxfer._query_list.length === 0 );

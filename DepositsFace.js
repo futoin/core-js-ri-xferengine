@@ -7,7 +7,7 @@ const BaseFace = require( './BaseFace' );
  */
 class DepositsFace extends BaseFace {
     static get IFACE_NAME() {
-        return 'futoin.xfer.deposits';
+        return 'futoin.xfer.deposit';
     }
 
     /**
