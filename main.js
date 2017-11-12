@@ -22,6 +22,8 @@ const main = {
     DB_IFACEVER : 'futoin.db.l2:1.0',
     EVTGEN_IFACEVER : 'futoin.evt.gen:1.0',
 
+    EVTGEN_ALIAS : 'xfer.evtgen',
+
     historyTimeBarrier : null,
     setHistoryTimeBarrier : ( count, units ) => {
         main.historyTimeBarrier = () => moment.utc().subtract( count, units );

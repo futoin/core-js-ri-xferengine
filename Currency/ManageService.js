@@ -2,7 +2,7 @@
 
 const BaseService = require( '../BaseService' );
 const ManageFace = require( './ManageFace' );
-const { DB_CURRENCY_TABLE, DB_EXRATE_TABLE } = require( '../main' );
+const { DB_CURRENCY_TABLE, DB_EXRATE_TABLE, EVTGEN_ALIAS } = require( '../main' );
 
 
 /**
@@ -20,7 +20,7 @@ class ManageService extends BaseService {
 
         const ccm = reqinfo.executor().ccm();
         const db = ccm.db( 'xfer' );
-        const evtgen = ccm.iface( 'xfer.evtgen' );
+        const evtgen = ccm.iface( EVTGEN_ALIAS );
         reqinfo.result( true );
 
         // try insert
@@ -86,7 +86,7 @@ class ManageService extends BaseService {
         const p = reqinfo.params();
         const ccm = reqinfo.executor().ccm();
         const db = ccm.db( 'xfer' );
-        const evtgen = ccm.iface( 'xfer.evtgen' );
+        const evtgen = ccm.iface( EVTGEN_ALIAS );
         reqinfo.result( true );
 
         db.select()

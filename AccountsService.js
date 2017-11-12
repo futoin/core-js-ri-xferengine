@@ -13,6 +13,7 @@ const {
     DB_CURRENCY_TABLE,
     DB_DOMAIN_LIMITS_TABLE,
     DB_LIMIT_GROUPS_TABLE,
+    EVTGEN_ALIAS,
     limitStatsTable,
 } = require( './main' );
 
@@ -38,7 +39,7 @@ class AccountsService extends BaseService {
                 const p = reqinfo.params();
                 const ccm = reqinfo.executor().ccm();
                 const db = ccm.db( 'xfer' );
-                const evtgen = ccm.iface( 'xfer.evtgen' );
+                const evtgen = ccm.iface( EVTGEN_ALIAS );
 
                 const xfer = db.newXfer();
                 const now = xfer.helpers().now();
@@ -62,7 +63,8 @@ class AccountsService extends BaseService {
                     updated: now,
                 } );
 
-                evtgen.addXferEvent( xfer, 'AH_NEW', Object.assign( { uuidb64 }, p ) );
+                evtgen.addXferEvent( xfer, 'AH_NEW',
+                    Object.assign( { id: uuidb64 }, p ) );
 
                 xfer.execute( as );
 
@@ -86,7 +88,7 @@ class AccountsService extends BaseService {
                 const p = reqinfo.params();
                 const ccm = reqinfo.executor().ccm();
                 const db = ccm.db( 'xfer' );
-                const evtgen = ccm.iface( 'xfer.evtgen' );
+                const evtgen = ccm.iface( EVTGEN_ALIAS );
 
                 const xfer = db.newXfer();
                 let sq;
@@ -201,7 +203,7 @@ class AccountsService extends BaseService {
                 const p = reqinfo.params();
                 const ccm = reqinfo.executor().ccm();
                 const db = ccm.db( 'xfer' );
-                const evtgen = ccm.iface( 'xfer.evtgen' );
+                const evtgen = ccm.iface( EVTGEN_ALIAS );
 
                 //---
                 db.select( DB_ACCOUNT_HOLDERS_TABLE )
@@ -240,7 +242,8 @@ class AccountsService extends BaseService {
                     ext_acct_id: p.ext_id,
                 } );
 
-                evtgen.addXferEvent( xfer, 'ACCT_NEW', Object.assign( { uuidb64 }, p ) );
+                evtgen.addXferEvent( xfer, 'ACCT_NEW',
+                    Object.assign( { id: uuidb64 }, p ) );
 
                 xfer.execute( as );
 
@@ -260,7 +263,7 @@ class AccountsService extends BaseService {
                 const p = reqinfo.params();
                 const ccm = reqinfo.executor().ccm();
                 const db = ccm.db( 'xfer' );
-                const evtgen = ccm.iface( 'xfer.evtgen' );
+                const evtgen = ccm.iface( EVTGEN_ALIAS );
 
                 const xfer = db.newXfer();
                 const q = xfer.update( DB_ACCOUNTS_TABLE, { affected: 1 } );
@@ -293,7 +296,7 @@ class AccountsService extends BaseService {
         const p = reqinfo.params();
         const ccm = reqinfo.executor().ccm();
         const db = ccm.db( 'xfer' );
-        const evtgen = ccm.iface( 'xfer.evtgen' );
+        const evtgen = ccm.iface( EVTGEN_ALIAS );
 
         db.select( DB_ACCOUNTS_VIEW )
             .where( 'uuidb64', p.id )

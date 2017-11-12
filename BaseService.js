@@ -5,7 +5,7 @@ const PingFace = require( 'futoin-invoker/PingFace' );
 const SpecTools = require( 'futoin-invoker/SpecTools' );
 
 const DBGenFace = require( 'futoin-eventstream/DBGenFace' );
-const { DB_IFACEVER, EVTGEN_IFACEVER } = require( './main' );
+const { DB_IFACEVER, EVTGEN_IFACEVER, EVTGEN_ALIAS } = require( './main' );
 
 /**
  * Base Service with common registration logic
@@ -40,10 +40,10 @@ class BaseService extends PingService {
 
             const ccm = executor.ccm();
             ccm.assertIface( '#db.xfer', DB_IFACEVER );
-            ccm.assertIface( 'xfer.evtgen', EVTGEN_IFACEVER );
+            ccm.assertIface( EVTGEN_ALIAS, EVTGEN_IFACEVER );
 
-            if ( !( ccm.iface( 'xfer.evtgen' ) instanceof DBGenFace ) ) {
-                as.error( 'InternalError', 'CCM xfet.evtgen must be instance of DBGenFace' );
+            if ( !( ccm.iface( EVTGEN_ALIAS ) instanceof DBGenFace ) ) {
+                as.error( 'InternalError', `CCM ${EVTGEN_ALIAS} must be instance of DBGenFace` );
             }
         } );
 

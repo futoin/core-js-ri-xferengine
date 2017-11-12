@@ -301,7 +301,7 @@ module.exports = function(describe, it, vars) {
                         (as, err) => {
                             if ( err === 'InternalError' ) {
                                 expect(as.state.error_info).to.equal(
-                                    'CCM xfet.evtgen must be instance of DBGenFace'
+                                    'CCM xfer.evtgen must be instance of DBGenFace'
                                 );
                                 as.success();
                             }

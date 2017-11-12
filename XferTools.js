@@ -11,6 +11,7 @@ const {
     DB_ACCOUNTS_TABLE,
     DB_ACCOUNTS_VIEW,
     DB_XFERS_TABLE,
+    EVTGEN_ALIAS,
     limitStatsTable,
     historyTimeBarrier,
 } = require( './main' );
@@ -994,6 +995,22 @@ class XferTools {
                     }
                 } );
             }
+
+            //---
+            this._ccm.iface( EVTGEN_ALIAS )
+                .addXferEvent( dbxfer, 'XFER_NEW', {
+                    id: xfer.id,
+                    src : xfer.src_account,
+                    src_amount : xfer.src_amount,
+                    src_currency : xfer.src_info.currency,
+                    dst : xfer.dst_account,
+                    dst_amount : xfer.dst_amount,
+                    dst_currency : xfer.dst_info.currency,
+                    amount: xfer.amount,
+                    currency: xfer.currency,
+                    type: xfer.type,
+                    status: xfer.status,
+                } );
         } );
     }
 
@@ -1058,7 +1075,15 @@ class XferTools {
             .set( 'updated', dbxfer.helpers().now() )
             .where( 'uuidb64', xfer.id )
             .where( 'xfer_status', xfer.status );
+
         xfer.status = next_state;
+
+        //---
+        this._ccm.iface( EVTGEN_ALIAS )
+            .addXferEvent( dbxfer, 'XFER_UPD', {
+                id: xfer.id,
+                status: xfer.status,
+            } );
     }
 
     _cancelXfer( as, dbxfer, xfer ) {
