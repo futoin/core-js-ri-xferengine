@@ -1365,11 +1365,11 @@ class XferTools {
         as.add( ( as ) => {
             if ( xfer.status === ST_WAIT_EXT_IN ) {
                 if ( xfer.extra_fee && ( xfer.extra_fee.status !== ST_DONE ) ) {
-                    as.add( ( as ) => this._feeExtIn( as, xfer.extra_fee ) );
+                    as.add( ( as ) => this._rawExtIn( as, xfer.extra_fee ) );
                     as.add( ( as ) => this._completeExtIn( as, xfer.extra_fee ) );
                 }
 
-                as.add( ( as ) => this._domainExtIn( as, xfer.in_xfer ) );
+                as.add( ( as ) => this._domainExtIn( as, xfer ) );
                 as.add( ( as ) => this._completeExtIn( as, xfer ) );
             }
 
@@ -1379,7 +1379,7 @@ class XferTools {
 
             as.add( ( as ) => {
                 if ( xfer.status === ST_WAIT_EXT_OUT ) {
-                    as.add( ( as ) => this._domainExtOut( as, xfer.out_xfer ) );
+                    as.add( ( as ) => this._domainExtOut( as, xfer ) );
                     as.add( ( as ) => this._completeExtOut( as, xfer ) );
                 }
             } );
@@ -1417,7 +1417,7 @@ class XferTools {
         } );
         as.add( ( as ) => {
             if ( xfer.out_xfer && ( xfer.out_xfer.status != ST_CANCELED ) ) {
-                as.add( ( as ) => this._domainCancelExtOut( as, xfer.out_xfer ) );
+                as.add( ( as ) => this._domainCancelExtOut( as, xfer ) );
                 as.add( ( as ) => this._completeCancelExtOut( as, xfer ) );
             } else if ( xfer.status != ST_CANCELED ) {
                 as.add( ( as ) => this._completeCancel( as, xfer ) );
@@ -1425,7 +1425,7 @@ class XferTools {
 
 
             if ( xfer.in_xfer && ( xfer.in_xfer.status != ST_CANCELED ) ) {
-                as.add( ( as ) => this._domainCancelExtIn( as, xfer.in_xfer ) );
+                as.add( ( as ) => this._domainCancelExtIn( as, xfer ) );
                 as.add( ( as ) => this._completeCancelExtIn( as, xfer ) );
             }
 
@@ -1437,7 +1437,7 @@ class XferTools {
                 }
 
                 if ( extra_fee.in_xfer && ( extra_fee.in_xfer.status != ST_CANCELED ) ) {
-                    as.add( ( as ) => this._feeCancelExtIn( as, extra_fee ) );
+                    as.add( ( as ) => this._rawCancelExtIn( as, extra_fee ) );
                     as.add( ( as ) => this._completeCancelExtIn( as, extra_fee ) );
                 }
             }
@@ -1447,32 +1447,41 @@ class XferTools {
         } );
     }
 
-    _feeExtIn( as, fee_xfer ) {
-        const feeface = this._ccm.iface( 'TODO' );
-        feeface.call( as, 'fee', {
-            holder: fee_xfer.dst_info.ext_holder_id,
-            currency: fee_xfer.dst_info.currency,
-            amount: fee_xfer.dst_amount,
-            reason: fee_xfer.misc_data.reason || '',
-            ext_id: fee_xfer.id,
-            ext_info: fee_xfer.misc_data.info || {},
-            orig_ts : fee_xfer.created || moment.utc().format(),
-            force : fee_xfer.force,
-        } );
+    _peerXferData( xfer ) {
+        return {
+            xfer_type: xfer.type,
+            orig_currency: xfer.currency,
+            orig_amount: xfer.amount,
+            src_account: xfer.src_info.ext_acct_id,
+            src_currency: xfer.src_info.currency,
+            src_amount: xfer.src_amount,
+            dst_account: xfer.dst_info.ext_acct_id,
+            dst_currency: xfer.dst_info.currency,
+            dst_amount: xfer.dst_amount,
+            ext_id: xfer.id,
+            ext_info: xfer.misc_data.info || {},
+            orig_ts : xfer.created || moment.utc().format(),
+        };
     }
 
-    _feeCancelExtIn( as, fee_xfer ) {
-        const feeface = this._ccm.iface( 'TODO' );
-        feeface.call( as, 'cancelFee', {
-            holder: fee_xfer.dst_info.ext_holder_id,
-            currency: fee_xfer.dst_info.currency,
-            amount: fee_xfer.dst_amount,
-            reason: fee_xfer.misc_data.reason || '',
-            ext_id: fee_xfer.id,
-            ext_info: fee_xfer.misc_data.info || {},
-            orig_ts : fee_xfer.created,
-            force : fee_xfer.force,
-        } );
+    _rawExtIn( as, xfer ) {
+        this._ccm.xferIface( as, 'futoin.xfer.peer', xfer.src_account );
+        as.add( ( as, iface ) => iface.call( as, 'rawXfer', this._peerXferData( xfer ) ) );
+    }
+
+    _rawCancelExtIn( as, xfer ) {
+        this._ccm.xferIface( as, 'futoin.xfer.peer', xfer.src_account );
+        as.add( ( as, iface ) => iface.call( as, 'cancelXfer', this._peerXferData( xfer ) ) );
+    }
+
+    _rawExtOut( as, xfer ) {
+        this._ccm.xferIface( as, 'futoin.xfer.peer', xfer.dst_account );
+        as.add( ( as, iface ) => iface.call( as, 'rawXfer', this._peerXferData( xfer ) ) );
+    }
+
+    _rawCancelExtOut( as, xfer ) {
+        this._ccm.xferIface( as, 'futoin.xfer.peer', xfer.dst_account );
+        as.add( ( as, iface ) => iface.call( as, 'cancelXfer', this._peerXferData( xfer ) ) );
     }
 
     _domainDbStep( as, _dbxfer, _xfer ) {
@@ -1485,20 +1494,20 @@ class XferTools {
         // mind xfer.repeat
     }
 
-    _domainExtIn( as, _in_xfer ) {
-        as.error( 'NotImplemented' );
+    _domainExtIn( as, xfer ) {
+        this._rawExtIn( as, xfer.in_xfer );
     }
 
-    _domainExtOut( as, _out_xfer ) {
-        as.error( 'NotImplemented' );
+    _domainExtOut( as, xfer ) {
+        this._rawExtOut( as, xfer.out_xfer );
     }
 
-    _domainCancelExtIn( as, _in_xfer ) {
-        as.error( 'NotImplemented' );
+    _domainCancelExtIn( as, xfer ) {
+        this._rawCancelExtIn( as, xfer.in_xfer );
     }
 
-    _domainCancelExtOut( as, _out_xfer ) {
-        as.error( 'NotImplemented' );
+    _domainCancelExtOut( as, xfer ) {
+        this._rawCancelExtOut( as, xfer.out_xfer );
     }
 }
 

@@ -45,7 +45,9 @@ class DepositService extends BaseService {
                 amount: p_fee.amount,
                 currency: p_fee.currency,
                 misc_data: {
-                    reason: p_fee.reason,
+                    info : {
+                        reason: p_fee.reason,
+                    },
                 },
             };
         }
@@ -60,7 +62,7 @@ class DepositService extends BaseService {
             currency: p.currency,
             ext_id: xt.makeExtId( p.rel_account, p.ext_id ),
             orig_ts: p.orig_ts,
-            misc_data: { ext_info: p.ext_info },
+            misc_data: { info: p.ext_info },
             xfer_fee,
         } );
 

@@ -1323,7 +1323,7 @@ module.exports = function(describe, it, vars) {
                     
                     as.add(
                         (as) => {
-                            tmpxt._domainExtIn(as);
+                            tmpxt._domainExtIn(as, { in_xfer: {} } );
                             as.add( (as) => as.error('Fail') );
                         },
                         (as, err) => {
@@ -1335,7 +1335,7 @@ module.exports = function(describe, it, vars) {
                     
                     as.add(
                         (as) => {
-                            tmpxt._domainExtOut(as);
+                            tmpxt._domainExtOut(as, { out_xfer: {} });
                             as.add( (as) => as.error('Fail') );
                         },
                         (as, err) => {
@@ -1347,7 +1347,7 @@ module.exports = function(describe, it, vars) {
                     
                     as.add(
                         (as) => {
-                            tmpxt._domainCancelExtIn(as);
+                            tmpxt._domainCancelExtIn(as, { in_xfer: {} });
                             as.add( (as) => as.error('Fail') );
                         },
                         (as, err) => {
@@ -1359,7 +1359,7 @@ module.exports = function(describe, it, vars) {
                     
                     as.add(
                         (as) => {
-                            tmpxt._domainCancelExtOut(as);
+                            tmpxt._domainCancelExtOut(as, { out_xfer: {} });
                             as.add( (as) => as.error('Fail') );
                         },
                         (as, err) => {
@@ -1628,16 +1628,12 @@ module.exports = function(describe, it, vars) {
                     super( ccm, 'Deposits' );
                 }
                 
-                _feeExtIn () {
-                    // noop
+                _rawExtIn( as, xfer ) {
+                    as.add( (as) => {} );
                 }
                 
-                _domainExtIn() {
-                    // noop
-                }
-                
-                _domainExtOut() {
-                    // noop
+                _rawExtOut( as, xfer ) {
+                    as.add( (as) => {} );
                 }
             };
             
@@ -2080,16 +2076,12 @@ module.exports = function(describe, it, vars) {
                     super( ccm, 'Deposits' );
                 }
                 
-                _feeExtIn () {
-                    // noop
+                _rawExtIn( as, xfer ) {
+                    as.add( (as) => {} );
                 }
                 
-                _domainExtIn() {
-                    // noop
-                }
-                
-                _domainExtOut() {
-                    // noop
+                _rawExtOut( as, xfer ) {
+                    as.add( (as) => {} );
                 }
             };
             
@@ -3243,27 +3235,19 @@ module.exports = function(describe, it, vars) {
                     super( ccm, 'Deposits' );
                 }
                 
-                _feeExtIn( as, fee_xfer ) {
+                _rawExtIn( as, xfer ) {
                     as.add( (as) => {} );
                 }
 
-                _feeCancelExtIn( as, fee_xfer ) {
-                    as.add( (as) => {} );
-                }
-
-                _domainExtIn( as, _in_xfer ) {
-                    as.add( (as) => {} );
-                }
-
-                _domainExtOut( as, _out_xfer ) {
+                _rawCancelExtIn( as, xfer ) {
                     as.add( (as) => {} );
                 }
                 
-                _domainCancelExtIn( as, _in_xfer ) {
+                _rawExtOut( as, xfer ) {
                     as.add( (as) => {} );
                 }
 
-                _domainCancelExtOut( as, _out_xfer ) {
+                _rawCancelExtOut( as, xfer ) {
                     as.add( (as) => {} );
                 }
             };

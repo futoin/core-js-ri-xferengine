@@ -22,7 +22,9 @@ class WithdrawService extends BaseService {
                 amount: p_extra_fee.amount,
                 currency: p_extra_fee.currency,
                 misc_data: {
-                    reason: p_extra_fee.reason,
+                    info: {
+                        reason: p_extra_fee.reason,
+                    },
                 },
             };
         }
