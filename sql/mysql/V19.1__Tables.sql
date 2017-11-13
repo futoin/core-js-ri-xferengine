@@ -277,6 +277,8 @@ CREATE TABLE active_xfers (
         'Canceled',
         'Rejected'
     ) NOT NULL,
+    `src_post_balance` DECIMAL(22, 0) NULL,
+    `dst_post_balance` DECIMAL(22, 0) NULL,
     `extra_fee_id` CHARACTER(22) NULL REFERENCES active_xfers(uuidb64),
     `xfer_fee_id` CHARACTER(22) NULL REFERENCES active_xfers(uuidb64),
     -- Should be "real ext id : rel_account_id" - in that order

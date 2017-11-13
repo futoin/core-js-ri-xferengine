@@ -835,28 +835,37 @@ class XferTools {
     _decreaseBalance( dbxfer, xfer, cancel=false ) {
         let acct_info;
         let account;
+        let balance_field;
         let q_amt;
+
+        if ( cancel && xfer.preauth ) {
+            return;
+        }
 
         const xfer_q = dbxfer.select( DB_XFERS_TABLE, { selected: 1 } )
             .where( 'uuidb64', xfer.id );
         const acct_q = dbxfer.update( DB_ACCOUNTS_TABLE, { affected: 1 } );
 
         if ( cancel ) {
-            if ( xfer.preauth ) {
-                return;
-            }
-
             acct_info = xfer.dst_info;
             account = xfer.dst_account;
+            balance_field = 'dst_post_balance';
 
-            xfer_q.get( 'dst_amount' );
+            xfer_q.get( [ 'dst', 'dst_amount', 'dst_currency_id' ] );
             q_amt = acct_q.backref( xfer_q, 'dst_amount' );
+
+            acct_q.where( 'uuidb64', acct_q.backref( xfer_q, 'dst' ) );
+            acct_q.where( 'currency_id', acct_q.backref( xfer_q, 'dst_currency_id' ) );
         } else {
             acct_info = xfer.src_info;
             account = xfer.src_account;
+            balance_field = 'src_post_balance';
 
-            xfer_q.get( 'src_amount' );
+            xfer_q.get( [ 'src', 'src_amount', 'src_currency_id' ] );
             q_amt = acct_q.backref( xfer_q, 'src_amount' );
+
+            acct_q.where( 'uuidb64', acct_q.backref( xfer_q, 'src' ) );
+            acct_q.where( 'currency_id', acct_q.backref( xfer_q, 'src_currency_id' ) );
         }
 
         const q_zero = dbxfer.escape( '0' );
@@ -869,22 +878,36 @@ class XferTools {
             acct_q.set( 'balance', dbxfer.expr( `balance - ${q_amt}` ) );
         }
 
-        acct_q.where( 'uuidb64', account );
+        acct_q.where( 'uuidb64', account ); // double safety
+        acct_q.where( 'currency_id', acct_info.currency_id ); // double safety
 
         if ( acct_info.acct_type !== ACCT_SYSTEM ) {
             acct_q.where( `(balance + COALESCE(overdraft, ${q_zero}) - reserved - ${q_amt}) >= 0` );
         }
 
-        acct_q.where( 'currency_id', acct_info.currency_id );
+        this._recordBalance( dbxfer, xfer, account, balance_field );
     }
 
     _increaseBalance( dbxfer, xfer, cancel=false ) {
+        if ( !cancel && xfer.preauth ) {
+            return;
+        }
+
+        let acct_info;
+        let account;
+        let balance_field;
+
         const xfer_q = dbxfer.select( DB_XFERS_TABLE, { selected: 1 } )
             .where( 'uuidb64', xfer.id );
 
         const acct_q = dbxfer.update( DB_ACCOUNTS_TABLE, { affected: 1 } );
 
         if ( cancel ) {
+            acct_info = xfer.src_info;
+            account = xfer.src_account;
+            balance_field = 'src_post_balance';
+
+            xfer_q.get( [ 'src', 'src_amount', 'src_currency_id' ] );
             xfer_q.where( 'xfer_status', ST_CANCELED );
 
             if ( xfer.preauth ) {
@@ -901,6 +924,11 @@ class XferTools {
                 acct_q.where( 'reserved >=', acct_q.backref( xfer_q, 'src_amount' ) );
             }
         } else {
+            acct_info = xfer.dst_info;
+            account = xfer.dst_account;
+            balance_field = 'dst_post_balance';
+
+            xfer_q.get( [ 'dst', 'dst_amount', 'dst_currency_id' ] );
             xfer_q.where( 'xfer_status', ST_DONE );
 
             acct_q.set( 'balance', acct_q.expr( `balance + ${acct_q.backref( xfer_q, 'dst_amount' )}` ) );
@@ -908,6 +936,52 @@ class XferTools {
             acct_q.where( 'uuidb64', acct_q.backref( xfer_q, 'dst' ) );
             acct_q.where( 'currency_id', acct_q.backref( xfer_q, 'dst_currency_id' ) );
         }
+
+        // double safety
+        acct_q.where( 'uuidb64', account );
+        acct_q.where( 'currency_id', acct_info.currency_id );
+
+        this._recordBalance( dbxfer, xfer, account, balance_field );
+    }
+
+    _recordBalance( dbxfer, xfer, account, target_field ) {
+        const acct_q = dbxfer.select( DB_ACCOUNTS_TABLE, { selected: 1 } );
+        acct_q.get( [ 'balance', 'reserved' ] ).where( 'uuidb64', account );
+
+        const xfer_q = dbxfer.update( DB_XFERS_TABLE, { affected: 1 } );
+        xfer_q.set( target_field, xfer_q.backref( acct_q, 'balance' ) );
+        xfer_q.where( 'uuidb64', xfer.id );
+
+        const evtgen = this._ccm.iface( EVTGEN_ALIAS );
+        const evt_q = dbxfer.insert( evtgen.DB_EVENT_TABLE, { affected: 1 } )
+            .set( 'type', 'ACCT_BAL' )
+            .set( 'ts', dbxfer.helpers().now() );
+
+        const json_id = JSON.stringify( account );
+
+        // TODO: cleanup this mess
+        //=========
+        const evt_data_parts = [
+            evt_q.escape( `{"id":${json_id},"raw_balance":"` ),
+            evt_q.backref( acct_q, 'balance' ),
+            evt_q.escape( '","raw_reserved":"' ),
+            evt_q.backref( acct_q, 'reserved' ),
+            evt_q.escape( '"}' ),
+        ];
+        let evt_data;
+
+        if ( dbxfer._db_type === 'mysql' ) {
+            evt_data = `CONCAT(${evt_data_parts.join( ',' )})`;
+        } else {
+            evt_data = evt_data_parts.join( '||' );
+        }
+
+        if ( dbxfer._db_type === 'postgresql' ) {
+            evt_data = `(${evt_data})::json`;
+        }
+
+        //=========
+        evt_q.set( 'data', evt_q.expr( evt_data ) );
     }
 
     _createXfer( as, dbxfer, xfer ) {
@@ -1075,9 +1149,13 @@ class XferTools {
                 xfer.repeat = false;
 
                 if ( xfer.out_xfer ) {
-                    this._completeXfer( dbxfer, xfer, ST_WAIT_EXT_OUT );
-                    // no balance updates
-                    this._completeXfer( dbxfer, xfer.out_xfer, ST_WAIT_EXT_OUT );
+                    this._getAccountsInfo( as, xfer.out_xfer );
+
+                    as.add( ( as ) => {
+                        this._completeXfer( dbxfer, xfer, ST_WAIT_EXT_OUT );
+                        // no balance updates
+                        this._completeXfer( dbxfer, xfer.out_xfer, ST_WAIT_EXT_OUT );
+                    } );
                 } else {
                     this._completeXfer( dbxfer, xfer );
                     this._increaseBalance( dbxfer, xfer );

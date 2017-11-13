@@ -262,6 +262,8 @@ CREATE TABLE active_xfers (
     "updated" TIMESTAMP NOT NULL,
     "xfer_type" xfer_type NOT NULL,
     "xfer_status" xfer_status NOT NULL,
+    "src_post_balance" amount NULL,
+    "dst_post_balance" amount NULL,
     "extra_fee_id" uuid_b64 NULL REFERENCES active_xfers(uuidb64)
         DEFERRABLE INITIALLY DEFERRED,
     "xfer_fee_id" uuid_b64 NULL REFERENCES active_xfers(uuidb64)
