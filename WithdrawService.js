@@ -12,6 +12,11 @@ class WithdrawService extends BaseService {
         return WithdrawFace;
     }
 
+    _xferTools( reqinfo ) {
+        const ccm = reqinfo.executor().ccm();
+        return new DepositTools( ccm );
+    }
+
     _params2xfer( p ) {
         const p_extra_fee = p.extra_fee;
         let extra_fee = null;
@@ -44,8 +49,7 @@ class WithdrawService extends BaseService {
     }
 
     startWithdrawal( as, reqinfo ) {
-        const ccm = reqinfo.executor().ccm();
-        const xt = new DepositTools( ccm );
+        const xt = this._xferTools( reqinfo );
         const p = reqinfo.params();
 
         const xfer = this._params2xfer( p );
@@ -66,8 +70,7 @@ class WithdrawService extends BaseService {
     }
 
     confirmWithdrawal( as, reqinfo ) {
-        const ccm = reqinfo.executor().ccm();
-        const xt = new DepositTools( ccm );
+        const xt = this._xferTools( reqinfo );
         const p = reqinfo.params();
 
         const xfer = this._params2xfer( p );
@@ -77,8 +80,7 @@ class WithdrawService extends BaseService {
     }
 
     rejectWithdrawal( as, reqinfo ) {
-        const ccm = reqinfo.executor().ccm();
-        const xt = new DepositTools( ccm );
+        const xt = this._xferTools( reqinfo );
         const p = reqinfo.params();
 
         const xfer = this._params2xfer( p );

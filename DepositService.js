@@ -12,9 +12,13 @@ class DepositService extends BaseService {
         return DepositFace;
     }
 
-    preDepositCheck( as, reqinfo ) {
+    _xferTools( reqinfo ) {
         const ccm = reqinfo.executor().ccm();
-        const xt = new DepositTools( ccm );
+        return new DepositTools( ccm );
+    }
+
+    preDepositCheck( as, reqinfo ) {
+        const xt = this._xferTools( reqinfo );
         const p = reqinfo.params();
 
         xt.processXfer( as, {
@@ -32,8 +36,7 @@ class DepositService extends BaseService {
     }
 
     onDeposit( as, reqinfo ) {
-        const ccm = reqinfo.executor().ccm();
-        const xt = new DepositTools( ccm );
+        const xt = this._xferTools( reqinfo );
         const p = reqinfo.params();
 
         const p_fee = p.fee;
