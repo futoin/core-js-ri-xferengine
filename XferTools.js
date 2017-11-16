@@ -356,7 +356,7 @@ class XferTools {
             if ( !ext_id.endsWith( xfer.src_account ) &&
                 !ext_id.endsWith( xfer.dst_account )
             ) {
-                as.error( 'InternalError', 'Invalid external ID format' );
+                as.error( 'XferError', 'Invalid external ID format' );
             }
 
             //---
@@ -507,7 +507,7 @@ class XferTools {
 
         as.add( ( as, rows ) => {
             if ( !rows.length ) {
-                as.error( 'InternalError', 'Missing fee xfer' );
+                as.error( 'XferError', 'Missing fee xfer' );
             }
 
             const r = rows[0];
@@ -602,7 +602,7 @@ class XferTools {
     _convXferAmounts( as, xfer ) {
         as.add( ( as ) => {
             // common
-            if ( ( xfer.src_info.currency !== xfer.currency ) &&
+            if ( ( xfer.src_info.currency !== xfer.currency ) ||
                  ( xfer.dst_info.currency !== xfer.currency )
             ) {
                 xfer.misc_data.amount = xfer.amount;
@@ -1059,7 +1059,7 @@ class XferTools {
                     xfer_q.set( 'extra_fee_id', xfer.extra_fee.id );
                     xfer_event.extra_fee_id = xfer.extra_fee.id;
                 } else {
-                    as.error( 'InternalError',
+                    as.error( 'XferError',
                         'Transit Extra Fee destination is not allowed' );
                 }
             }
@@ -1078,7 +1078,7 @@ class XferTools {
             // Transaction Fee
             if ( xfer.xfer_fee && !cancel ) {
                 if ( xfer.out_xfer ) {
-                    as.error( 'InternalError',
+                    as.error( 'XferError',
                         'Xfer fee is not allowed for Transit destination' );
                 }
 
@@ -1096,7 +1096,7 @@ class XferTools {
                 // Fee ID gets generated in async step
                 as.add( ( as ) => {
                     if ( xfer.xfer_fee.dst_info.acct_type === ACCT_TRANSIT ) {
-                        as.error( 'InternalError',
+                        as.error( 'XferError',
                             'Transit Xfer Fee destination is not allowed' );
                     }
                 } );
@@ -1342,13 +1342,31 @@ class XferTools {
         // check data for consistency
         // TODO; disable for production
         if ( !SpecTools.checkType( TypeSpec, 'XferInfo', xfer ) ) {
-            as.error( 'InternalError', 'Invalid xfer data' );
+            as.error( 'XferError', 'Invalid xfer data' );
         }
 
         const dbxfer = this._ccm.db( 'xfer' ).newXfer();
 
-        as.add( ( as ) => this._startXfer( as, dbxfer, xfer ) );
-        as.add( ( as ) => this._domainDbStep( as, dbxfer, xfer ) );
+        as.add(
+            ( as ) => {
+                as.add( ( as ) => this._startXfer( as, dbxfer, xfer ) );
+                as.add( ( as ) => this._domainDbStep( as, dbxfer, xfer ) );
+            },
+            ( as, err ) => {
+                /*
+                TODO:
+                this._ccm.iface( EVTGEN_ALIAS ).addEvent(
+                    as,
+                    'XFER_ERR',
+                    {
+                        err: err,
+                        info: as.state.error_info,
+                        xfer: xfer,
+                    }
+                );
+                */
+            }
+        );
 
         if ( xfer.noop ) {
             as.add( ( as ) => as.success( 'NOOP' ) );
@@ -1393,13 +1411,31 @@ class XferTools {
         // check data for consistency
         // TODO; disable for production
         if ( !SpecTools.checkType( TypeSpec, 'XferInfo', xfer ) ) {
-            as.error( 'InternalError', 'Invalid xfer data' );
+            as.error( 'XferError', 'Invalid xfer data' );
         }
 
         const dbxfer = this._ccm.db( 'xfer' ).newXfer();
 
-        as.add( ( as ) => this._cancelXfer( as, dbxfer, xfer ) );
-        as.add( ( as ) => this._domainDbCancelStep( as, dbxfer, xfer ) );
+        as.add(
+            ( as ) => {
+                as.add( ( as ) => this._cancelXfer( as, dbxfer, xfer ) );
+                as.add( ( as ) => this._domainDbCancelStep( as, dbxfer, xfer ) );
+            },
+            ( as, err ) => {
+                /*
+                TODO:
+                this._ccm.iface( EVTGEN_ALIAS ).addEvent(
+                    as,
+                    'XFER_ERR',
+                    {
+                        err: err,
+                        info: as.state.error_info,
+                        xfer: xfer,
+                    }
+                );
+                */
+            }
+        );
 
         if ( xfer.noop ) {
             as.add( ( as ) => as.success( 'NOOP' ) );
@@ -1447,17 +1483,18 @@ class XferTools {
         } );
     }
 
-    _peerXferData( xfer ) {
+    _peerXferData( xfer, to_external ) {
         return {
+            to_external: to_external,
             xfer_type: xfer.type,
             orig_currency: xfer.currency,
             orig_amount: xfer.amount,
-            src_account: xfer.src_info.ext_acct_id,
-            src_currency: xfer.src_info.currency,
-            src_amount: xfer.src_amount,
-            dst_account: xfer.dst_info.ext_acct_id,
-            dst_currency: xfer.dst_info.currency,
-            dst_amount: xfer.dst_amount,
+            dst_account: xfer.src_info.ext_acct_id,
+            dst_currency: xfer.src_info.currency,
+            dst_amount: xfer.src_amount,
+            src_account: xfer.dst_info.ext_acct_id,
+            src_currency: xfer.dst_info.currency,
+            src_amount: xfer.dst_amount,
             ext_id: xfer.id,
             ext_info: xfer.misc_data.info || {},
             orig_ts : xfer.created || moment.utc().format(),
@@ -1466,22 +1503,22 @@ class XferTools {
 
     _rawExtIn( as, xfer ) {
         this._ccm.xferIface( as, 'futoin.xfer.peer', xfer.src_account );
-        as.add( ( as, iface ) => iface.call( as, 'rawXfer', this._peerXferData( xfer ) ) );
+        as.add( ( as, iface ) => iface.call( as, 'rawXfer', this._peerXferData( xfer, true ) ) );
     }
 
     _rawCancelExtIn( as, xfer ) {
         this._ccm.xferIface( as, 'futoin.xfer.peer', xfer.src_account );
-        as.add( ( as, iface ) => iface.call( as, 'cancelXfer', this._peerXferData( xfer ) ) );
+        as.add( ( as, iface ) => iface.call( as, 'cancelXfer', this._peerXferData( xfer, true ) ) );
     }
 
     _rawExtOut( as, xfer ) {
         this._ccm.xferIface( as, 'futoin.xfer.peer', xfer.dst_account );
-        as.add( ( as, iface ) => iface.call( as, 'rawXfer', this._peerXferData( xfer ) ) );
+        as.add( ( as, iface ) => iface.call( as, 'rawXfer', this._peerXferData( xfer, false ) ) );
     }
 
     _rawCancelExtOut( as, xfer ) {
         this._ccm.xferIface( as, 'futoin.xfer.peer', xfer.dst_account );
-        as.add( ( as, iface ) => iface.call( as, 'cancelXfer', this._peerXferData( xfer ) ) );
+        as.add( ( as, iface ) => iface.call( as, 'cancelXfer', this._peerXferData( xfer, false ) ) );
     }
 
     _domainDbStep( as, _dbxfer, _xfer ) {
@@ -1508,6 +1545,79 @@ class XferTools {
 
     _domainCancelExtOut( as, xfer ) {
         this._rawCancelExtOut( as, xfer.out_xfer );
+    }
+
+    pairPeer( as, holder, currency, alias=null ) {
+        const ccm = this._ccm;
+        const xferacct = ccm.iface( 'xfer.accounts' );
+        let account_id;
+        let already_peered_ext_id = false;
+
+        alias = alias || `${currency} exchange`;
+
+        xferacct.listAccounts(
+            as,
+            holder
+        );
+        as.add( ( as, accounts ) => {
+            for ( let v of accounts ) {
+                if ( ( v.type === 'External' ) &&
+                     ( v.currency === currency ) &&
+                     ( v.alias === alias )
+                ) {
+                    account_id = v.id;
+                    already_peered_ext_id = v.ext_id;
+
+                    return;
+                }
+            }
+
+            // else
+            xferacct.addAccount(
+                as,
+                holder,
+                'External',
+                currency,
+                alias,
+                true
+            );
+            as.add( ( as, res ) => account_id = res );
+        } );
+
+        as.add( ( as ) => {
+            ccm.xferIface( as, 'futoin.xfer.peer', account_id );
+            as.add( ( as, peerface ) => {
+                peerface.pair( as, account_id, currency, alias );
+            } );
+            as.add( ( as, ext_id ) => {
+                if ( already_peered_ext_id ) {
+                    assert( already_peered_ext_id === ext_id );
+                } else {
+                    const dbxfer = ccm.db( 'xfer' ).newXfer();
+                    dbxfer.update( DB_ACCOUNTS_TABLE, { affected: 1 } )
+                        .set( 'ext_acct_id', ext_id )
+                        .where( 'uuidb64', account_id );
+                    dbxfer.execute( as );
+                }
+            } );
+        } );
+        as.add( ( as ) => as.success( account_id ) );
+    }
+
+    validatePeerRequest( as, holder, peer_account, rel_account ) {
+        // NOTE: it's NOT security, it's only consistency check !!!
+
+        const dbxfer = this._ccm.db( 'xfer' ).newXfer();
+        // 1. peer_account belongs to holder and External
+        dbxfer.select( DB_ACCOUNTS_VIEW, { selected: 1 } )
+            .where( 'uuidb64', peer_account )
+            .where( 'ext_holder_id', holder )
+            .where( 'acct_type', 'External' );
+        // 2. rel_account is Regular
+        dbxfer.select( DB_ACCOUNTS_TABLE, { selected: 1 } )
+            .where( 'uuidb64', rel_account )
+            .where( 'acct_type', 'Regular' );
+        dbxfer.execute( as );
     }
 }
 

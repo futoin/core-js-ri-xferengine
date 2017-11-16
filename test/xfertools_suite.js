@@ -1176,7 +1176,7 @@ module.exports = function(describe, it, vars) {
                             as.add( (as) => as.error('Fail') );
                         },
                         (as, err) => {
-                            if ( err === 'InternalError' ) {
+                            if ( err === 'XferError' ) {
                                 expect(as.state.error_info).to.equal(
                                     'Invalid external ID format'
                                 );
@@ -1379,7 +1379,7 @@ module.exports = function(describe, it, vars) {
                             as.add( (as) => as.error('Fail') );
                         },
                         (as, err) => {
-                            if ( err === 'InternalError' ) {
+                            if ( err === 'XferError' ) {
                                 expect(as.state.error_info).to.equal(
                                     'Invalid xfer data'
                                 );
@@ -1398,7 +1398,7 @@ module.exports = function(describe, it, vars) {
                             as.add( (as) => as.error('Fail') );
                         },
                         (as, err) => {
-                            if ( err === 'InternalError' ) {
+                            if ( err === 'XferError' ) {
                                 expect(as.state.error_info).to.equal(
                                     'Invalid xfer data'
                                 );
@@ -1697,7 +1697,7 @@ module.exports = function(describe, it, vars) {
                             as.add( (as) => as.error('Fail') );
                         },
                         (as, err) => {
-                            if (err === 'InternalError') {
+                            if (err === 'XferError') {
                                 expect( as.state.error_info ).to.equal(
                                     'Transit Extra Fee destination is not allowed'
                                 );
@@ -2144,7 +2144,7 @@ module.exports = function(describe, it, vars) {
                             as.add( (as) => as.error('Fail') );
                         },
                         (as, err) => {
-                            if (err === 'InternalError') {
+                            if (err === 'XferError') {
                                 expect( as.state.error_info ).to.equal(
                                     'Xfer fee is not allowed for Transit destination'
                                 );
@@ -2174,7 +2174,7 @@ module.exports = function(describe, it, vars) {
                             as.add( (as) => as.error('Fail') );
                         },
                         (as, err) => {
-                            if (err === 'InternalError') {
+                            if (err === 'XferError') {
                                 expect( as.state.error_info ).to.equal(
                                     'Transit Xfer Fee destination is not allowed'
                                 );
@@ -2204,7 +2204,7 @@ module.exports = function(describe, it, vars) {
                             as.add( (as) => as.error('Fail') );
                         },
                         (as, err) => {
-                            if (err === 'InternalError') {
+                            if (err === 'XferError') {
                                 expect( as.state.error_info ).to.equal(
                                     'Xfer fee is not allowed for Transit destination'
                                 );

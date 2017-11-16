@@ -499,6 +499,111 @@ module.exports = function(describe, it, vars) {
             as.execute();
         });
         
+        it('should create accounts with ext_id', function(done) {
+            as.add(
+                (as) => {
+                    const xferacct = ccm.iface('xfer.accounts');
+                    
+                    xferacct.addAccountHolder(
+                        as,
+                        'EXTERNAL',
+                        'default',
+                        true,
+                        true,
+                        {},
+                        {}
+                    );
+                    
+                    as.add( (as, holder) => {
+                        xferacct.addAccount(
+                            as,
+                            holder,
+                            'External',
+                            'I:EUR',
+                            'Source',
+                            true,
+                            "FirstExtID"
+                        );
+                        xferacct.addAccount(
+                            as,
+                            holder,
+                            'External',
+                            'I:EUR',
+                            'Sync',
+                            true,
+                            "SecondExtID"
+                        );
+                        
+                        xferacct.listAccounts(as, holder);
+                        
+                        as.add( (as, res) => {
+                            expect(res).to.be.lengthOf(2);
+                            xferacct.getAccountExt(as, holder, res[0].ext_id);
+                            xferacct.getAccountExt(as, holder, res[1].ext_id);
+                        });
+                    });
+                    
+                    xferacct.addAccountHolder(
+                        as,
+                        'EXTERNAL2',
+                        'default',
+                        true,
+                        true,
+                        {},
+                        {}
+                    );
+                    
+                    as.add( (as, holder) => {
+                        as.add(
+                            (as) => {
+                                xferacct.getAccountExt(as, holder, 'FirstExtID');
+                                as.add( (as) => as.error('Fail') );
+                            },
+                            (as, err) => {
+                                if (err === 'UnknownAccountID') {
+                                    as.success();
+                                }
+                            }
+                        );
+                        
+                        xferacct.addAccount(
+                            as,
+                            holder,
+                            'External',
+                            'I:EUR',
+                            'Source',
+                            true,
+                            "FirstExtID"
+                        );
+                        xferacct.addAccount(
+                            as,
+                            holder,
+                            'External',
+                            'I:EUR',
+                            'Sync',
+                            true,
+                            "SecondExtID"
+                        );
+                        
+                        xferacct.listAccounts(as, holder);
+                        
+                        as.add( (as, res) => {
+                            expect(res).to.be.lengthOf(2);
+                            xferacct.getAccountExt(as, holder, res[0].ext_id);
+                            xferacct.getAccountExt(as, holder, res[1].ext_id);
+                        });
+                    });
+                },
+                (as, err) => {
+                    console.log(err);
+                    console.log(as.state.error_info);
+                    done(as.state.last_exception || 'Fail');
+                }
+            );
+            as.add( (as) => done() );
+            as.execute();
+        });
+        
         it('should update accounts', function(done) {
             as.add(
                 (as) => {

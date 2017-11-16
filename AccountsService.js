@@ -20,6 +20,7 @@ const {
 const SYM_GET_AH_ID = Symbol( 'getAccountHolder' );
 const SYM_GET_AH_EXTID = Symbol( 'getAccountHolderExt' );
 const SYM_GET_ACCOUNT = Symbol( 'getAccount' );
+const SYM_GET_ACCOUNT_EXT = Symbol( 'getAccountExt' );
 const SYM_LIST_ACCOUNTS = Symbol( 'listAccounts' );
 const SYM_GET_LIMIT_STATS = Symbol( 'getLimitStats1' );
 
@@ -230,7 +231,7 @@ class AccountsService extends BaseService {
                     .where( 'code', p.currency );
 
 
-                const iq = xfer.insert( DB_ACCOUNTS_TABLE );
+                const iq = xfer.insert( DB_ACCOUNTS_TABLE, { affected: 1 } );
                 iq.set( {
                     uuidb64,
                     holder: p.holder,
@@ -363,6 +364,30 @@ class AccountsService extends BaseService {
                         'C.id = A.currency_id' )
                     .get( [ 'A.*', 'C.code', 'C.dec_places' ] );
                 qb.where( 'A.uuidb64', qb.param( 'id' ) );
+                return qb.prepare();
+            } )
+            .executeAssoc( as, reqinfo.params() );
+
+        as.add( ( as, rows ) => {
+            if ( rows.length !== 1 ) {
+                as.error( 'UnknownAccountID' );
+            }
+
+            reqinfo.result( this._accountInfo( rows[0] ) );
+        } );
+    }
+
+    getAccountExt( as, reqinfo ) {
+        const db = reqinfo.executor().ccm().db( 'xfer' );
+
+        db
+            .getPrepared( SYM_GET_ACCOUNT_EXT, ( db ) => {
+                const qb = db.select( [ DB_ACCOUNTS_TABLE, 'A' ] )
+                    .leftJoin( [ DB_CURRENCY_TABLE, 'C' ],
+                        'C.id = A.currency_id' )
+                    .get( [ 'A.*', 'C.code', 'C.dec_places' ] );
+                qb.where( 'A.holder', qb.param( 'holder' ) );
+                qb.where( 'A.ext_acct_id', qb.param( 'ext_id' ) );
                 return qb.prepare();
             } )
             .executeAssoc( as, reqinfo.params() );

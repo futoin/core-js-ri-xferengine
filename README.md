@@ -96,6 +96,15 @@ The concept is described in FutoIn specification: [FTN19: FutoIn Interface - Tra
 <dt><a href="#LimitsService">LimitsService</a></dt>
 <dd><p>Limits Service</p>
 </dd>
+<dt><a href="#PaymentTools">PaymentTools</a></dt>
+<dd><p>XferTools with focus on Payments use case</p>
+</dd>
+<dt><a href="#PeerFace">PeerFace</a></dt>
+<dd><p>Peer Face</p>
+</dd>
+<dt><a href="#PeerService">PeerService</a></dt>
+<dd><p>Peer Service</p>
+</dd>
 <dt><a href="#UUIDTool">UUIDTool</a></dt>
 <dd><p>Common tool for UUID generation and use in transactions</p>
 </dd>
@@ -380,6 +389,41 @@ Register futoin.xfers.limits interface with Executor
 | executor | <code>Executor</code> | executor instance |
 | options | <code>object</code> | implementation defined options |
 
+<a name="PaymentTools"></a>
+
+## PaymentTools
+XferTools with focus on Payments use case
+
+**Kind**: global class  
+<a name="PeerFace"></a>
+
+## PeerFace
+Peer Face
+
+**Kind**: global class  
+<a name="PeerFace.register"></a>
+
+### PeerFace.register(as, ccm, name, endpoint, [credentials], [options])
+CCM registration helper
+
+**Kind**: static method of [<code>PeerFace</code>](#PeerFace)  
+
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| as | <code>AsyncSteps</code> |  | steps interface |
+| ccm | <code>AdvancedCCM</code> |  | CCM instance |
+| name | <code>string</code> |  | CCM registration name |
+| endpoint | <code>\*</code> |  | see AdvancedCCM#register |
+| [credentials] | <code>\*</code> | <code></code> | see AdvancedCCM#register |
+| [options] | <code>object</code> | <code>{}</code> | interface options |
+| [options.version] | <code>string</code> | <code>&quot;&lt;latest&gt;&quot;</code> | interface version to use |
+
+<a name="PeerService"></a>
+
+## PeerService
+Peer Service
+
+**Kind**: global class  
 <a name="UUIDTool"></a>
 
 ## UUIDTool

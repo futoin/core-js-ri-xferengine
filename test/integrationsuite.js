@@ -1,5 +1,6 @@
 'use strict';
 
+const util = require('util');
 const expect = require( 'chai' ).expect;
 const moment = require( 'moment' );
 
@@ -20,6 +21,13 @@ module.exports = function(describe, it, vars) {
         
         executor.on('notExpected', function() {
             console.dir(arguments);
+            
+            if ( arguments[3] ) {
+                for (var f of arguments[3]) {
+                    console.log('================================');
+                    console.log(f.toString());
+                }
+            }
         });
 
         as.add(
@@ -41,4 +49,5 @@ module.exports = function(describe, it, vars) {
     require('./accounts_suite')( describe, it, vars );
     require('./xfertools_suite')( describe, it, vars );
     require('./deposits_suite')( describe, it, vars );
+    require('./peerxfer_suite')( describe, it, vars );
 };

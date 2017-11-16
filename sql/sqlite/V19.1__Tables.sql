@@ -72,7 +72,8 @@ CREATE TABLE accounts (
     "overdraft" DECIMAL(22, 0) NULL,
     "rel_uuidb64" CHARACTER(22) NULL REFERENCES accounts(uuidb64),
     "ext_acct_id" VARCHAR(64) NULL,
-    CONSTRAINT "holder_alias" UNIQUE ("holder", "acct_alias")
+    CONSTRAINT "holder_alias" UNIQUE ("holder", "acct_alias"),
+    CONSTRAINT "holder_ext_acct_id" UNIQUE ("holder", "ext_acct_id")
 );
 
 CREATE VIEW v_accounts AS

@@ -98,7 +98,8 @@ CREATE TABLE accounts (
     `overdraft` DECIMAL(22, 0) NULL,
     `rel_uuidb64` CHARACTER(22) NULL REFERENCES accounts(uuidb64),
     `ext_acct_id` VARCHAR(64) NULL,
-    UNIQUE `holder_alias` (`holder`, `acct_alias`)
+    UNIQUE `holder_alias` (`holder`, `acct_alias`),
+    UNIQUE `holder_ext_acct_id` (`holder`, `ext_acct_id`)
 )
     ENGINE=InnoDB
     CHARACTER SET 'utf8';
