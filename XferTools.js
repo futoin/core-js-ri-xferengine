@@ -1353,18 +1353,17 @@ class XferTools {
                 as.add( ( as ) => this._domainDbStep( as, dbxfer, xfer ) );
             },
             ( as, err ) => {
-                /*
-                TODO:
+                const error_info = as.state.error_info;
                 this._ccm.iface( EVTGEN_ALIAS ).addEvent(
                     as,
                     'XFER_ERR',
                     {
                         err: err,
-                        info: as.state.error_info,
+                        info: error_info,
                         xfer: xfer,
                     }
                 );
-                */
+                as.add( ( as ) => as.error( err, error_info ) );
             }
         );
 
@@ -1422,18 +1421,17 @@ class XferTools {
                 as.add( ( as ) => this._domainDbCancelStep( as, dbxfer, xfer ) );
             },
             ( as, err ) => {
-                /*
-                TODO:
+                const error_info = as.state.error_info;
                 this._ccm.iface( EVTGEN_ALIAS ).addEvent(
                     as,
                     'XFER_ERR',
                     {
                         err: err,
-                        info: as.state.error_info,
+                        info: error_info,
                         xfer: xfer,
                     }
                 );
-                */
+                as.add( ( as ) => as.error( err, error_info ) );
             }
         );
 

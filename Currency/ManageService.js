@@ -42,41 +42,35 @@ class ManageService extends BaseService {
                 }
 
                 if ( err === 'XferCondition' ) {
-                    as.success( 'UPDATE' );
-                }
-            }
-        );
+                    /// update on dup
+                    as.add(
+                        ( as ) => {
+                            const xfer = db.newXfer();
+                            xfer.update( DB_CURRENCY_TABLE, { affected: 1 } )
+                                .set( {
+                                    name: p.name,
+                                    symbol: p.symbol,
+                                    enabled: p.enabled,
+                                } )
+                                .where( {
+                                    code: p.code,
+                                    dec_places: p.dec_places,
+                                } );
+                            evtgen.addXferEvent( xfer, 'CURRENCY', p );
+                            xfer.execute( as );
 
-        /// update on dup
-        as.add(
-            ( as, res ) => {
-                if ( res !== 'UPDATE' ) {
-                    return;
-                }
+                            as.add( ( as ) => {} );
+                        },
+                        ( as, err ) => {
+                            if ( err === 'Duplicate' ) {
+                                as.error( 'DuplicateNameOrSymbol', `Currency: ${p.code}` );
+                            }
 
-                const xfer = db.newXfer();
-                xfer.update( DB_CURRENCY_TABLE, { affected: 1 } )
-                    .set( {
-                        name: p.name,
-                        symbol: p.symbol,
-                        enabled: p.enabled,
-                    } )
-                    .where( {
-                        code: p.code,
-                        dec_places: p.dec_places,
-                    } );
-                evtgen.addXferEvent( xfer, 'CURRENCY', p );
-                xfer.execute( as );
-
-                as.add( ( as ) => {} );
-            },
-            ( as, err ) => {
-                if ( err === 'Duplicate' ) {
-                    as.error( 'DuplicateNameOrSymbol', `Currency: ${p.code}` );
-                }
-
-                if ( err === 'XferCondition' ) {
-                    as.error( 'DecPlaceMismatch', `Currency: ${p.code}` );
+                            if ( err === 'XferCondition' ) {
+                                as.error( 'DecPlaceMismatch', `Currency: ${p.code}` );
+                            }
+                        }
+                    );
                 }
             }
         );
@@ -129,25 +123,18 @@ class ManageService extends BaseService {
                 },
                 ( as, err ) => {
                     if ( err === 'Duplicate' ) {
-                        as.success( err );
-                    }
-                }
-            );
-            // Update on dup
-            as.add(
-                ( as, res ) => {
-                    if ( res !== 'Duplicate' ) {
-                        return;
-                    }
+                        // Update on dup
+                        as.add( ( as ) => {
+                            const xfer = db.newXfer();
+                            xfer.update( DB_EXRATE_TABLE, { affected: 1 } )
+                                .set( change )
+                                .where( pair );
+                            evtgen.addXferEvent( xfer, 'EXRATE', p );
+                            xfer.execute( as );
 
-                    const xfer = db.newXfer();
-                    xfer.update( DB_EXRATE_TABLE, { affected: 1 } )
-                        .set( change )
-                        .where( pair );
-                    evtgen.addXferEvent( xfer, 'EXRATE', p );
-                    xfer.execute( as );
-
-                    as.add( ( as ) => {} );
+                            as.add( ( as ) => {} );
+                        } );
+                    }
                 }
             );
         } );
