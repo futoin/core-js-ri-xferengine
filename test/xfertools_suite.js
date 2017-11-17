@@ -632,7 +632,7 @@ module.exports = function(describe, it, vars) {
                                 'Transit First',
                                 true,
                                 `transit1`,
-                                external_account,
+                                external_account
                             );
                             as.add( (as, id) => first_transit = id );
                             

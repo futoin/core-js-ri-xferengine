@@ -102,9 +102,9 @@ class AmountTools {
     static convAllAmounts( amounts, rate, dec_places, round_up=false ) {
         const res = Object.assign( {}, amounts );
 
-        for ( let [ k, v ] of Object.entries( res ) ) {
+        for ( let k in res ) {
             if ( this.isAmountField( k ) ) {
-                res[k] = this.convAmount( v, rate, dec_places, round_up );
+                res[k] = this.convAmount( res[k], rate, dec_places, round_up );
             }
         }
 
@@ -114,7 +114,8 @@ class AmountTools {
     static prepNewStats( stats, deltas ) {
         const res = Object.assign( {}, deltas );
 
-        for ( let [ field, dv ] of Object.entries( deltas ) ) {
+        for ( let field in deltas ) {
+            let dv = deltas[ field ];
             const sv = stats[ field ];
 
             if ( sv === undefined ) {
@@ -133,7 +134,8 @@ class AmountTools {
     }
 
     static checkStatsLimit( stats, limits ) {
-        for ( let [ field, sv ] of Object.entries( stats ) ) {
+        for ( let field in stats ) {
+            let sv = stats[field];
             const lv = limits[field];
 
             if ( lv === undefined ) {

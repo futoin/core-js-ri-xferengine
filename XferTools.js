@@ -211,7 +211,9 @@ class XferTools {
             const lq = dbxfer.update( limitStatsTable( domain ), { affected: 1 } );
             lq.where( { holder } );
 
-            for ( let [ k, dv ] of Object.entries( deltas ) ) {
+            for ( let k in deltas ) {
+                let dv = deltas[k];
+
                 if ( k in stats ) {
                     let lv = lim_hard[k];
 
@@ -300,7 +302,9 @@ class XferTools {
 
             const q_zero = lq.escape( 0 );
 
-            for ( let [ k, dv ] of Object.entries( deltas ) ) {
+            for ( let k in deltas ) {
+                let dv = deltas[k];
+
                 if ( !do_daily && ( k.indexOf( '_daily_' ) > 0 ) ) {
                     continue;
                 }

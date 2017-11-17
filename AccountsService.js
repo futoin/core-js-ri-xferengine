@@ -448,7 +448,9 @@ class AccountsService extends BaseService {
     _limitStats( row ) {
         const stats = {};
 
-        for ( let [ k, v ] of Object.entries( row ) ) {
+        for ( let k in row ) {
+            const v = row[k];
+
             if ( k.endsWith( '_cnt' ) ) {
                 stats[k] = v;
             } else if ( AmountTools.isAmountField( k ) ) {

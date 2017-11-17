@@ -205,7 +205,7 @@ module.exports = function(describe, it, vars) {
                                 user_account,
                                 system_account,
                                 'I:EUR',
-                                '1.00',
+                                '1.00'
                             );
                             as.add( (as) => as.error('Fail') );
                         },
@@ -285,7 +285,7 @@ module.exports = function(describe, it, vars) {
                         user_account,
                         system_account,
                         'I:EUR',
-                        '0.80',
+                        '0.80'
                     );
                     
                     as.add( (as, res) => {
@@ -299,7 +299,7 @@ module.exports = function(describe, it, vars) {
                             system_account,
                             'I:EUR',
                             '0.80',
-                            moment.utc().format(),
+                            moment.utc().format()
                         );
                     });
                     
@@ -310,7 +310,7 @@ module.exports = function(describe, it, vars) {
                                 user_account,
                                 system_account,
                                 'I:EUR',
-                                '1.00',
+                                '1.00'
                             );
                             as.add( (as) => as.error('Fail') );
                         },
@@ -327,7 +327,7 @@ module.exports = function(describe, it, vars) {
                         user_account,
                         system_account,
                         'I:EUR',
-                        '0.80',
+                        '0.80'
                     );
                     
                     
@@ -342,7 +342,7 @@ module.exports = function(describe, it, vars) {
                             system_account,
                             'I:EUR',
                             '0.80',
-                            moment.utc().format(),
+                            moment.utc().format()
                         );
                         
                         as.add(
@@ -354,7 +354,7 @@ module.exports = function(describe, it, vars) {
                                     system_account,
                                     'I:EUR',
                                     '0.80',
-                                    moment.utc().format(),
+                                    moment.utc().format()
                                 );
                                 as.add( (as) => as.error('Fail') );
                             },
@@ -400,7 +400,7 @@ module.exports = function(describe, it, vars) {
                                 system_account,
                                 'I:EUR',
                                 '0.80',
-                                moment.utc().format(),
+                                moment.utc().format()
                             );
                             as.add( (as) => as.error('Fail') );
                         },
