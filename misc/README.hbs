@@ -13,13 +13,36 @@ Reference implementation of:
     FTN19: FutoIn Interface - Transaction Engine
     Version: 1.0
     
-* Spec: [FTN19: FutoIn Interface - Transaction Engine v1.x](http://specs.futoin.org/final/preview/ftn18_if_xfer_engine-1.html)
+* Spec: [FTN19: FutoIn Interface - Transaction Engine v1.x](http://specs.futoin.org/draft/preview/ftn19_if_xfer_engine-1.html)
 
 [Web Site](http://futoin.org/)
 
 # About
 
-Work in progress.
+**Work in progress. Technology preview, even though partially used in production.**
+
+Universal cluster focused transaction engine concept implementation.
+
+## Features:
+
+* Market cases (aka transaction domains):
+    * Deposits & Withdrawals
+    * Retail
+    * Payments
+    * Online Gaming
+    * Fee bound to transaction (both deducted & extra)
+* Multi-currency
+    * ISO fiat currencies
+    * Crypto currency namespace
+    * Any custom currency namespace
+* Advanced limits per transaction domain:
+    * Per-account statistics
+    * Daily, Weekly, Monthly limits for amounts & transaction count
+    * Overdraft for balance
+    * Dedicated "External" accounts for integration limits of third-party systems
+* Clustering with protocol level interaction
+* External Wallet (Seamless Wallet)
+* DB-based event stream for reliable state distribution for ad-hoc systems
 
 # Supported database types
 
@@ -27,6 +50,10 @@ Work in progress.
 * PostgreSQL
 * SQLite
 * Potentially, any other SQL-compliant supported by `futoin-database`
+
+# BIG FAT WARNING
+
+**Please DO NOT use it unless you really understand what it is. The package is published as essential open source part of derived custom closed source projects of different vendors.**
 
 # Installation for Node.js
 
@@ -56,7 +83,7 @@ More detailed concept is in the FTN19 spec.
     
 # API documentation
 
-The concept is described in FutoIn specification: [FTN19: FutoIn Interface - Transaction Engine v1.x](http://specs.futoin.org/final/preview/ftn18_if_xfer_engine-1.html)
+The concept is described in FutoIn specification: [FTN19: FutoIn Interface - Transaction Engine v1.x](http://specs.futoin.org/draft/preview/ftn19_if_xfer_engine-1.html)
 
 {{>main}}
 
