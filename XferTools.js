@@ -733,8 +733,9 @@ class XferTools {
                     xfer.dst_info.currency, xfer.dst_amount,
                     xfer.dst_limit_prefix, xfer.dst_limit_extra || {} );
 
-                as.add( ( as, { do_check, do_risk } ) => {
-                    xfer.do_check = xfer.do_check || do_check;
+                as.add( ( as, { do_risk } ) => {
+                    // NO user confirmation on destination check limits
+                    //xfer.do_check = xfer.do_check || do_check;
                     xfer.do_risk = xfer.do_risk || do_risk;
                 } );
             }
