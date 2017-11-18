@@ -6,6 +6,7 @@ BREAKING CHANGE: deposit(withdrawal) source(sink) now obey outbound(inbound) Pay
 BREAKING CHANGE: user confirmation is not processed on inbound transactions of any limit domain
 BREAKING CHANGE: startWithdraw requires ext_id & ext_info to avoid double xfers even in manual processing
 NEW: Payments domain processing frontend
+NEW: Full support for XFER_ERR and XFER_EXTERR events
 
 === 0.5.0 (2017-11-17) ===
 Initial release
