@@ -36,6 +36,11 @@ module.exports = function(describe, it, vars) {
         let account_holder;
         let user_account;
         
+        const checkBalance = (as, account, balance) => {
+            ccm.iface('xfer.accounts').getAccount( as, account );
+            as.add( (as, info) => expect(info.balance).to.equal(balance) );
+        }
+        
         beforeEach('payments', function() {
             as.add(
                 (as) => {
@@ -188,6 +193,12 @@ module.exports = function(describe, it, vars) {
                             }
                         );
                         
+                        if ( i === 0 ) {
+                            checkBalance(as, user_account, '0.99');
+                            checkBalance(as, fee_account, '0.01');
+                            checkBalance(as, system_account, '-1.00');
+                        }
+                        
                         as.add( (as) => as.state.test_name = `On inbound no-fee #2 ${i}` );
                         payments.onInbound( as,
                             user_account,
@@ -199,6 +210,12 @@ module.exports = function(describe, it, vars) {
                             moment.utc().format(),
                             null
                         );
+                        
+                        if ( i === 0 ) {
+                            checkBalance(as, user_account, '1.39');
+                            checkBalance(as, fee_account, '0.01');
+                            checkBalance(as, system_account, '-1.40');
+                        }
 
                         as.add( (as) => as.state.test_name = `On inbound no-fee #3 ${i}` );
                         payments.onInbound( as,
@@ -211,6 +228,10 @@ module.exports = function(describe, it, vars) {
                             moment.utc().format(),
                             null
                         );
+
+                        checkBalance(as, user_account, '99.99');
+                        checkBalance(as, fee_account, '0.01');
+                        checkBalance(as, system_account, '-100.00');
                     }
                     
                     as.add(
@@ -252,6 +273,10 @@ module.exports = function(describe, it, vars) {
                 {
                     const payments = ccm.iface('xfer.payments');
                     
+                    checkBalance(as, user_account, '99.99');
+                    checkBalance(as, fee_account, '0.01');
+                    checkBalance(as, system_account, '-100.00');
+
                     for ( let i = 0; i < 2; ++i ) {
                         as.add( (as) => as.state.test_name = `On outbound #1 ${i}` );
                         payments.startOutbound( as,
@@ -270,6 +295,12 @@ module.exports = function(describe, it, vars) {
                             }
                         );
                         
+                        if (i === 0) {
+                            checkBalance(as, user_account, '98.98');
+                            checkBalance(as, fee_account, '0.02');
+                            checkBalance(as, system_account, '-99.00');
+                        }
+                        
                         as.add( (as) => as.state.test_name = `On outbound #2 ${i}` );
                         as.add(
                             (as) => {
@@ -287,6 +318,10 @@ module.exports = function(describe, it, vars) {
                                 as.add( (as, { xfer_id, wait_user }) => {
                                     expect(xfer_id).to.be.ok;
                                     expect(wait_user).to.equal(true);
+
+                                    checkBalance(as, user_account, '88.98');
+                                    checkBalance(as, fee_account, '0.02');
+                                    checkBalance(as, system_account, '-99.00');
                                     
                                     as.add( (as) => as.state.test_name = `Reject outbound #2 ${i}` );
                                     payments.rejectOutbound( as,
@@ -297,6 +332,9 @@ module.exports = function(describe, it, vars) {
                                         '10.00',
                                         moment.utc().format()
                                     );
+                                    checkBalance(as, user_account, '98.98');
+                                    checkBalance(as, fee_account, '0.02');
+                                    checkBalance(as, system_account, '-99.00');
                                 });
                             },
                             (as, err) => {
@@ -322,7 +360,13 @@ module.exports = function(describe, it, vars) {
                         as.add( (as, { xfer_id, wait_user }) => {
                             expect(wait_user).to.equal(false);
                         });
-
+                        
+                        if (i === 0) {
+                            checkBalance(as, user_account, '97.98');
+                            checkBalance(as, fee_account, '0.02');
+                            checkBalance(as, system_account, '-98.00');
+                        }
+                        
                         as.add( (as) => as.state.test_name = `On outbound no-fee #4 ${i}` );
                         payments.startOutbound( as,
                             user_account,
@@ -339,6 +383,12 @@ module.exports = function(describe, it, vars) {
                             expect(xfer_id).to.be.ok;
                             expect(wait_user).to.equal(i === 0);
                             
+                            if (i === 0) {
+                                checkBalance(as, user_account, '0.00');
+                                checkBalance(as, fee_account, '0.02');
+                                checkBalance(as, system_account, '-98.00');
+                            }
+                            
                             payments.confirmOutbound( as,
                                 xfer_id,
                                 user_account,
@@ -347,7 +397,13 @@ module.exports = function(describe, it, vars) {
                                 '97.98',
                                 moment.utc().format()
                             );
-                        
+                            
+                            if (i === 0) {
+                                checkBalance(as, user_account, '0.00');
+                                checkBalance(as, fee_account, '0.02');
+                                checkBalance(as, system_account, '-0.02');
+                            }
+
                             as.add(
                                 (as) => {
                                     as.add( (as) => as.state.test_name = `Reject outbound #4 ${i}` );
@@ -430,6 +486,10 @@ module.exports = function(describe, it, vars) {
                             }
                         }
                     );
+                    
+                    checkBalance(as, user_account, '0.00');
+                    checkBalance(as, fee_account, '0.02');
+                    checkBalance(as, system_account, '-0.02');
                 },
                 (as, err) =>
                 {

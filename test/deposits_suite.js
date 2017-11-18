@@ -39,6 +39,22 @@ module.exports = function(describe, it, vars) {
         let account_holder;
         let user_account;
         
+        const checkBalance = (as, account, balance) => {
+            ccm.iface('xfer.accounts').getAccount( as, account );
+            as.add( (as, info) => expect(info.balance).to.equal(balance) );
+        }
+        
+        const checkBalanceAll = ( as, system_bal, fee_bal, user_bal ) => {
+            let base;
+            as.add( (as) => base = as.state.test_name );
+            as.add( (as) => as.state.test_name = base + ' system');
+            checkBalance( as, system_account, system_bal );
+            as.add( (as) => as.state.test_name = base + ' fee');
+            checkBalance( as, fee_account, fee_bal );
+            as.add( (as) => as.state.test_name = base + ' user');
+            checkBalance( as, user_account, user_bal );
+        }
+        
         beforeEach('deposits', function() {
             as.add(
                 (as) => {
@@ -185,6 +201,7 @@ module.exports = function(describe, it, vars) {
                         'I:EUR',
                         '1.00'
                     );
+                    checkBalanceAll(as, '0.00', '0.00', '0.00');
                     
                     for ( let i = 0; i < 2; ++i ) {
                         as.add( (as) => as.state.test_name = `On deposit #1 ${i}` );
@@ -204,6 +221,8 @@ module.exports = function(describe, it, vars) {
                             }
                         );
                         
+                        if (!i) checkBalanceAll(as, '-0.60', '0.01', '0.59');
+                        
                         as.add( (as) => as.state.test_name = `On deposit no-fee #2 ${i}` );
                         deposits.onDeposit( as,
                             user_account,
@@ -215,6 +234,8 @@ module.exports = function(describe, it, vars) {
                             moment.utc().format(),
                             null
                         );
+                        
+                        if (!i) checkBalanceAll(as, '-1.00', '0.01', '0.99');
                     }
                     
                     as.add(
@@ -234,6 +255,8 @@ module.exports = function(describe, it, vars) {
                             }
                         }
                     );
+                    
+                    checkBalanceAll(as, '-1.00', '0.01', '0.99');
                     
                     as.add(
                         (as) => {
@@ -261,6 +284,8 @@ module.exports = function(describe, it, vars) {
                             }
                         }
                     );
+                    
+                    checkBalanceAll(as, '-1.00', '0.01', '0.99');
                 },
                 (as, err) =>
                 {
@@ -279,6 +304,8 @@ module.exports = function(describe, it, vars) {
                 (as) =>
                 {
                     const withdraw = ccm.iface('xfer.withdrawals');
+                    
+                    checkBalanceAll(as, '-1.00', '0.01', '0.99');
                     
                     for ( let i = 0; i < 2; ++i ) {
                         as.add( (as) => as.state.test_name = `Start withdraw #1` );
@@ -302,7 +329,10 @@ module.exports = function(describe, it, vars) {
                             expect( res.xfer_id ).to.be.ok;
                             expect( res.wait_user ).to.be.false;
                         });
-                        
+                                           
+                        if (!i) checkBalanceAll(as, '-0.90', '0.02', '0.88');
+
+                        //---
                         as.add( (as) => as.state.test_name = `Start withdraw #2` );
                         as.add( (as) => {
                             withdraw.startWithdrawal( as,
@@ -318,6 +348,8 @@ module.exports = function(describe, it, vars) {
                             as.add( (as, res) => {
                                 expect( res.xfer_id ).to.be.ok;
                                 expect( res.wait_user ).to.be.true;
+                            
+                                checkBalanceAll(as, '-0.90', '0.02', '0.08');
                                 
                                 as.add( (as) => as.state.test_name = `Reject withdraw #2` );
                                 withdraw.rejectWithdrawal( as,
@@ -328,6 +360,8 @@ module.exports = function(describe, it, vars) {
                                     '0.80',
                                     moment.utc().format()
                                 );
+                                
+                                checkBalanceAll(as, '-0.90', '0.02', '0.88');
                             });
                         }, (as, err) => {
                             if ( i ) {
@@ -336,6 +370,9 @@ module.exports = function(describe, it, vars) {
                             }
                         });
                         
+                        if (!i) checkBalanceAll(as, '-0.90', '0.02', '0.88');
+                        
+                        // ---
                         as.add(
                             (as) => {
                                 as.add( (as) => as.state.test_name = 'Start withdraw #3' );
@@ -357,7 +394,9 @@ module.exports = function(describe, it, vars) {
                             }
                         );
                         
+                        if (!i) checkBalanceAll(as, '-0.90', '0.02', '0.88');
                         
+                        // ---
                         as.add( (as) => as.state.test_name = `Start withdraw #4` );
                         withdraw.startWithdrawal( as,
                             user_account,
@@ -374,6 +413,8 @@ module.exports = function(describe, it, vars) {
                             expect( res.xfer_id ).to.be.ok;
                             expect( res.wait_user ).to.equal(i === 0);
                             
+                            if (!i) checkBalanceAll(as, '-0.90', '0.02', '0.08');
+                            
                             as.add( (as) => as.state.test_name = `Confirm withdraw #4` );
                             withdraw.confirmWithdrawal( as,
                                 res.xfer_id,
@@ -383,6 +424,8 @@ module.exports = function(describe, it, vars) {
                                 '0.80',
                                 moment.utc().format()
                             );
+                            
+                            if (!i) checkBalanceAll(as, '-0.10', '0.02', '0.08');
                             
                             as.add(
                                 (as) => {
@@ -405,6 +448,8 @@ module.exports = function(describe, it, vars) {
                             );
                         });
                     }
+                    
+                    checkBalanceAll(as, '-0.10', '0.02', '0.08');
                     
                     as.add(
                         (as) => {
@@ -453,6 +498,8 @@ module.exports = function(describe, it, vars) {
                             }
                         }
                     );
+                    
+                    checkBalanceAll(as, '-0.10', '0.02', '0.08');
                 },
                 (as, err) =>
                 {
