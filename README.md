@@ -123,6 +123,12 @@ The concept is described in FutoIn specification: [FTN19: FutoIn Interface - Tra
 <dt><a href="#LimitsService">LimitsService</a></dt>
 <dd><p>Limits Service</p>
 </dd>
+<dt><a href="#PaymentFace">PaymentFace</a></dt>
+<dd><p>Payments Face</p>
+</dd>
+<dt><a href="#PaymentService">PaymentService</a></dt>
+<dd><p>Payments Service</p>
+</dd>
 <dt><a href="#PaymentTools">PaymentTools</a></dt>
 <dd><p>XferTools with focus on Payments use case</p>
 </dd>
@@ -416,6 +422,35 @@ Register futoin.xfers.limits interface with Executor
 | executor | <code>Executor</code> | executor instance |
 | options | <code>object</code> | implementation defined options |
 
+<a name="PaymentFace"></a>
+
+## PaymentFace
+Payments Face
+
+**Kind**: global class  
+<a name="PaymentFace.register"></a>
+
+### PaymentFace.register(as, ccm, name, endpoint, [credentials], [options])
+CCM registration helper
+
+**Kind**: static method of [<code>PaymentFace</code>](#PaymentFace)  
+
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| as | <code>AsyncSteps</code> |  | steps interface |
+| ccm | <code>AdvancedCCM</code> |  | CCM instance |
+| name | <code>string</code> |  | CCM registration name |
+| endpoint | <code>\*</code> |  | see AdvancedCCM#register |
+| [credentials] | <code>\*</code> | <code></code> | see AdvancedCCM#register |
+| [options] | <code>object</code> | <code>{}</code> | interface options |
+| [options.version] | <code>string</code> | <code>&quot;&lt;latest&gt;&quot;</code> | interface version to use |
+
+<a name="PaymentService"></a>
+
+## PaymentService
+Payments Service
+
+**Kind**: global class  
 <a name="PaymentTools"></a>
 
 ## PaymentTools
