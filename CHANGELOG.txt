@@ -5,6 +5,7 @@ BREAKING CHANGE: deposit(withdrawal) source(sink) now obey outbound(inbound) Pay
  - Original behavior is kept when XferTools are used directly
 BREAKING CHANGE: user confirmation is not processed on inbound transactions of any limit domain
 BREAKING CHANGE: startWithdraw requires ext_id & ext_info to avoid double xfers even in manual processing
+CHANGED: to re-read transit xfers instead of "guessing" its state
 NEW: Payments domain processing frontend
 NEW: Full support for XFER_ERR and XFER_EXTERR events
 

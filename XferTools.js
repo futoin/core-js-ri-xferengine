@@ -455,6 +455,7 @@ class XferTools {
             xfer.id = r.uuidb64;
             xfer.status = r.xfer_status;
             xfer.created = moment.utc( r.created ).format();
+            xfer.updated = moment.utc( r.updated ).format();
             xfer.misc_data = Object.assign(
                 xfer.misc_data,
                 r.misc_data
@@ -463,17 +464,12 @@ class XferTools {
 
             if ( xfer.misc_data.rel_in_id ) {
                 xfer.in_xfer.id = xfer.misc_data.rel_in_id;
-
-                if ( xfer.status === ST_WAIT_EXT_IN ) {
-                    xfer.in_xfer.status = ST_WAIT_EXT_IN;
-                } else {
-                    xfer.in_xfer.status = ST_DONE;
-                }
+                this._readTransitXfer( as, xfer.in_xfer );
             }
 
             if ( xfer.misc_data.rel_out_id ) {
                 xfer.out_xfer.id = xfer.misc_data.rel_out_id;
-                xfer.out_xfer.status = xfer.status;
+                this._readTransitXfer( as, xfer.out_xfer );
             }
 
             if ( r.extra_fee_id ) {
@@ -497,6 +493,52 @@ class XferTools {
                 xfer.xfer_fee.force = xfer.force;
                 this._readFeeXfer( as, xfer.xfer_fee );
             }
+        } );
+    }
+
+    _readTransitXfer( as, xfer ) {
+        this._getAccountsInfo( as, xfer );
+        this._convXferAmounts( as, xfer );
+
+        this._ccm.db( 'xfer' )
+            .getPrepared( BY_FEE_ID, ( db ) => {
+                const q = db.select( DB_XFERS_TABLE );
+                q.where( 'uuidb64', q.param( 'uuidb64' ) );
+                return q.prepare();
+            } )
+            .executeAssoc( as, { uuidb64: xfer.id } );
+
+        as.add( ( as, rows ) => {
+            if ( !rows.length ) {
+                as.error( 'XferError', 'Missing transit xfer' );
+            }
+
+            const r = rows[0];
+
+            if ( ( xfer.src_account !== r.src ) ||
+                ( xfer.src_info.currency_id !== r.src_currency_id ) ||
+                ( xfer.dst_account !== r.dst ) ||
+                ( xfer.dst_info.currency_id !== r.dst_currency_id ) ||
+                ( xfer.type !== r.xfer_type )
+            ) {
+                as.error( "OriginalMismatch" );
+            }
+
+            xfer.status = r.xfer_status;
+            xfer.created = moment.utc( r.created ).format();
+            xfer.updated = moment.utc( r.updated ).format();
+            xfer.misc_data = Object.assign(
+                xfer.misc_data,
+                JSON.parse( r.misc_data )
+            );
+
+            // fee amounts may change on repeat calls - use original
+            xfer.src_amount = AmountTools.fromStorage(
+                r.src_amount, xfer.src_info.dec_places );
+            xfer.dst_amount = AmountTools.fromStorage(
+                r.dst_amount, xfer.dst_info.dec_places );
+
+            xfer.repeat = true;
         } );
     }
 
@@ -534,6 +576,7 @@ class XferTools {
 
             fee_xfer.status = r.xfer_status;
             fee_xfer.created = moment.utc( r.created ).format();
+            fee_xfer.updated = moment.utc( r.updated ).format();
             fee_xfer.misc_data = Object.assign(
                 fee_xfer.misc_data,
                 JSON.parse( r.misc_data )
@@ -549,12 +592,7 @@ class XferTools {
 
             if ( fee_xfer.misc_data.rel_in_id ) {
                 fee_xfer.in_xfer.id = fee_xfer.misc_data.rel_in_id;
-
-                if ( fee_xfer.status === ST_WAIT_EXT_IN ) {
-                    fee_xfer.in_xfer.status = ST_WAIT_EXT_IN;
-                } else {
-                    fee_xfer.in_xfer.status = ST_DONE;
-                }
+                this._readTransitXfer( as, fee_xfer.in_xfer );
             }
         } );
     }
@@ -1027,7 +1065,8 @@ class XferTools {
 
             //=========================
 
-            const q_now = dbxfer.helpers().now();
+            xfer.created = xfer.updated = moment.utc().format();
+            const q_now = dbxfer.helpers().date( xfer.created );
 
             // Xfer
             const xfer_q = dbxfer.insert( DB_XFERS_TABLE, { affected: 1 } );
@@ -1165,8 +1204,6 @@ class XferTools {
                 xfer.repeat = false;
 
                 if ( xfer.out_xfer ) {
-                    this._getAccountsInfo( as, xfer.out_xfer );
-
                     as.add( ( as ) => {
                         this._completeXfer( dbxfer, xfer, ST_WAIT_EXT_OUT );
                         // no balance updates
@@ -1235,18 +1272,6 @@ class XferTools {
                 }
 
                 this._createXfer( as, dbxfer, xfer );
-            }
-
-            if ( in_xfer ) {
-                this._getAccountsInfo( as, in_xfer );
-            }
-
-            if ( out_xfer ) {
-                this._getAccountsInfo( as, out_xfer );
-            }
-
-            if ( extra_fee && extra_fee.in_xfer ) {
-                this._getAccountsInfo( as, extra_fee.in_xfer );
             }
 
             this._checkCancelLimits( as, dbxfer, xfer );
@@ -1556,7 +1581,7 @@ class XferTools {
             src_amount: xfer.dst_amount,
             ext_id: xfer.id,
             ext_info: xfer.misc_data.info || {},
-            orig_ts : xfer.created || moment.utc().format(),
+            orig_ts : xfer.created,
         };
     }
 

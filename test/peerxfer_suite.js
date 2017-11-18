@@ -30,6 +30,8 @@ module.exports = function(describe, it, vars) {
         const DepositService = require('../DepositService');
         const WithdrawFace = require('../WithdrawFace');
         const WithdrawService = require('../WithdrawService');
+        const PaymentFace = require('../PaymentFace');
+        const PaymentService = require('../PaymentService');
         const PeerFace = require('../PeerFace');
         const PeerService = require('../PeerService');
         const BasicAuthFace = require('futoin-executor/BasicAuthFace');
@@ -61,6 +63,9 @@ module.exports = function(describe, it, vars) {
                     
                     WithdrawService.register(as, executor);
                     WithdrawFace.register(as, ccm, 'xfer.withdrawals', executor);
+                    
+                    PaymentService.register(as, executor);
+                    PaymentFace.register(as, ccm, 'xfer.payments', executor);
 
                     PeerService.register(as, executor);
                     PeerFace.register(as, ccm, 'xfer.peer1', executor, 'peer2:pwd');
@@ -75,7 +80,12 @@ module.exports = function(describe, it, vars) {
 
                     // mock
                     ccm.xferIface = function(as, iface, name) {
-                        as.add( (as) => as.success( this.iface('xfer.peer1')) );
+                        switch (iface) {
+                            case 'futoin.xfer.deposit': iface = 'xfer.deposits'; break;
+                            case 'futoin.xfer.peer': iface = 'xfer.peer1'; break;
+                        }
+                        
+                        as.add( (as) => as.success( this.iface(iface)) );
                     };
                 },
                 (as, err) => {
@@ -269,9 +279,10 @@ module.exports = function(describe, it, vars) {
                 {
                     const xferacct = ccm.iface('xfer.accounts');
                     const deposits = ccm.iface('xfer.deposits');
+                    const payments = ccm.iface('xfer.payments');
                 
                     as.add( (as) => as.state.test_name = 'Deposit to source' );
-                    deposits.onDeposit( as,
+                    payments.onInbound( as,
                         source_account,
                         system_account,
                         'I:EUR',
@@ -293,8 +304,8 @@ module.exports = function(describe, it, vars) {
                         moment.utc().format()
                     );
                     
-                    as.add( (as) => as.state.test_name = 'Deposit source -> system' );
-                    deposits.onDeposit( as,
+                    as.add( (as) => as.state.test_name = 'Inbound source -> system' );
+                    payments.onInbound( as,
                         system_account,
                         source_transit,
                         'I:EUR',
