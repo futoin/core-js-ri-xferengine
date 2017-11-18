@@ -1,6 +1,8 @@
 
 === (next) ===
-BREAKING CHANGE: deposit(withdrawal) source(sink) now obey outgoing(incoming) Payments domain limits
+BREAKING CHANGE: deposit(withdrawal) source(sink) now obey outbound(inbound) Payments domain limits
+ - Applies to transactions done through futoin.xfer.deposit & futoin.xfer.withdraw ifaces
+ - Original behavior is kept when XferTools are used directly
 
 === 0.5.0 (2017-11-17) ===
 Initial release
