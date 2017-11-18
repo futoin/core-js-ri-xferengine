@@ -28,6 +28,7 @@ module.exports = function(describe, it, vars) {
         const AccountsFace = require('../AccountsFace');
         const AccountsService = require('../AccountsService');
 
+        const DepositTools = require('../DepositTools');
         const DepositFace = require('../DepositFace');
         const DepositService = require('../DepositService');
         const WithdrawFace = require('../WithdrawFace');
@@ -450,6 +451,46 @@ module.exports = function(describe, it, vars) {
                             if (err === 'UnknownXferID') {
                                 as.success();
                             }
+                        }
+                    );
+                },
+                (as, err) =>
+                {
+                    console.log(as.state.test_name);
+                    console.log(err);
+                    console.log(as.state.error_info);
+                    done(as.state.last_exception || 'Fail');
+                }
+            );
+            as.add( (as) => done() );
+            as.execute();
+        });
+        
+        it ('should trigger just in case checks', function(done) {
+            as.add(
+                (as) =>
+                {
+                    const dt = new DepositTools(ccm);
+                    
+                    as.add(
+                        (as) => {
+                            as.state.test_name = 'Deposit cancel DB step';
+                            dt._domainDbCancelStep( as, null, { type: 'Deposit' } );
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'NotAllowed' ) as.success();
+                        }
+                    );
+                    
+                    as.add(
+                        (as) => {
+                            as.state.test_name = 'Deposit cancel ext-out step';
+                            dt._rawCancelExtOut( as, { type: 'Deposit' } );
+                            as.add( (as) => as.error('Fail') );
+                        },
+                        (as, err) => {
+                            if ( err === 'NotAllowed' ) as.success();
                         }
                     );
                 },

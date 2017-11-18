@@ -749,6 +749,8 @@ class XferTools {
                 }
             }
 
+            const misc_data = xfer.misc_data;
+
             if ( xfer.src_limit_prefix ) {
                 this.addLimitProcessing(
                     as, dbxfer,
@@ -758,8 +760,8 @@ class XferTools {
                     xfer.src_limit_prefix, xfer.src_limit_extra || {} );
 
                 as.add( ( as, { do_check, do_risk } ) => {
-                    xfer.do_check = xfer.do_check || do_check;
-                    xfer.do_risk = xfer.do_risk || do_risk;
+                    misc_data.do_check = misc_data.do_check || do_check;
+                    misc_data.do_risk = misc_data.do_risk || do_risk;
                 } );
             }
 
@@ -773,8 +775,8 @@ class XferTools {
 
                 as.add( ( as, { do_risk } ) => {
                     // NO user confirmation on destination check limits
-                    //xfer.do_check = xfer.do_check || do_check;
-                    xfer.do_risk = xfer.do_risk || do_risk;
+                    //misc_data.do_check = misc_data.do_check || do_check;
+                    misc_data.do_risk = misc_data.do_risk || do_risk;
                 } );
             }
         } );
@@ -826,7 +828,7 @@ class XferTools {
 
     _analyzeXferRisk( as, xfer ) {
         as.add( ( as ) => {
-            if ( !xfer.do_risk ) {
+            if ( !xfer.misc_data.do_risk ) {
                 return;
             }
 
@@ -838,8 +840,6 @@ class XferTools {
     _genRelIDs( as, dbxfer, xfer ) {
         as.add( ( as ) => {
             if ( xfer.in_xfer ) {
-                xfer.user_confirm = true; // force for external wallet
-
                 if ( !xfer.in_xfer.id ) {
                     const rel_in_id = UUIDTool.genXfer( dbxfer );
                     xfer.misc_data.rel_in_id = rel_in_id;
@@ -1042,8 +1042,12 @@ class XferTools {
         as.add( ( as ) => {
             let cancel = ( xfer.status === ST_CANCELED );
             let decrease_now = false;
+            const misc_data = xfer.misc_data;
 
-            if ( xfer.do_check && !xfer.user_confirm && !cancel ) {
+            if ( misc_data.do_check && !xfer.user_confirm &&
+                 !cancel && !xfer.in_transit &&
+                 ( xfer.status === ST_DONE )
+            ) {
                 xfer.status = ST_WAIT_USER;
             }
 
@@ -1104,9 +1108,9 @@ class XferTools {
                 xfer_event.ext_id = xfer.ext_id;
             }
 
-            if ( xfer.misc_data ) {
-                xfer_q.set( 'misc_data', JSON.stringify( xfer.misc_data ) );
-                xfer_event.misc_data = xfer.misc_data;
+            if ( misc_data ) {
+                xfer_q.set( 'misc_data', JSON.stringify( misc_data ) );
+                xfer_event.misc_data = misc_data;
             }
 
             if ( xfer.extra_fee && !cancel ) {
@@ -1198,21 +1202,6 @@ class XferTools {
                 as.error( 'AlreadyCanceled' );
             } else if ( xfer.in_transit || xfer.in_xfer_fee ) {
                 this._createXfer( as, dbxfer, xfer );
-            } else if ( xfer.user_confirm &&
-                        ( xfer.status === ST_WAIT_USER )
-            ) {
-                xfer.repeat = false;
-
-                if ( xfer.out_xfer ) {
-                    as.add( ( as ) => {
-                        this._completeXfer( dbxfer, xfer, ST_WAIT_EXT_OUT );
-                        // no balance updates
-                        this._completeXfer( dbxfer, xfer.out_xfer, ST_WAIT_EXT_OUT );
-                    } );
-                } else {
-                    this._completeXfer( dbxfer, xfer );
-                    this._increaseBalance( dbxfer, xfer );
-                }
             }
         } );
     }
@@ -1304,7 +1293,13 @@ class XferTools {
         //this._increaseBalance( dbxfer, xfer.in_xfer );
         //this._decreaseBalance( dbxfer, xfer );
 
-        if ( xfer.out_xfer ) {
+        if ( xfer.misc_data.do_check && !xfer.user_confirm ) {
+            this._completeXfer( dbxfer, xfer, ST_WAIT_USER );
+
+            if ( xfer.out_xfer ) {
+                this._completeXfer( dbxfer, xfer.out_xfer, ST_WAIT_USER );
+            }
+        } else if ( xfer.out_xfer ) {
             this._completeXfer( dbxfer, xfer, ST_WAIT_EXT_OUT );
 
             // optimized out
@@ -1329,7 +1324,10 @@ class XferTools {
     _completeCancelExtIn( as, xfer ) {
         const dbxfer = this._ccm.db( 'xfer' ).newXfer();
 
-        if ( xfer.in_xfer.status === ST_DONE ) {
+        if ( ( xfer.in_xfer.status === ST_DONE ) &&
+             !xfer.out_xfer &&
+             ( xfer.status !== ST_WAIT_USER )
+        ) {
             this._decreaseBalance( dbxfer, xfer.in_xfer, true );
         }
 
@@ -1370,8 +1368,11 @@ class XferTools {
 
         this._completeXfer( dbxfer, xfer, ST_CANCELED );
 
-        if ( ( xfer_status === ST_DONE ) ||
-             ( xfer_status === ST_WAIT_EXT_OUT )
+        if ( xfer.in_xfer ) {
+            // no balance updates
+        } else if (
+            ( xfer_status === ST_DONE ) ||
+            ( xfer_status === ST_WAIT_EXT_OUT )
         ) {
             this._increaseBalance( dbxfer, xfer, true );
         }
@@ -1379,8 +1380,24 @@ class XferTools {
         dbxfer.execute( as );
     }
 
+    _completeUser( as, xfer ) {
+        const dbxfer = this._ccm.db( 'xfer' ).newXfer();
+
+        if ( xfer.out_xfer ) {
+            this._completeXfer( dbxfer, xfer, ST_WAIT_EXT_OUT );
+            // no balance updates
+            this._completeXfer( dbxfer, xfer.out_xfer, ST_WAIT_EXT_OUT );
+        } else {
+            this._completeXfer( dbxfer, xfer );
+            this._increaseBalance( dbxfer, xfer );
+        }
+
+        dbxfer.execute( as );
+    }
+
     _handleError( as, err, evt_type, xfer ) {
         const error_info = as.state.error_info;
+        const async_stack = as.state.async_stack;
         this._ccm.iface( EVTGEN_ALIAS ).addEvent(
             as,
             evt_type,
@@ -1390,7 +1407,12 @@ class XferTools {
                 xfer: xfer,
             }
         );
-        as.add( ( as ) => as.error( err, error_info ) );
+        as.add(
+            ( as ) => as.error( err, error_info ),
+            ( as, err ) => {
+                as.state.async_stack = async_stack;
+            }
+        );
     }
 
     processXfer( as, xfer ) {
@@ -1419,19 +1441,13 @@ class XferTools {
 
         // Actual DB xfer
         as.add(
-            ( as ) => {
-                if ( xfer.repeat ) {
-                    assert( dbxfer._query_list.length === 0 );
-                } else {
-                    dbxfer.executeAssoc( as );
-                }
-            },
+            ( as ) => dbxfer.executeAssoc( as ),
             ( as, err ) => this._handleError( as, err, 'XFER_ERR', xfer )
         );
 
         // Process external logic
         as.add( ( as ) => {
-            if ( xfer.status === ST_WAIT_EXT_IN ) {
+            if ( xfer.in_xfer && ( xfer.in_xfer.status === ST_WAIT_EXT_IN ) ) {
                 if ( xfer.extra_fee && ( xfer.extra_fee.status !== ST_DONE ) ) {
                     as.add(
                         ( as ) => {
@@ -1451,10 +1467,15 @@ class XferTools {
                 );
             }
 
-            if ( xfer.status === ST_WAIT_USER ) {
-                as.error( ST_WAIT_USER, 'User confirmation is required' );
-            }
-
+            as.add( ( as ) => {
+                if ( xfer.status === ST_WAIT_USER ) {
+                    if ( xfer.user_confirm ) {
+                        this._completeUser( as, xfer );
+                    } else {
+                        as.error( ST_WAIT_USER, 'User confirmation is required' );
+                    }
+                }
+            } );
 
             as.add(
                 ( as ) => {
@@ -1504,24 +1525,27 @@ class XferTools {
                     as.error( 'AlreadyCompleted' );
                 }
 
-                if ( !xfer.repeat || ( dbxfer._query_list.length > 0 ) ) {
-                    dbxfer.executeAssoc( as );
-                }
+                dbxfer.executeAssoc( as );
             },
             ( as, err ) => this._handleError( as, err, 'XFER_ERR', xfer )
         );
 
         // Process external logic
         as.add( ( as ) => {
-            if ( xfer.out_xfer && ( xfer.out_xfer.status != ST_CANCELED ) ) {
+            if ( xfer.out_xfer && ( xfer.out_xfer.status !== ST_CANCELED ) ) {
                 as.add(
                     ( as ) => {
-                        as.add( ( as ) => this._domainCancelExtOut( as, xfer ) );
+                        if ( ( xfer.out_xfer.status === ST_DONE ) ||
+                             ( xfer.out_xfer.status === ST_WAIT_EXT_OUT )
+                        ) {
+                            as.add( ( as ) => this._domainCancelExtOut( as, xfer ) );
+                        }
+
                         as.add( ( as ) => this._completeCancelExtOut( as, xfer ) );
                     },
                     ( as, err ) => this._handleError( as, err, 'XFER_EXTERR', xfer )
                 );
-            } else if ( xfer.status != ST_CANCELED ) {
+            } else if ( xfer.status !== ST_CANCELED ) {
                 as.add(
                     ( as ) => this._completeCancel( as, xfer ),
                     ( as, err ) => this._handleError( as, err, 'XFER_EXTERR', xfer )
@@ -1529,7 +1553,7 @@ class XferTools {
             }
 
 
-            if ( xfer.in_xfer && ( xfer.in_xfer.status != ST_CANCELED ) ) {
+            if ( xfer.in_xfer && ( xfer.in_xfer.status !== ST_CANCELED ) ) {
                 as.add(
                     ( as ) => {
                         as.add( ( as ) => this._domainCancelExtIn( as, xfer ) );

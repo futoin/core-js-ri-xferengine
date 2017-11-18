@@ -41,11 +41,14 @@
         "InvalidAmount",
         "LimitReject",
         "OriginalTooOld",
-        "OriginalMismatch"
+        "OriginalMismatch",
+        "NotEnoughFunds",
+        "AlreadyCanceled"
       ]
     },
     "cancelXfer": {
       "params": {
+        "to_external": "boolean",
         "xfer_type": "XferType",
         "orig_currency": "CurrencyCode",
         "orig_amount": "Amount",
@@ -59,7 +62,7 @@
         "ext_info": "XferExtInfo",
         "orig_ts": "XferTimestamp"
       },
-      "result": "XferID",
+      "result": "boolean",
       "throws": [
         "UnknownAccountID",
         "CurrencyMismatch",
