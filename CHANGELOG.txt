@@ -4,6 +4,7 @@ BREAKING CHANGE: deposit(withdrawal) source(sink) now obey outbound(inbound) Pay
  - Applies to transactions done through futoin.xfer.deposit & futoin.xfer.withdraw ifaces
  - Original behavior is kept when XferTools are used directly
 BREAKING CHANGE: user confirmation is not processed on inbound transactions of any limit domain
+BREAKING CHANGE: startWithdraw requires ext_id & ext_info to avoid double xfers even in manual processing
 
 === 0.5.0 (2017-11-17) ===
 Initial release

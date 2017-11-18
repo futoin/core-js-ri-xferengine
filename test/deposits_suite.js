@@ -279,93 +279,46 @@ module.exports = function(describe, it, vars) {
                 {
                     const withdraw = ccm.iface('xfer.withdrawals');
                     
-                    as.add( (as) => as.state.test_name = `Start withdraw #1` );
-                    withdraw.startWithdrawal( as,
-                        user_account,
-                        system_account,
-                        'I:EUR',
-                        '0.10',
-                        {
-                            rel_account: fee_account,
-                            currency: 'I:EUR',
-                            amount: '0.01',
-                            reason: 'System fee',
-                        }
-                    );
-                    
-                    as.add( (as, res) => {
-                        expect( res.xfer_id ).to.be.ok;
-                        expect( res.wait_user ).to.be.false;
-                    });
-                    
-                    as.add( (as) => as.state.test_name = `Start withdraw #2` );
-                    withdraw.startWithdrawal( as,
-                        user_account,
-                        system_account,
-                        'I:EUR',
-                        '0.80'
-                    );
-                    
-                    as.add( (as, res) => {
-                        expect( res.xfer_id ).to.be.ok;
-                        expect( res.wait_user ).to.be.true;
-                        
-                        as.add( (as) => as.state.test_name = `Reject withdraw #2` );
-                        withdraw.rejectWithdrawal( as,
-                            res.xfer_id,
+                    for ( let i = 0; i < 2; ++i ) {
+                        as.add( (as) => as.state.test_name = `Start withdraw #1` );
+                        withdraw.startWithdrawal( as,
                             user_account,
                             system_account,
                             'I:EUR',
-                            '0.80',
-                            moment.utc().format()
+                            '0.10',
+                            'T1',
+                            {},
+                            moment.utc().format(),
+                            {
+                                rel_account: fee_account,
+                                currency: 'I:EUR',
+                                amount: '0.01',
+                                reason: 'System fee',
+                            }
                         );
-                    });
-                    
-                    as.add(
-                        (as) => {
-                            as.add( (as) => as.state.test_name = 'Start withdraw #3' );
+                        
+                        as.add( (as, res) => {
+                            expect( res.xfer_id ).to.be.ok;
+                            expect( res.wait_user ).to.be.false;
+                        });
+                        
+                        as.add( (as) => as.state.test_name = `Start withdraw #2` );
+                        as.add( (as) => {
                             withdraw.startWithdrawal( as,
                                 user_account,
                                 system_account,
                                 'I:EUR',
-                                '1.00'
+                                '0.80',
+                                'T2',
+                                {},
+                                moment.utc().format(),
                             );
-                            as.add( (as) => as.error('Fail') );
-                        },
-                        (as, err) => {
-                            if (err === 'NotEnoughFunds') {
-                                as.success();
-                            }
-                        }
-                    );
-                    
-                    
-                    as.add( (as) => as.state.test_name = `Start withdraw #4` );
-                    withdraw.startWithdrawal( as,
-                        user_account,
-                        system_account,
-                        'I:EUR',
-                        '0.80'
-                    );
-                    
-                    
-                    as.add( (as, res) => {
-                        expect( res.xfer_id ).to.be.ok;
-                        expect( res.wait_user ).to.be.true;
-                        
-                        as.add( (as) => as.state.test_name = `Confirm withdraw #4` );
-                        withdraw.confirmWithdrawal( as,
-                            res.xfer_id,
-                            user_account,
-                            system_account,
-                            'I:EUR',
-                            '0.80',
-                            moment.utc().format()
-                        );
-                        
-                        as.add(
-                            (as) => {
-                                as.add( (as) => as.state.test_name = 'Reject withdraw #4' );
+                            
+                            as.add( (as, res) => {
+                                expect( res.xfer_id ).to.be.ok;
+                                expect( res.wait_user ).to.be.true;
+                                
+                                as.add( (as) => as.state.test_name = `Reject withdraw #2` );
                                 withdraw.rejectWithdrawal( as,
                                     res.xfer_id,
                                     user_account,
@@ -374,15 +327,83 @@ module.exports = function(describe, it, vars) {
                                     '0.80',
                                     moment.utc().format()
                                 );
+                            });
+                        }, (as, err) => {
+                            if ( i ) {
+                                expect(err).to.equal('AlreadyCanceled');
+                                as.success();
+                            }
+                        });
+                        
+                        as.add(
+                            (as) => {
+                                as.add( (as) => as.state.test_name = 'Start withdraw #3' );
+                                withdraw.startWithdrawal( as,
+                                    user_account,
+                                    system_account,
+                                    'I:EUR',
+                                    '1.00',
+                                    'T3',
+                                    {},
+                                    moment.utc().format(),
+                                );
                                 as.add( (as) => as.error('Fail') );
                             },
                             (as, err) => {
-                                if (err === 'AlreadyCompleted') {
+                                if (err === 'NotEnoughFunds') {
                                     as.success();
                                 }
                             }
                         );
-                    });
+                        
+                        
+                        as.add( (as) => as.state.test_name = `Start withdraw #4` );
+                        withdraw.startWithdrawal( as,
+                            user_account,
+                            system_account,
+                            'I:EUR',
+                            '0.80',
+                            'T4',
+                            {},
+                            moment.utc().format(),
+                        );
+                        
+                        
+                        as.add( (as, res) => {
+                            expect( res.xfer_id ).to.be.ok;
+                            expect( res.wait_user ).to.equal(i === 0);
+                            
+                            as.add( (as) => as.state.test_name = `Confirm withdraw #4` );
+                            withdraw.confirmWithdrawal( as,
+                                res.xfer_id,
+                                user_account,
+                                system_account,
+                                'I:EUR',
+                                '0.80',
+                                moment.utc().format()
+                            );
+                            
+                            as.add(
+                                (as) => {
+                                    as.add( (as) => as.state.test_name = 'Reject withdraw #4' );
+                                    withdraw.rejectWithdrawal( as,
+                                        res.xfer_id,
+                                        user_account,
+                                        system_account,
+                                        'I:EUR',
+                                        '0.80',
+                                        moment.utc().format()
+                                    );
+                                    as.add( (as) => as.error('Fail') );
+                                },
+                                (as, err) => {
+                                    if (err === 'AlreadyCompleted') {
+                                        as.success();
+                                    }
+                                }
+                            );
+                        });
+                    }
                     
                     as.add(
                         (as) => {
@@ -392,6 +413,9 @@ module.exports = function(describe, it, vars) {
                                 system_account,
                                 'I:EUR',
                                 '0.07',
+                                'T5',
+                                {},
+                                moment.utc().format(),
                                 {
                                     rel_account: fee_account,
                                     currency: 'I:EUR',

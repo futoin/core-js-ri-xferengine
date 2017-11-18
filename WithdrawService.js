@@ -17,7 +17,8 @@ class WithdrawService extends BaseService {
         return new DepositTools( ccm );
     }
 
-    _params2xfer( p ) {
+    _params2xfer( xt, reqinfo ) {
+        const p = reqinfo.params();
         const p_extra_fee = p.extra_fee;
         let extra_fee = null;
 
@@ -45,16 +46,16 @@ class WithdrawService extends BaseService {
             dst_account: p.rel_account,
             amount: p.amount,
             currency: p.currency,
-            orig_ts: p.orig_ts ? p.orig_ts : null,
+            ext_id: p.ext_id ? xt.makeExtId( p.account, p.ext_id ) : null,
+            orig_ts: p.orig_ts,
+            misc_data: p.ext_info ? { info: p.ext_info } : {},
             extra_fee,
         };
     }
 
     startWithdrawal( as, reqinfo ) {
         const xt = this._xferTools( reqinfo );
-        const p = reqinfo.params();
-
-        const xfer = this._params2xfer( p );
+        const xfer = this._params2xfer( xt, reqinfo );
 
         as.add(
             ( as ) => {
@@ -73,20 +74,20 @@ class WithdrawService extends BaseService {
 
     confirmWithdrawal( as, reqinfo ) {
         const xt = this._xferTools( reqinfo );
-        const p = reqinfo.params();
+        const xfer = this._params2xfer( xt, reqinfo );
 
-        const xfer = this._params2xfer( p );
         xfer.user_confirm = true;
+
         xt.processXfer( as, xfer );
         as.add( ( as ) => reqinfo.result( true ) );
     }
 
     rejectWithdrawal( as, reqinfo ) {
         const xt = this._xferTools( reqinfo );
-        const p = reqinfo.params();
+        const xfer = this._params2xfer( xt, reqinfo );
 
-        const xfer = this._params2xfer( p );
         xfer.reject_mode = true;
+
         xt.processCancel( as, xfer );
         as.add( ( as ) => reqinfo.result( true ) );
     }
