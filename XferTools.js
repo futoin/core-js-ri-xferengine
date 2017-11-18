@@ -752,12 +752,18 @@ class XferTools {
             const misc_data = xfer.misc_data;
 
             if ( xfer.src_limit_prefix ) {
+                misc_data.src_limit = {
+                    domain: xfer.src_limit_domain || this._domain,
+                    prefix: xfer.src_limit_prefix,
+                    extra: xfer.src_limit_extra || {},
+                };
                 this.addLimitProcessing(
                     as, dbxfer,
-                    xfer.src_limit_domain || this._domain,
+                    misc_data.src_limit.domain,
                     xfer.src_info.holder,
                     xfer.src_info.currency, xfer.src_amount,
-                    xfer.src_limit_prefix, xfer.src_limit_extra || {} );
+                    misc_data.src_limit.prefix,
+                    misc_data.src_limit.extra );
 
                 as.add( ( as, { do_check, do_risk } ) => {
                     misc_data.do_check = misc_data.do_check || do_check;
@@ -766,12 +772,18 @@ class XferTools {
             }
 
             if ( xfer.dst_limit_prefix ) {
+                misc_data.dst_limit = {
+                    domain: xfer.dst_limit_domain || this._domain,
+                    prefix: xfer.dst_limit_prefix,
+                    extra: xfer.dst_limit_extra || {},
+                };
                 this.addLimitProcessing(
                     as, dbxfer,
-                    xfer.dst_limit_domain || this._domain,
+                    misc_data.dst_limit.domain,
                     xfer.dst_info.holder,
                     xfer.dst_info.currency, xfer.dst_amount,
-                    xfer.dst_limit_prefix, xfer.dst_limit_extra || {} );
+                    misc_data.dst_limit.prefix,
+                    misc_data.dst_limit.extra );
 
                 as.add( ( as, { do_risk } ) => {
                     // NO user confirmation on destination check limits
@@ -782,48 +794,53 @@ class XferTools {
         } );
     }
 
-    _checkCancelLimits( as, dbxfer, xfer ) {
-        as.add( ( as ) => {
-            // Check if enough balance, if not Transit account
-            if ( xfer.dst_info.acct_type !== ACCT_TRANSIT &&
-                 xfer.dst_info.acct_type !== ACCT_SYSTEM &&
-                 ( xfer.status !== ST_CANCELED )
-            ) {
-                let cancel_amt = xfer.dst_amount;
+    _checkCancel( as, xfer ) {
+        // Check if enough balance, if not Transit account
+        if ( xfer.dst_info.acct_type !== ACCT_TRANSIT &&
+                xfer.dst_info.acct_type !== ACCT_SYSTEM &&
+                ( xfer.status !== ST_CANCELED )
+        ) {
+            let cancel_amt = xfer.dst_amount;
 
-                if ( xfer.xfer_fee ) {
-                    cancel_amt = AmountTools.subtract(
-                        cancel_amt,
-                        xfer.xfer_fee.src_amount,
-                        xfer.dst_info.dec_places
-                    );
-                }
-
-                if ( !AmountTools.checkXferAmount( cancel_amt, xfer.dst_info ) ) {
-                    as.error( 'NotEnoughFunds' );
-                }
+            if ( xfer.xfer_fee ) {
+                cancel_amt = AmountTools.subtract(
+                    cancel_amt,
+                    xfer.xfer_fee.src_amount,
+                    xfer.dst_info.dec_places
+                );
             }
 
-            if ( xfer.src_limit_prefix ) {
-                this.addStatsCancel(
-                    as, dbxfer,
-                    xfer.src_limit_domain || this._domain,
-                    xfer.src_info.holder,
-                    xfer.orig_ts,
-                    xfer.src_info.currency, xfer.src_amount,
-                    xfer.src_limit_prefix, xfer.src_limit_extra || {} );
+            if ( !AmountTools.checkXferAmount( cancel_amt, xfer.dst_info ) ) {
+                as.error( 'NotEnoughFunds' );
             }
+        }
+    }
 
-            if ( xfer.dst_limit_prefix ) {
-                this.addStatsCancel(
-                    as, dbxfer,
-                    xfer.dst_limit_domain || this._domain,
-                    xfer.dst_info.holder,
-                    xfer.orig_ts,
-                    xfer.dst_info.currency, xfer.dst_amount,
-                    xfer.dst_limit_prefix, xfer.dst_limit_extra || {} );
-            }
-        } );
+    _cancelLimits( as, dbxfer, xfer ) {
+        const misc_data = xfer.misc_data;
+
+        if ( misc_data.src_limit && misc_data.src_limit.prefix ) {
+            this.addStatsCancel(
+                as, dbxfer,
+                misc_data.src_limit.domain,
+                xfer.src_info.holder,
+                xfer.orig_ts,
+                xfer.src_info.currency, xfer.src_amount,
+                misc_data.src_limit.prefix,
+                misc_data.src_limit.extra
+            );
+        }
+
+        if ( misc_data.dst_limit && misc_data.dst_limit.prefix ) {
+            this.addStatsCancel(
+                as, dbxfer,
+                misc_data.dst_limit.domain,
+                xfer.dst_info.holder,
+                xfer.orig_ts,
+                xfer.dst_info.currency, xfer.dst_amount,
+                misc_data.dst_limit.prefix,
+                misc_data.dst_limit.extra );
+        }
     }
 
     _analyzeXferRisk( as, xfer ) {
@@ -1261,9 +1278,9 @@ class XferTools {
                 }
 
                 this._createXfer( as, dbxfer, xfer );
+            } else {
+                this._checkCancel( as, xfer );
             }
-
-            this._checkCancelLimits( as, dbxfer, xfer );
         } );
     }
 
@@ -1278,10 +1295,11 @@ class XferTools {
             this._decreaseBalance( dbxfer, xfer, true );
         }
 
+        this._cancelLimits( as, dbxfer, xfer );
         this._completeXfer( dbxfer, xfer, ST_CANCELED );
         this._increaseBalance( dbxfer, xfer, true );
 
-        dbxfer.execute( as );
+        as.add( ( as ) => dbxfer.execute( as ) );
     }
 
     _completeExtIn( as, xfer ) {
@@ -1331,10 +1349,11 @@ class XferTools {
             this._decreaseBalance( dbxfer, xfer.in_xfer, true );
         }
 
+        this._cancelLimits( as, dbxfer, xfer.in_xfer );
         this._completeXfer( dbxfer, xfer.in_xfer, ST_CANCELED );
         this._increaseBalance( dbxfer, xfer.in_xfer, true );
 
-        dbxfer.execute( as );
+        as.add( ( as ) => dbxfer.execute( as ) );
     }
 
     _completeExtOut( as, xfer ) {
@@ -1360,12 +1379,14 @@ class XferTools {
             this._decreaseBalance( dbxfer, xfer.out_xfer, true );
         }
 
+        this._cancelLimits( as, dbxfer, xfer.out_xfer );
         this._completeXfer( dbxfer, xfer.out_xfer, ST_CANCELED );
 
         // optimized out
         //this._increaseBalance( dbxfer, xfer.out_xfer, true );
         //this._decreaseBalance( dbxfer, xfer, true );
 
+        this._cancelLimits( as, dbxfer, xfer );
         this._completeXfer( dbxfer, xfer, ST_CANCELED );
 
         if ( xfer.in_xfer ) {
@@ -1377,7 +1398,7 @@ class XferTools {
             this._increaseBalance( dbxfer, xfer, true );
         }
 
-        dbxfer.execute( as );
+        as.add( ( as ) => dbxfer.execute( as ) );
     }
 
     _completeUser( as, xfer ) {
