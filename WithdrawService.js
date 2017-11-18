@@ -37,8 +37,10 @@ class WithdrawService extends BaseService {
         return {
             id : p.xfer_id ? p.xfer_id : null,
             type: 'Withdrawal',
+            src_limit_domain: 'Deposits',
             src_limit_prefix: 'withdrawal',
-            dst_limit_prefix: false,
+            dst_limit_domain: 'Payments',
+            dst_limit_prefix: 'inbound',
             src_account: p.account,
             dst_account: p.rel_account,
             amount: p.amount,

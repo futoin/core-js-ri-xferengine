@@ -24,7 +24,9 @@ class DepositService extends BaseService {
         xt.processXfer( as, {
             noop: true,
             type: 'Deposit',
-            src_limit_prefix: false,
+            src_limit_domain: 'Payments',
+            src_limit_prefix: 'outbound',
+            dst_limit_domain: 'Deposits',
             dst_limit_prefix: 'deposit',
             src_account: p.rel_account,
             dst_account: p.account,
@@ -57,7 +59,9 @@ class DepositService extends BaseService {
 
         xt.processXfer( as, {
             type: 'Deposit',
-            src_limit_prefix: false,
+            src_limit_domain: 'Payments',
+            src_limit_prefix: 'outbound',
+            dst_limit_domain: 'Deposits',
             dst_limit_prefix: 'deposit',
             src_account: p.rel_account,
             dst_account: p.account,

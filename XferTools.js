@@ -39,7 +39,12 @@ const TypeSpec = {
                     type: 'string',
                     optional: true,
                 },
+
                 src_account: 'AccountID',
+                src_limit_domain: {
+                    type: 'string',
+                    optional: true,
+                },
                 src_limit_prefix: "PrefixOrFalse",
                 src_limit_extra: {
                     type: 'map',
@@ -47,6 +52,10 @@ const TypeSpec = {
                 },
 
                 dst_account: 'AccountID',
+                dst_limit_domain: {
+                    type: 'string',
+                    optional: true,
+                },
                 dst_limit_prefix: "PrefixOrFalse",
                 dst_limit_extra: {
                     type: 'map',
@@ -129,12 +138,11 @@ class XferTools {
     // Processing of Limits & Stats
     //-----------------------
 
-    _processLimits( as, dbxfer, holder, delta_currency, deltas ) {
+    _processLimits( as, dbxfer, domain, holder, delta_currency, deltas ) {
         const ccm = this._ccm;
         const limface = ccm.iface( 'xfer.limits' );
         const acctface = ccm.iface( 'xfer.accounts' );
         const currface = ccm.iface( 'currency.info' );
-        const domain = this._domain;
 
         let currency;
         let currency_info;
@@ -235,7 +243,7 @@ class XferTools {
         } );
     }
 
-    addLimitProcessing( as, dbxfer, holder, currency, amount, prefix, extra={} ) {
+    addLimitProcessing( as, dbxfer, domain, holder, currency, amount, prefix, extra={} ) {
         let deltas = Object.assign( {
             [`${prefix}_min_amt`] : amount,
             [`${prefix}_daily_amt`] : amount,
@@ -246,16 +254,15 @@ class XferTools {
             [`${prefix}_monthly_cnt`] : 1,
         }, extra );
 
-        this._processLimits( as, dbxfer, holder, currency, deltas );
+        this._processLimits( as, dbxfer, domain, holder, currency, deltas );
     }
 
     // Reverting transaction stats
     //-----------------------
-    _cancelStats( as, dbxfer, holder, date, delta_currency, deltas ) {
+    _cancelStats( as, dbxfer, domain, holder, date, delta_currency, deltas ) {
         const ccm = this._ccm;
         const acctface = ccm.iface( 'xfer.accounts' );
         const currface = ccm.iface( 'currency.info' );
-        const domain = this._domain;
 
         let currency;
         let currency_info;
@@ -331,7 +338,7 @@ class XferTools {
         } );
     }
 
-    addStatsCancel( as, dbxfer, holder, date, currency, amount, prefix, extra={} ) {
+    addStatsCancel( as, dbxfer, domain, holder, date, currency, amount, prefix, extra={} ) {
         // cancel must be accounted as transaction for security reasons
         // cnt - (-1) = cnt + 1
         let deltas = Object.assign( {
@@ -343,7 +350,7 @@ class XferTools {
             [`${prefix}_monthly_cnt`] : -1,
         }, extra );
 
-        this._cancelStats( as, dbxfer, holder, date, currency, deltas );
+        this._cancelStats( as, dbxfer, domain, holder, date, currency, deltas );
     }
 
     // Ttransaction processing
@@ -707,6 +714,7 @@ class XferTools {
             if ( xfer.src_limit_prefix ) {
                 this.addLimitProcessing(
                     as, dbxfer,
+                    xfer.src_limit_domain || this._domain,
                     xfer.src_info.holder,
                     xfer.src_info.currency, xfer.src_amount,
                     xfer.src_limit_prefix, xfer.src_limit_extra || {} );
@@ -720,6 +728,7 @@ class XferTools {
             if ( xfer.dst_limit_prefix ) {
                 this.addLimitProcessing(
                     as, dbxfer,
+                    xfer.dst_limit_domain || this._domain,
                     xfer.dst_info.holder,
                     xfer.dst_info.currency, xfer.dst_amount,
                     xfer.dst_limit_prefix, xfer.dst_limit_extra || {} );
@@ -757,6 +766,7 @@ class XferTools {
             if ( xfer.src_limit_prefix ) {
                 this.addStatsCancel(
                     as, dbxfer,
+                    xfer.src_limit_domain || this._domain,
                     xfer.src_info.holder,
                     xfer.orig_ts,
                     xfer.src_info.currency, xfer.src_amount,
@@ -766,6 +776,7 @@ class XferTools {
             if ( xfer.dst_limit_prefix ) {
                 this.addStatsCancel(
                     as, dbxfer,
+                    xfer.dst_limit_domain || this._domain,
                     xfer.dst_info.holder,
                     xfer.orig_ts,
                     xfer.dst_info.currency, xfer.dst_amount,

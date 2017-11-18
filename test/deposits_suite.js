@@ -105,11 +105,29 @@ module.exports = function(describe, it, vars) {
                         "withdrawal_min_amt" : "0.01"
                     }, false );
                     
+                    xferlim.addLimitGroup(as, 'DepositSystemTest');
+                    
+                    xferlim.setLimits(as, 'DepositSystemTest', 'Payments', 'I:EUR', {
+                        "outbound_daily_amt" : "1000.00",
+                        "outbound_daily_cnt" : 1000,
+                        "inbound_daily_amt" : "1000.00",
+                        "inbound_daily_cnt" : 1000,
+                        "outbound_weekly_amt" : "5000.00",
+                        "outbound_weekly_cnt" : 1000,
+                        "inbound_weekly_amt" : "5000.00",
+                        "inbound_weekly_cnt" : 1000,
+                        "outbound_monthly_amt" : "100000.00",
+                        "outbound_monthly_cnt" : 1000,
+                        "inbound_monthly_amt" :"100000.00",
+                        "inbound_monthly_cnt" : 1000,
+                        "outbound_min_amt" : "0.01"
+                    }, false, false );
+                    
                     
                     //--
                     const xferacct = ccm.iface('xfer.accounts');
                     
-                    xferacct.addAccountHolder( as, 'DepositSystem', 'DepositTest', true, true, {}, {} );
+                    xferacct.addAccountHolder( as, 'DepositSystem', 'DepositSystemTest', true, true, {}, {} );
                     as.add( (as, holder) => {
                         xferacct.addAccount(
                             as,

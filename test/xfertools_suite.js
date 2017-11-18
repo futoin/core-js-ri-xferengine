@@ -108,7 +108,7 @@ module.exports = function(describe, it, vars) {
                     
                     //---
                     const xfer1 = db.newXfer();
-                    xt.addLimitProcessing( as, xfer1, holder, 'I:EUR', '0.21', 'retail' );
+                    xt.addLimitProcessing( as, xfer1, 'Retail', holder, 'I:EUR', '0.21', 'retail' );
                     
                     as.add( (as, { do_risk, do_check } ) => {
                         as.state.test_name = "1";
@@ -119,7 +119,7 @@ module.exports = function(describe, it, vars) {
                     
                     //---
                     const xfer2 = db.newXfer();
-                    xt.addLimitProcessing( as, xfer2, holder, 'I:EUR', '0.30', 'retail' );
+                    xt.addLimitProcessing( as, xfer2, 'Retail', holder, 'I:EUR', '0.30', 'retail' );
                     
                     as.add( (as, { do_risk, do_check } ) => {
                         as.state.test_name = "2";
@@ -130,7 +130,7 @@ module.exports = function(describe, it, vars) {
                     
                     //---
                     const xfer3 = db.newXfer();
-                    xt.addLimitProcessing( as, xfer3, holder, 'I:EUR', '0.20', 'retail' );
+                    xt.addLimitProcessing( as, xfer3, 'Retail', holder, 'I:EUR', '0.20', 'retail' );
                     
                     as.add( (as, { do_risk, do_check } ) => {
                         as.state.test_name = "3";
@@ -141,7 +141,7 @@ module.exports = function(describe, it, vars) {
                     
                     //---
                     const xfer4 = db.newXfer();
-                    xt.addLimitProcessing( as, xfer4, holder, 'I:EUR', '0.10', 'retail' );
+                    xt.addLimitProcessing( as, xfer4, 'Retail', holder, 'I:EUR', '0.10', 'retail' );
                     
                     as.add( (as, { do_risk, do_check } ) => {
                         as.state.test_name = "4";
@@ -233,7 +233,7 @@ module.exports = function(describe, it, vars) {
                     
                     //---
                     const xfer1 = db.newXfer();
-                    xt.addLimitProcessing( as, xfer1, holder, 'I:EUR', '0.21', 'deposit' );
+                    xt.addLimitProcessing( as, xfer1, 'Deposits', holder, 'I:EUR', '0.21', 'deposit' );
                     
                     as.add( (as, { do_risk, do_check } ) => {
                         as.state.test_name = "1";
@@ -244,7 +244,7 @@ module.exports = function(describe, it, vars) {
                     
                     //---
                     const xfer2 = db.newXfer();
-                    xt.addLimitProcessing( as, xfer2, holder, 'I:EUR', '0.30', 'deposit' );
+                    xt.addLimitProcessing( as, xfer2, 'Deposits', holder, 'I:EUR', '0.30', 'deposit' );
                     
                     as.add( (as, { do_risk, do_check } ) => {
                         as.state.test_name = "2";
@@ -255,7 +255,7 @@ module.exports = function(describe, it, vars) {
                     
                     //---
                     const xfer3 = db.newXfer();
-                    xt.addLimitProcessing( as, xfer3, holder, 'I:EUR', '0.20', 'deposit' );
+                    xt.addLimitProcessing( as, xfer3, 'Deposits', holder, 'I:EUR', '0.20', 'deposit' );
                     
                     as.add( (as, { do_risk, do_check } ) => {
                         as.state.test_name = "3";
@@ -320,7 +320,7 @@ module.exports = function(describe, it, vars) {
                     
                     //---
                     const xfer1 = db.newXfer();
-                    xt.addLimitProcessing( as, xfer1, holder, 'I:EUR', '1.00', 'outbound' );
+                    xt.addLimitProcessing( as, xfer1, 'Payments', holder, 'I:EUR', '1.00', 'outbound' );
                     
                     as.add( (as, { do_risk, do_check } ) => {
                         as.state.test_name = "1";
@@ -333,7 +333,7 @@ module.exports = function(describe, it, vars) {
                     as.add(
                         (as) => {
                             const xfer2 = db.newXfer();
-                            xt.addLimitProcessing( as, xfer2, holder, 'I:USD', '0.01', 'outbound' );
+                            xt.addLimitProcessing( as, xfer2, 'Payments', holder, 'I:USD', '0.01', 'outbound' );
                             as.add( (as) => as.error('Fail') );
                         },
                         (as, err) => {
@@ -347,7 +347,7 @@ module.exports = function(describe, it, vars) {
                     as.add(
                         (as) => {
                             const xfer3 = db.newXfer();
-                            xt.addLimitProcessing( as, xfer3, holder, 'I:EUR', '1.01', 'inbound' );
+                            xt.addLimitProcessing( as, xfer3, 'Payments', holder, 'I:EUR', '1.01', 'inbound' );
                             as.add( (as) => as.error('Fail') );
                         },
                         (as, err) => {
@@ -379,7 +379,7 @@ module.exports = function(describe, it, vars) {
                     as.add(
                         (as) => {
                             const xfer3 = db.newXfer();
-                            xt.addLimitProcessing( as, xfer3, holder, 'I:EUR', '1.01', 'inbound' );
+                            xt.addLimitProcessing( as, xfer3, 'Payments', holder, 'I:EUR', '1.01', 'inbound' );
                             as.add( (as) => as.error('Fail') );
                         },
                         (as, err) => {
@@ -392,7 +392,7 @@ module.exports = function(describe, it, vars) {
                     // try limit
                     //---
                     const xfer4 = db.newXfer();
-                    xt.addLimitProcessing( as, xfer4, holder, 'I:EUR', '1.00', 'inbound' );
+                    xt.addLimitProcessing( as, xfer4, 'Payments', holder, 'I:EUR', '1.00', 'inbound' );
                     
                     as.add( (as, { do_risk, do_check } ) => {
                         expect(do_risk).to.equal(false);
@@ -406,7 +406,7 @@ module.exports = function(describe, it, vars) {
                     as.add(
                         (as) => {
                             const xfer3 = db.newXfer();
-                            xt.addLimitProcessing( as, xfer3, holder, 'I:EUR', '0.01', 'inbound' );
+                            xt.addLimitProcessing( as, xfer3, 'Payments', holder, 'I:EUR', '0.01', 'inbound' );
                             as.add( (as) => as.error('Fail') );
                         },
                         (as, err) => {
@@ -419,13 +419,13 @@ module.exports = function(describe, it, vars) {
                     // cancel stats
                     //---
                     const xfer5 = db.newXfer();
-                    xt.addStatsCancel( as, xfer5, holder, moment.utc().format(), 'I:EUR', '1.00', 'inbound' );
+                    xt.addStatsCancel( as, xfer5, 'Payments', holder, moment.utc().format(), 'I:EUR', '1.00', 'inbound' );
                     as.add( (as) => xfer5.execute( as ) );                                            
                     
                     // try limit again
                     //---
                     const xfer6 = db.newXfer();
-                    xt.addLimitProcessing( as, xfer6, holder, 'I:EUR', '1.00', 'inbound' );
+                    xt.addLimitProcessing( as, xfer6, 'Payments', holder, 'I:EUR', '1.00', 'inbound' );
                     
                     as.add( (as, { do_risk, do_check } ) => {
                         expect(do_risk).to.equal(false);
@@ -446,13 +446,13 @@ module.exports = function(describe, it, vars) {
                     //---
                     {
                         const xfer = db.newXfer();
-                        xt.addStatsCancel( as, xfer, holder,
+                        xt.addStatsCancel( as, xfer, 'Payments', holder,
                                            moment.utc().startOf('month').subtract(1, 'day').format(),
                                            'I:EUR', '1.00', 'inbound' );
-                        xt.addStatsCancel( as, xfer, holder,
+                        xt.addStatsCancel( as, xfer, 'Payments', holder,
                                            moment.utc().startOf('week').subtract(1, 'day').format(),
                                            'I:EUR', '1.00', 'inbound' );
-                        xt.addStatsCancel( as, xfer, holder,
+                        xt.addStatsCancel( as, xfer, 'Payments', holder,
                                            moment.utc().subtract(1, 'day').format(),
                                            'I:EUR', '1.00', 'inbound' );
                     }
