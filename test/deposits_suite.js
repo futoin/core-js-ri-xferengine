@@ -311,7 +311,7 @@ module.exports = function(describe, it, vars) {
                                 '0.80',
                                 'T2',
                                 {},
-                                moment.utc().format(),
+                                moment.utc().format()
                             );
                             
                             as.add( (as, res) => {
@@ -345,7 +345,7 @@ module.exports = function(describe, it, vars) {
                                     '1.00',
                                     'T3',
                                     {},
-                                    moment.utc().format(),
+                                    moment.utc().format()
                                 );
                                 as.add( (as) => as.error('Fail') );
                             },
@@ -365,7 +365,7 @@ module.exports = function(describe, it, vars) {
                             '0.80',
                             'T4',
                             {},
-                            moment.utc().format(),
+                            moment.utc().format()
                         );
                         
                         
