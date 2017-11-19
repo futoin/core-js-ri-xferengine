@@ -905,16 +905,16 @@ futoin-asyncsteps@^1.9.0:
   dependencies:
     performance-now "^2.1.0"
 
-futoin-database@^1.5.0:
-  version "1.5.0"
-  resolved "https://registry.yarnpkg.com/futoin-database/-/futoin-database-1.5.0.tgz#d2442cf944fdd707f2304c79bb911e06dd31b1a6"
+futoin-database@^1.5.1:
+  version "1.5.1"
+  resolved "https://registry.yarnpkg.com/futoin-database/-/futoin-database-1.5.1.tgz#9b93af85229b99af0447543d18bcbad6d4dbf9c1"
   dependencies:
     lodash "^4.17.4"
-    moment "^2.19.1"
+    moment "^2.19.2"
     sqlstring "^2.3.0"
   optionalDependencies:
     mysql "^2.15.0"
-    pg "^7.3.0"
+    pg "^7.4.0"
     sqlite3 "^3.1.13"
 
 futoin-eventstream@^0.9.5:
@@ -1664,7 +1664,7 @@ mocha@^4.0.1:
     mkdirp "0.5.1"
     supports-color "4.4.0"
 
-moment@^2.19.1, moment@^2.19.2:
+moment@^2.19.2:
   version "2.19.2"
   resolved "https://registry.yarnpkg.com/moment/-/moment-2.19.2.tgz#8a7f774c95a64550b4c7ebd496683908f9419dbe"
 
@@ -1872,7 +1872,7 @@ pg-types@~1.12.1:
     postgres-date "~1.0.0"
     postgres-interval "^1.1.0"
 
-pg@^7.3.0:
+pg@^7.4.0:
   version "7.4.0"
   resolved "https://registry.yarnpkg.com/pg/-/pg-7.4.0.tgz#e256061d2c52723c3c858defb97f1159ca660f83"
   dependencies:
