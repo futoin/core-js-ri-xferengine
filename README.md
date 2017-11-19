@@ -117,6 +117,15 @@ The concept is described in FutoIn specification: [FTN19: FutoIn Interface - Tra
 <dt><a href="#DepositTools">DepositTools</a></dt>
 <dd><p>XferTools with focus on Deposits use case</p>
 </dd>
+<dt><a href="#GamingFace">GamingFace</a></dt>
+<dd><p>Gaming Face</p>
+</dd>
+<dt><a href="#GamingService">GamingService</a></dt>
+<dd><p>Gaming Service</p>
+</dd>
+<dt><a href="#GamingTools">GamingTools</a></dt>
+<dd><p>XferTools with focus on Gaming use case</p>
+</dd>
 <dt><a href="#LimitsFace">LimitsFace</a></dt>
 <dd><p>Limits Face</p>
 </dd>
@@ -377,6 +386,41 @@ Deposits Service
 
 ## DepositTools
 XferTools with focus on Deposits use case
+
+**Kind**: global class  
+<a name="GamingFace"></a>
+
+## GamingFace
+Gaming Face
+
+**Kind**: global class  
+<a name="GamingFace.register"></a>
+
+### GamingFace.register(as, ccm, name, endpoint, [credentials], [options])
+CCM registration helper
+
+**Kind**: static method of [<code>GamingFace</code>](#GamingFace)  
+
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| as | <code>AsyncSteps</code> |  | steps interface |
+| ccm | <code>AdvancedCCM</code> |  | CCM instance |
+| name | <code>string</code> |  | CCM registration name |
+| endpoint | <code>\*</code> |  | see AdvancedCCM#register |
+| [credentials] | <code>\*</code> | <code></code> | see AdvancedCCM#register |
+| [options] | <code>object</code> | <code>{}</code> | interface options |
+| [options.version] | <code>string</code> | <code>&quot;&lt;latest&gt;&quot;</code> | interface version to use |
+
+<a name="GamingService"></a>
+
+## GamingService
+Gaming Service
+
+**Kind**: global class  
+<a name="GamingTools"></a>
+
+## GamingTools
+XferTools with focus on Gaming use case
 
 **Kind**: global class  
 <a name="LimitsFace"></a>
