@@ -11,6 +11,7 @@ FIXED: to more safely handle limits on cancel
 FIXED: to process inbound/outbound limits for External accounts
 CHANGED: to record do_check/do_risk in misc_data
 CHANGED: to re-read transit xfers instead of "guessing" its state
+CHANGED: not to optimize out chained balance increase/decrease operations for extra safety
 NEW: Payments domain processing frontend
 NEW: Full support for XFER_ERR and XFER_EXTERR events
 

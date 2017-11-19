@@ -927,6 +927,8 @@ class XferTools {
             balance_field = 'dst_post_balance';
 
             xfer_q.get( [ 'dst', 'dst_amount', 'dst_currency_id' ] );
+            xfer_q.where( 'dst_post_balance IS NOT NULL' );
+
             q_amt = acct_q.backref( xfer_q, 'dst_amount' );
 
             acct_q.where( 'uuidb64', acct_q.backref( xfer_q, 'dst' ) );
@@ -937,6 +939,8 @@ class XferTools {
             balance_field = 'src_post_balance';
 
             xfer_q.get( [ 'src', 'src_amount', 'src_currency_id' ] );
+            xfer_q.where( 'src_post_balance IS NULL' );
+
             q_amt = acct_q.backref( xfer_q, 'src_amount' );
 
             acct_q.where( 'uuidb64', acct_q.backref( xfer_q, 'src' ) );
@@ -984,6 +988,7 @@ class XferTools {
 
             xfer_q.get( [ 'src', 'src_amount', 'src_currency_id' ] );
             xfer_q.where( 'xfer_status', ST_CANCELED );
+            xfer_q.where( 'src_post_balance IS NOT NULL' );
 
             if ( xfer.preauth ) {
                 acct_q.set( 'reserved', acct_q.expr( `reserved - ${acct_q.backref( xfer_q, 'src_amount' )}` ) );
@@ -1005,6 +1010,7 @@ class XferTools {
 
             xfer_q.get( [ 'dst', 'dst_amount', 'dst_currency_id' ] );
             xfer_q.where( 'xfer_status', ST_DONE );
+            xfer_q.where( 'dst_post_balance IS NULL' );
 
             acct_q.set( 'balance', acct_q.expr( `balance + ${acct_q.backref( xfer_q, 'dst_amount' )}` ) );
             acct_q.set( 'updated', dbxfer.helpers().now() );
@@ -1314,9 +1320,8 @@ class XferTools {
         this._decreaseBalance( dbxfer, xfer.in_xfer );
         this._completeXfer( dbxfer, xfer.in_xfer );
 
-        // optimized out
-        //this._increaseBalance( dbxfer, xfer.in_xfer );
-        //this._decreaseBalance( dbxfer, xfer );
+        this._increaseBalance( dbxfer, xfer.in_xfer );
+        this._decreaseBalance( dbxfer, xfer );
 
         if ( xfer.misc_data.do_check && !xfer.user_confirm ) {
             this._completeXfer( dbxfer, xfer, ST_WAIT_USER );
@@ -1327,9 +1332,7 @@ class XferTools {
         } else if ( xfer.out_xfer ) {
             this._completeXfer( dbxfer, xfer, ST_WAIT_EXT_OUT );
 
-            // optimized out
-            //this._increaseBalance( dbxfer, xfer );
-            //this._decreaseBalance( dbxfer, xfer.out_xfer );
+            // NOTE: balance operation is done in _completeExtOut
 
             this._completeXfer( dbxfer, xfer.out_xfer, ST_WAIT_EXT_OUT );
         } else {
@@ -1368,9 +1371,8 @@ class XferTools {
 
         this._completeXfer( dbxfer, xfer, ST_DONE );
 
-        // optimized out
-        //this._increaseBalance( dbxfer, xfer );
-        //this._decreaseBalance( dbxfer, xfer.out_xfer );
+        this._increaseBalance( dbxfer, xfer );
+        this._decreaseBalance( dbxfer, xfer.out_xfer );
 
         this._completeXfer( dbxfer, xfer.out_xfer, ST_DONE );
         this._increaseBalance( dbxfer, xfer.out_xfer );
@@ -1389,20 +1391,23 @@ class XferTools {
         this._cancelLimits( as, dbxfer, xfer.out_xfer );
         this._completeXfer( dbxfer, xfer.out_xfer, ST_CANCELED );
 
-        // optimized out
-        //this._increaseBalance( dbxfer, xfer.out_xfer, true );
-        //this._decreaseBalance( dbxfer, xfer, true );
-
         this._cancelLimits( as, dbxfer, xfer );
         this._completeXfer( dbxfer, xfer, ST_CANCELED );
 
-        if ( xfer.in_xfer ) {
-            // no balance updates
-        } else if (
-            ( xfer_status === ST_DONE ) ||
-            ( xfer_status === ST_WAIT_EXT_OUT )
+        if ( xfer_status == ST_DONE ) {
+            this._increaseBalance( dbxfer, xfer.out_xfer, true );
+            this._decreaseBalance( dbxfer, xfer, true );
+        }
+
+        if ( ( xfer_status === ST_DONE ) ||
+             ( xfer_status === ST_WAIT_EXT_OUT ) ||
+             ( xfer_status === ST_WAIT_USER )
         ) {
             this._increaseBalance( dbxfer, xfer, true );
+
+            if ( xfer.in_xfer ) {
+                this._decreaseBalance( dbxfer, xfer.in_xfer, true );
+            }
         }
 
         as.add( ( as ) => dbxfer.execute( as ) );
@@ -1413,7 +1418,9 @@ class XferTools {
 
         if ( xfer.out_xfer ) {
             this._completeXfer( dbxfer, xfer, ST_WAIT_EXT_OUT );
-            // no balance updates
+
+            // NOTE: balance operation is done in _completeExtOut
+
             this._completeXfer( dbxfer, xfer.out_xfer, ST_WAIT_EXT_OUT );
         } else {
             this._completeXfer( dbxfer, xfer );
