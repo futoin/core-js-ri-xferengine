@@ -698,6 +698,8 @@ class XferTools {
                 xfer.in_xfer = {
                     id: xfer.misc_data.rel_in_id,
                     src_account: xfer.src_info.rel_uuidb64,
+                    src_limit_domain: 'Payments',
+                    src_limit_prefix: 'outbound',
                     dst_account: xfer.src_account,
                     currency: xfer.src_info.currency,
                     amount: xfer.src_amount,
@@ -715,6 +717,8 @@ class XferTools {
                     id: xfer.misc_data.rel_out_id,
                     src_account: xfer.dst_account,
                     dst_account: xfer.dst_info.rel_uuidb64,
+                    src_limit_domain: 'Payments',
+                    src_limit_prefix: 'inbound',
                     currency: xfer.dst_info.currency,
                     amount: xfer.dst_amount,
                     type: xfer.type,
@@ -1217,7 +1221,10 @@ class XferTools {
                 this._createTransitOutbound( as, dbxfer, xfer );
             } else if ( xfer.status === ST_CANCELED ) {
                 as.error( 'AlreadyCanceled' );
-            } else if ( xfer.in_transit || xfer.in_xfer_fee ) {
+            } else if ( xfer.in_transit ) {
+                this._checkXferLimits( as, dbxfer, xfer );
+                this._createXfer( as, dbxfer, xfer );
+            } else if ( xfer.in_xfer_fee ) {
                 this._createXfer( as, dbxfer, xfer );
             }
         } );

@@ -497,6 +497,24 @@ module.exports = function(describe, it, vars) {
                     }
                     
                     const xferlim = ccm.iface('xfer.limits');
+                    xferlim.addLimitGroup(as, 'ExternalXfer');
+                    
+                    xferlim.setLimits(as, 'ExternalXfer', 'Payments', 'I:EUR', {
+                        "outbound_daily_amt" : "1000.00",
+                        "outbound_daily_cnt" : 1000,
+                        "inbound_daily_amt" : "1000.00",
+                        "inbound_daily_cnt" : 1000,
+                        "outbound_weekly_amt" : "1000.00",
+                        "outbound_weekly_cnt" : 1000,
+                        "inbound_weekly_amt" : "1000.00",
+                        "inbound_weekly_cnt" : 1000,
+                        "outbound_monthly_amt" : "1000.00",
+                        "outbound_monthly_cnt" : 1000,
+                        "inbound_monthly_amt" : "1000.00",
+                        "inbound_monthly_cnt" : 1000,
+                        "outbound_min_amt" : "0"
+                    }, false, false );
+                    
                     xferlim.addLimitGroup(as, 'SimpleXfer');
                     
                     xferlim.setLimits(as, 'SimpleXfer', 'Gaming', 'I:EUR', {
@@ -550,13 +568,40 @@ module.exports = function(describe, it, vars) {
                         "deposit_min_amt" : "0.10",
                         "withdrawal_min_amt" : "0.10",
                     }, false, false );
-                    
+                    xferlim.setLimits(as, 'SimpleXfer', 'Payments', 'I:EUR', {
+                        "outbound_daily_amt" : "1000.00",
+                        "outbound_daily_cnt" : 1000,
+                        "inbound_daily_amt" : "1000.00",
+                        "inbound_daily_cnt" : 1000,
+                        "outbound_weekly_amt" : "1000.00",
+                        "outbound_weekly_cnt" : 1000,
+                        "inbound_weekly_amt" : "1000.00",
+                        "inbound_weekly_cnt" : 1000,
+                        "outbound_monthly_amt" : "1000.00",
+                        "outbound_monthly_cnt" : 1000,
+                        "inbound_monthly_amt" : "1000.00",
+                        "inbound_monthly_cnt" : 1000,
+                        "outbound_min_amt" : "0"
+                    }, false, false );
+                                        
                     
                     const currmgr = ccm.iface('currency.manage');
                     currmgr.setCurrency(as, 'L:XFRT', 3, 'Xfer Test Currency', 'XFT', true);
                     currmgr.setExRate(as, 'I:EUR', 'L:XFRT', '1.500', '0.05');
                     
                     const xferacct = ccm.iface('xfer.accounts');
+                    
+                    xferacct.addAccountHolder( as, 'ExternalXfer', 'ExternalXfer', true, true, {}, {} );
+                    as.add( (as, holder) => {
+                        xferacct.addAccount(
+                            as,
+                            holder,
+                            'External',
+                            'I:EUR',
+                            'Ext'
+                        );
+                        as.add( (as, id) => external_account = id );
+                    });
                     
                     xferacct.addAccountHolder( as, 'SimpleXfer', 'SimpleXfer', true, true, {}, {} );
                     as.add( (as, holder) => {
@@ -618,36 +663,26 @@ module.exports = function(describe, it, vars) {
                         xferacct.addAccount(
                             as,
                             holder,
-                            'External',
+                            'Transit',
                             'I:EUR',
-                            'Ext'
+                            'Transit First',
+                            true,
+                            `transit1`,
+                            external_account
                         );
-                        as.add( (as, id) => {
-                            external_account = id;
-                            xferacct.addAccount(
-                                as,
-                                holder,
-                                'Transit',
-                                'I:EUR',
-                                'Transit First',
-                                true,
-                                `transit1`,
-                                external_account
-                            );
-                            as.add( (as, id) => first_transit = id );
-                            
-                            xferacct.addAccount(
-                                as,
-                                holder,
-                                'Transit',
-                                'I:EUR',
-                                'Transit Second',
-                                true,
-                                `transit2`,
-                                external_account
-                            );
-                            as.add( (as, id) => second_transit = id );
-                        });
+                        as.add( (as, id) => first_transit = id );
+                        
+                        xferacct.addAccount(
+                            as,
+                            holder,
+                            'Transit',
+                            'I:EUR',
+                            'Transit Second',
+                            true,
+                            `transit2`,
+                            external_account
+                        );
+                        as.add( (as, id) => second_transit = id );
                     } );
                 },
                 (as, err) =>
@@ -3230,6 +3265,7 @@ module.exports = function(describe, it, vars) {
         });
 
         it('should cancel transit', function(done) {
+            this.timeout(5e3);
             const pxt = new class extends XferTools {
                 constructor() {
                     super( ccm, 'Deposits' );
