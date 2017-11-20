@@ -374,7 +374,7 @@ module.exports = function(describe, it, vars) {
                     
                     as.add(
                         (as) => {
-                            as.state.test_name = 'UnknownAccountHolder on update';
+                            as.state.test_name = 'UnknownHolderID on update';
                             xferacct.updateAccountHolder(
                                 as,
                                 '1234567890123456789012',
@@ -383,7 +383,7 @@ module.exports = function(describe, it, vars) {
                             as.add( (as) => as.error('Fail') );
                         },
                         (as, err) => {
-                            if ( err === 'UnknownAccountHolder' ) {
+                            if ( err === 'UnknownHolderID' ) {
                                 as.success();
                             }
                         }
@@ -391,7 +391,7 @@ module.exports = function(describe, it, vars) {
                     
                     as.add(
                         (as) => {
-                            as.state.test_name = 'UnknownAccountHolder on get';
+                            as.state.test_name = 'UnknownHolderID on get';
                             xferacct.getAccountHolder(
                                 as,
                                 '1234567890123456789012'
@@ -399,7 +399,7 @@ module.exports = function(describe, it, vars) {
                             as.add( (as) => as.error('Fail') );
                         },
                         (as, err) => {
-                            if ( err === 'UnknownAccountHolder' ) {
+                            if ( err === 'UnknownHolderID' ) {
                                 as.success();
                             }
                         }
@@ -407,7 +407,7 @@ module.exports = function(describe, it, vars) {
                     
                     as.add(
                         (as) => {
-                            as.state.test_name = 'UnknownAccountHolder on getext';
+                            as.state.test_name = 'UnknownHolderID on getext';
                             xferacct.getAccountHolderExt(
                                 as,
                                 'unknown@example.org'
@@ -415,7 +415,7 @@ module.exports = function(describe, it, vars) {
                             as.add( (as) => as.error('Fail') );
                         },
                         (as, err) => {
-                            if ( err === 'UnknownAccountHolder' ) {
+                            if ( err === 'UnknownHolderID' ) {
                                 as.success();
                             }
                         }

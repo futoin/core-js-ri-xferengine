@@ -139,7 +139,7 @@ class AccountsService extends BaseService {
             ( as, err ) => {
                 if ( err === 'XferCondition' ) {
                     if ( as.state.error_info.startsWith( 'Affected' ) ) {
-                        as.error( 'UnknownAccountHolder' );
+                        as.error( 'UnknownHolderID' );
                     } else {
                         as.error( 'UnknownLimitGroup' );
                     }
@@ -164,7 +164,7 @@ class AccountsService extends BaseService {
 
         as.add( ( as, rows ) => {
             if ( rows.length !== 1 ) {
-                as.error( 'UnknownAccountHolder' );
+                as.error( 'UnknownHolderID' );
             }
 
             const r = rows[0];
