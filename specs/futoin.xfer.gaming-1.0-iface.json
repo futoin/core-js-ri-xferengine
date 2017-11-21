@@ -6,6 +6,20 @@
     "futoin.ping:1.0",
     "futoin.xfer.types:1.0"
   ],
+  "types": {
+    "RelatedBetPH": {
+      "type": "enum",
+      "items": [
+        "%FreeSpin%",
+        "%Prize%",
+        "%Award%"
+      ]
+    },
+    "RelatedBet": [
+      "XferExtID",
+      "RelatedBetPH"
+    ]
+  },
   "funcs": {
     "bet": {
       "params": {
@@ -13,7 +27,7 @@
         "rel_account": "AccountID",
         "currency": "CurrencyCode",
         "amount": "Amount",
-        "ext_id": "XferExtId",
+        "ext_id": "XferExtID",
         "ext_info": "XferExtInfo",
         "orig_ts": "XferTimestamp"
       },
@@ -38,7 +52,8 @@
         "rel_account": "AccountID",
         "currency": "CurrencyCode",
         "amount": "Amount",
-        "ext_id": "XferExtId",
+        "ext_id": "XferExtID",
+        "ext_info": "XferExtInfo",
         "orig_ts": "XferTimestamp"
       },
       "result": {
@@ -57,7 +72,8 @@
         "rel_account": "AccountID",
         "currency": "CurrencyCode",
         "amount": "Amount",
-        "ext_id": "XferExtId",
+        "rel_bet": "RelatedBet",
+        "ext_id": "XferExtID",
         "ext_info": "XferExtInfo",
         "orig_ts": "XferTimestamp"
       },
@@ -80,11 +96,11 @@
         "currency": "CurrencyCode"
       },
       "result": {
-        "balance": "Balance",
-        "bonus_part": "Amount"
+        "balance": "Balance"
       },
       "throws": [
         "UnknownHolderID",
+        "UnknownCurrency",
         "CurrencyMismatch"
       ]
     }

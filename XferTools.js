@@ -119,17 +119,27 @@ const ST_DONE = 'Done';
 const ST_CANCELED = 'Canceled';
 //const ST_REJECTED = 'Rejected';
 
-const ACCT_SYSTEM = 'System';
-//const ACCT_REGULAR = 'Regular';
-//const ACCT_EXTERNAL = 'External';
-const ACCT_TRANSIT = 'Transit';
-//const ACCT_BONUS = 'Bonus';
-
 /**
  * Actual transaction core
  * @private
  */
 class XferTools {
+    get ACCT_SYSTEM() {
+        return 'System';
+    }
+    get ACCT_REGULAR() {
+        return 'Regular';
+    }
+    get ACCT_EXTERNAL() {
+        return 'External';
+    }
+    get ACCT_TRANSIT() {
+        return 'Transit';
+    }
+    get ACCT_BONUS() {
+        return 'Bonus';
+    }
+
     constructor( ccm, domain ) {
         this._ccm = ccm;
         this._domain = domain;
@@ -627,6 +637,10 @@ class XferTools {
                 r.balance = AmountTools.fromStorage( r.balance, r.dec_places );
                 r.reserved = AmountTools.fromStorage( r.reserved, r.dec_places );
                 r.overdraft = AmountTools.fromStorage( r.overdraft, r.dec_places );
+                r.available_balance = AmountTools.subtract(
+                    AmountTools.add( r.balance, r.overdraft ),
+                    r.reserved
+                );
             }
 
             if ( rows[0].uuidb64 === xfer.src_account ) {
@@ -694,7 +708,7 @@ class XferTools {
                 return;
             }
 
-            if ( xfer.src_info.acct_type === ACCT_TRANSIT ) {
+            if ( xfer.src_info.acct_type === this.ACCT_TRANSIT ) {
                 xfer.in_xfer = {
                     id: xfer.misc_data.rel_in_id,
                     src_account: xfer.src_info.rel_uuidb64,
@@ -712,7 +726,7 @@ class XferTools {
                 };
             }
 
-            if ( xfer.dst_info.acct_type === ACCT_TRANSIT ) {
+            if ( xfer.dst_info.acct_type === this.ACCT_TRANSIT ) {
                 xfer.out_xfer = {
                     id: xfer.misc_data.rel_out_id,
                     src_account: xfer.dst_account,
@@ -735,8 +749,8 @@ class XferTools {
     _checkXferLimits( as, dbxfer, xfer ) {
         as.add( ( as ) => {
             // Check if enough balance, if not Transit account
-            if ( xfer.src_info.acct_type !== ACCT_TRANSIT &&
-                 xfer.src_info.acct_type !== ACCT_SYSTEM
+            if ( xfer.src_info.acct_type !== this.ACCT_TRANSIT &&
+                 xfer.src_info.acct_type !== this.ACCT_SYSTEM
             ) {
                 let req_amt = xfer.src_amount;
 
@@ -800,8 +814,8 @@ class XferTools {
 
     _checkCancel( as, xfer ) {
         // Check if enough balance, if not Transit account
-        if ( xfer.dst_info.acct_type !== ACCT_TRANSIT &&
-                xfer.dst_info.acct_type !== ACCT_SYSTEM &&
+        if ( xfer.dst_info.acct_type !== this.ACCT_TRANSIT &&
+                xfer.dst_info.acct_type !== this.ACCT_SYSTEM &&
                 ( xfer.status !== ST_CANCELED )
         ) {
             let cancel_amt = xfer.dst_amount;
@@ -960,7 +974,7 @@ class XferTools {
         acct_q.where( 'uuidb64', account ); // double safety
         acct_q.where( 'currency_id', acct_info.currency_id ); // double safety
 
-        if ( acct_info.acct_type !== ACCT_SYSTEM ) {
+        if ( acct_info.acct_type !== this.ACCT_SYSTEM ) {
             acct_q.where( `(balance + COALESCE(overdraft, ${q_zero}) - reserved - ${q_amt}) >= 0` );
         }
 
@@ -1141,7 +1155,7 @@ class XferTools {
             }
 
             if ( xfer.extra_fee && !cancel ) {
-                if ( xfer.extra_fee.dst_info.acct_type !== ACCT_TRANSIT ) {
+                if ( xfer.extra_fee.dst_info.acct_type !== this.ACCT_TRANSIT ) {
                     xfer_q.set( 'extra_fee_id', xfer.extra_fee.id );
                     xfer_event.extra_fee_id = xfer.extra_fee.id;
                 } else {
@@ -1181,7 +1195,7 @@ class XferTools {
 
                 // Fee ID gets generated in async step
                 as.add( ( as ) => {
-                    if ( xfer.xfer_fee.dst_info.acct_type === ACCT_TRANSIT ) {
+                    if ( xfer.xfer_fee.dst_info.acct_type === this.ACCT_TRANSIT ) {
                         as.error( 'XferError',
                             'Transit Xfer Fee destination is not allowed' );
                     }
@@ -1271,7 +1285,7 @@ class XferTools {
 
             // Insert new xfer
             if ( !xfer.id ) {
-                xfer.id = xfer.id || UUIDTool.genXfer( dbxfer );
+                xfer.id = UUIDTool.genXfer( dbxfer );
                 xfer.status = ST_CANCELED;
 
                 if ( extra_fee ) {

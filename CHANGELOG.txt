@@ -1,6 +1,7 @@
 
 === (next) ===
 CHANGED: Harmonized UnknownAccountHolder/UnknownHolderID errors
+NEW: Gaming xfer domain support
 
 === 0.6.0 (2017-11-19) ===
 BREAKING CHANGE: deposit(withdrawal) source(sink) now obey outbound(inbound) Payments domain limits

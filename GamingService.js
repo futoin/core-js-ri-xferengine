@@ -23,20 +23,23 @@ class GamingService extends BaseService {
 
         xt.findAccount( as, p.user, p.currency );
 
-        as.add( ( as, account ) => {
+        as.add( ( as, account, _bonus_accounts ) => {
             const xfer = {
                 type: 'Bet',
                 src_limit_domain: 'Gaming',
                 src_limit_prefix: 'bet',
                 dst_limit_domain: 'Payments',
                 dst_limit_prefix: 'inbound',
-                src_account: account.id,
+                src_account: account,
                 dst_account: p.rel_account,
                 amount: p.amount,
                 currency: p.currency,
                 ext_id: xt.makeExtId( p.rel_account, p.ext_id ),
                 orig_ts: p.orig_ts,
-                misc_data: { info: p.ext_info },
+                misc_data: {
+                    info: p.ext_info,
+                    orig_ts: p.orig_ts,
+                },
             };
 
             xt.processXfer( as, xfer );
@@ -64,21 +67,21 @@ class GamingService extends BaseService {
                 src_limit_prefix: 'bet',
                 dst_limit_domain: 'Payments',
                 dst_limit_prefix: 'inbound',
-                src_account: account.id,
+                src_account: account,
                 dst_account: p.rel_account,
                 amount: p.amount,
                 currency: p.currency,
                 ext_id: xt.makeExtId( p.rel_account, p.ext_id ),
                 orig_ts: p.orig_ts,
+                misc_data: {
+                    info: p.ext_info,
+                    orig_ts: p.orig_ts,
+                },
             };
 
             xt.processCancel( as, xfer );
 
-            as.add( ( as ) => {
-                reqinfo.result( {
-                    balance: xfer.game_balance,
-                } );
-            } );
+            this.gameBalance( as, reqinfo );
         } );
     }
 
@@ -96,12 +99,16 @@ class GamingService extends BaseService {
                 dst_limit_domain: 'Gaming',
                 dst_limit_prefix: 'win',
                 src_account: p.rel_account,
-                dst_account: account.id,
+                dst_account: account,
                 amount: p.amount,
                 currency: p.currency,
                 ext_id: xt.makeExtId( p.rel_account, p.ext_id ),
                 orig_ts: p.orig_ts,
-                misc_data: { info: p.ext_info },
+                misc_data: {
+                    info: p.ext_info,
+                    rel_ext_bet: p.rel_bet,
+                    orig_ts: p.orig_ts,
+                },
             };
 
             xt.processXfer( as, xfer );
@@ -117,10 +124,10 @@ class GamingService extends BaseService {
     }
 
     gameBalance( as, reqinfo ) {
-        // TODO: available balance for Regular accounts + related Bonus balances
-        // TODO: get balance from peer for Transit
+        const p = reqinfo.params();
         const xt = this._xferTools( reqinfo );
-        as.error( 'NotImplemented', xt );
+        xt.getGameAccount( as, p.user, p.currency );
+        as.add( ( as, balance ) => reqinfo.result( { balance } ) );
     }
 
 
