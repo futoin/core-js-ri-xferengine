@@ -1718,7 +1718,7 @@ class XferTools {
         );
         as.add( ( as, accounts ) => {
             for ( let v of accounts ) {
-                if ( ( v.type === 'External' ) &&
+                if ( ( v.type === this.ACCT_EXTERNAL ) &&
                      ( v.currency === currency ) &&
                      ( v.alias === alias )
                 ) {
@@ -1733,7 +1733,7 @@ class XferTools {
             xferacct.addAccount(
                 as,
                 holder,
-                'External',
+                this.ACCT_EXTERNAL,
                 currency,
                 alias,
                 true
@@ -1769,11 +1769,11 @@ class XferTools {
         dbxfer.select( DB_ACCOUNTS_VIEW, { selected: 1 } )
             .where( 'uuidb64', peer_account )
             .where( 'ext_holder_id', holder )
-            .where( 'acct_type', 'External' );
+            .where( 'acct_type', this.ACCT_EXTERNAL );
         // 2. rel_account is Regular
         dbxfer.select( DB_ACCOUNTS_TABLE, { selected: 1 } )
             .where( 'uuidb64', rel_account )
-            .where( 'acct_type', 'Regular' );
+            .where( 'acct_type IN', [ this.ACCT_EXTERNAL, this.ACCT_REGULAR ] );
         dbxfer.execute( as );
     }
 }

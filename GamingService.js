@@ -81,7 +81,8 @@ class GamingService extends BaseService {
 
             xt.processCancel( as, xfer );
 
-            this.gameBalance( as, reqinfo );
+            xt.getGameBalance( as, p.user, p.currency );
+            as.add( ( as, balance ) => reqinfo.result( { balance } ) );
         } );
     }
 
@@ -126,7 +127,7 @@ class GamingService extends BaseService {
     gameBalance( as, reqinfo ) {
         const p = reqinfo.params();
         const xt = this._xferTools( reqinfo );
-        xt.getGameAccount( as, p.user, p.currency );
+        xt.getGameBalance( as, p.user, p.currency );
         as.add( ( as, balance ) => reqinfo.result( { balance } ) );
     }
 

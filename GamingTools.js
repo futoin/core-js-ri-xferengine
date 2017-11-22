@@ -1,6 +1,5 @@
 'use strict';
 
-const assert = require( 'assert' );
 const XferTools = require( './XferTools' );
 const AmountTools = require( './AmountTools' );
 
@@ -41,7 +40,7 @@ class GamingTools extends XferTools {
         } );
     }
 
-    getGameAccount( as, user_ext_id, currency ) {
+    getGameBalance( as, user_ext_id, currency ) {
         const currface = this._ccm.iface( 'currency.info' );
         let currency_info;
 
@@ -106,7 +105,7 @@ class GamingTools extends XferTools {
         } );
     }
 
-    _domainDbStep( as, _dbxfer, xfer ) {
+    _calcGameBalance( xfer ) {
         let acct_info;
 
         // Optimistic actual balance, not the post-xfer one!
@@ -137,20 +136,29 @@ class GamingTools extends XferTools {
         }
     }
 
-    _domainDbCancelStep( as, _dbxfer, _xfer ) {
+    _domainDbStep( as, _dbxfer, xfer ) {
+        this._calcGameBalance( xfer );
+    }
+
+    _domainDbCancelStep( as, _dbxfer, xfer ) {
+        this._calcGameBalance( xfer );
+
         // TODO: forbid cancel bet after win
     }
 
     _domainExtIn( as, xfer ) {
-        assert( xfer.type === 'Bet' );
+        if ( xfer.type !== 'Bet' ) {
+            return super._domainExtIn( as, xfer );
+        }
+
         const in_xfer = xfer.in_xfer;
-        const acct_info = in_xfer.src_info;
+        const acct_info = in_xfer.dst_info;
 
         this._ccm.xferIface( as, 'futoin.xfer.gaming', in_xfer.src_account );
 
         as.add( ( as, iface ) => iface.call( as, 'bet', {
             user : acct_info.ext_holder_id,
-            rel_account: in_xfer.dst_info.ext_acct_id,
+            rel_account: in_xfer.src_info.ext_acct_id,
             currency: in_xfer.currency,
             amount: in_xfer.amount,
             // re-use external
@@ -170,15 +178,18 @@ class GamingTools extends XferTools {
     }
 
     _domainCancelExtIn( as, xfer ) {
-        assert( xfer.type === 'Bet' );
+        if ( xfer.type !== 'Bet' ) {
+            return super._domainCancelExtIn( as, xfer );
+        }
+
         const in_xfer = xfer.in_xfer;
-        const acct_info = in_xfer.src_info;
+        const acct_info = in_xfer.dst_info;
 
         this._ccm.xferIface( as, 'futoin.xfer.gaming', in_xfer.src_account );
 
         as.add( ( as, iface ) => iface.call( as, 'cancelBet', {
             user : acct_info.ext_holder_id,
-            rel_account: in_xfer.dst_info.ext_acct_id,
+            rel_account: in_xfer.src_info.ext_acct_id,
             currency: in_xfer.currency,
             amount: in_xfer.amount,
             // re-use external
@@ -195,18 +206,22 @@ class GamingTools extends XferTools {
     }
 
     _domainExtOut( as, xfer ) {
-        assert( xfer.type === 'Win' );
+        if ( xfer.type !== 'Win' ) {
+            return super._domainExtOut( as, xfer );
+        }
+
         const out_xfer = xfer.out_xfer;
-        const acct_info = out_xfer.dst_info;
+        const acct_info = out_xfer.src_info;
 
         this._ccm.xferIface( as, 'futoin.xfer.gaming', out_xfer.dst_account );
 
         as.add( ( as, iface ) => iface.call( as, 'win', {
             user : acct_info.ext_holder_id,
-            rel_account: out_xfer.src_info.ext_acct_id,
+            rel_account: out_xfer.dst_info.ext_acct_id,
             currency: out_xfer.currency,
             amount: out_xfer.amount,
             // re-use external
+            rel_bet: xfer.misc_data.rel_ext_bet,
             ext_id: xfer.ext_id,
             ext_info: xfer.misc_data.info,
             orig_ts: xfer.misc_data.orig_ts,
@@ -222,7 +237,11 @@ class GamingTools extends XferTools {
         } );
     }
 
-    _domainCancelExtOut( as, _xfer ) {
+    _domainCancelExtOut( as, xfer ) {
+        if ( xfer.type !== 'Win' ) {
+            return super._domainCancelExtOut( as, xfer );
+        }
+
         as.error( 'InternalError', 'Win cancellation is not allowed' );
     }
 }

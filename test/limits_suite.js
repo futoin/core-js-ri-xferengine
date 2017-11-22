@@ -405,6 +405,25 @@ module.exports = function(describe, it, vars) {
                         check: false,
                         risk: false,
                     }));
+                    
+                    
+                    xferlim.addLimitGroup(as, 'DefaultPeer');
+     
+                    xferlim.setLimits(as, 'DefaultPeer', 'Payments', 'I:EUR', {
+                        "outbound_daily_amt" : "0.00",
+                        "outbound_daily_cnt" : 0,
+                        "inbound_daily_amt" : "0.00",
+                        "inbound_daily_cnt" : 0,
+                        "outbound_weekly_amt" : "0.00",
+                        "outbound_weekly_cnt" : 0,
+                        "inbound_weekly_amt" : "0.00",
+                        "inbound_weekly_cnt" : 0,
+                        "outbound_monthly_amt" : "0.00",
+                        "outbound_monthly_cnt" : 0,
+                        "inbound_monthly_amt" : "0.00",
+                        "inbound_monthly_cnt" : 0,
+                        "outbound_min_amt" : "0.00",
+                    }, false, false );
                 },
                 (as, err) =>
                 {
