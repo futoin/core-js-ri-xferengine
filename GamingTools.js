@@ -3,6 +3,12 @@
 const XferTools = require( './XferTools' );
 const AmountTools = require( './AmountTools' );
 
+const {
+    DB_ACCOUNTS_TABLE,
+    DB_ACCOUNTS_VIEW,
+} = require( './main' );
+
+
 /**
  * XferTools with focus on Gaming use case
  */
@@ -101,6 +107,32 @@ class GamingTools extends XferTools {
                 } );
             } else {
                 as.success( game_balance );
+            }
+        } );
+    }
+
+    closeBonus( as, xfer ) {
+        const dbxfer = this._ccm.db( 'xfer' ).newXfer();
+
+        dbxfer.update( DB_ACCOUNTS_TABLE, { affected: 1 } )
+            .set( 'rel_uuidb64', xfer.dst_account )
+            .set( 'enabled', 'N' )
+            .set( 'reserved', dbxfer.expr( 'balance' ) )
+            .where( 'uuidb64', xfer.src_account );
+
+        dbxfer.select( DB_ACCOUNTS_VIEW, { selected: 1, result: true } )
+            .where( 'uuidb64', xfer.src_account );
+
+        dbxfer.executeAssoc( as );
+
+        as.add( ( as, res ) => {
+            const info = res[0].rows[0];
+
+            xfer.amount = AmountTools.fromStorage( info.balance, info.dec_places );
+            xfer.force = true;
+
+            if ( !AmountTools.isZero( xfer.amount ) ) {
+                this.processXfer( as, xfer );
             }
         } );
     }

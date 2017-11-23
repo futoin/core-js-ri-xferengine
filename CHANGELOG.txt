@@ -1,4 +1,7 @@
 
+=== (next) ===
+NEW: added BonusService operations (no in-game use yet)
+
 === 0.7.0 (2017-11-22) ===
 CHANGED: Harmonized UnknownAccountHolder/UnknownHolderID errors
 NEW: Gaming xfer domain support

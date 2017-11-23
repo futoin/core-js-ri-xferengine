@@ -181,6 +181,10 @@ class AmountTools {
     static isEqual( a, b ) {
         return this.compare( a, b ) === 0;
     }
+
+    static isZero( a ) {
+        return this.isEqual( a, '0' );
+    }
 }
 
 module.exports = AmountTools;

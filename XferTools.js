@@ -490,6 +490,7 @@ class XferTools {
                 xfer.extra_fee.id = r.extra_fee_id;
                 xfer.extra_fee.src_account = xfer.src_account;
                 xfer.extra_fee.force = xfer.force;
+                xfer.extra_fee.in_cancel = xfer.in_cancel;
                 this._readFeeXfer( as, xfer.extra_fee );
             }
 
@@ -501,6 +502,7 @@ class XferTools {
                 xfer.xfer_fee.id = r.xfer_fee_id;
                 xfer.xfer_fee.src_account = xfer.dst_account;
                 xfer.xfer_fee.force = xfer.force;
+                xfer.xfer_fee.in_cancel = xfer.in_cancel;
                 this._readFeeXfer( as, xfer.xfer_fee );
             }
         } );
@@ -651,7 +653,7 @@ class XferTools {
                 xfer.dst_info = rows[0];
             }
 
-            if ( xfer.force ) {
+            if ( xfer.force || xfer.in_cancel ) {
                 // ignore
             } else if (
                 ( xfer.src_info.account_enabled !== 'Y' ) ||
@@ -723,6 +725,7 @@ class XferTools {
                     } ),
                     in_transit: true,
                     force: xfer.force,
+                    in_cancel: xfer.in_cancel,
                 };
             }
 
@@ -741,6 +744,7 @@ class XferTools {
                     } ),
                     in_transit: true,
                     force: xfer.force,
+                    in_cancel: xfer.in_cancel,
                 };
             }
         } );
@@ -750,7 +754,8 @@ class XferTools {
         as.add( ( as ) => {
             // Check if enough balance, if not Transit account
             if ( xfer.src_info.acct_type !== this.ACCT_TRANSIT &&
-                 xfer.src_info.acct_type !== this.ACCT_SYSTEM
+                 xfer.src_info.acct_type !== this.ACCT_SYSTEM &&
+                 !xfer.force
             ) {
                 let req_amt = xfer.src_amount;
 
@@ -974,7 +979,7 @@ class XferTools {
         acct_q.where( 'uuidb64', account ); // double safety
         acct_q.where( 'currency_id', acct_info.currency_id ); // double safety
 
-        if ( acct_info.acct_type !== this.ACCT_SYSTEM ) {
+        if ( ( acct_info.acct_type !== this.ACCT_SYSTEM ) && !xfer.force ) {
             acct_q.where( `(balance + COALESCE(overdraft, ${q_zero}) - reserved - ${q_amt}) >= 0` );
         }
 
@@ -1036,10 +1041,10 @@ class XferTools {
         acct_q.where( 'uuidb64', account );
         acct_q.where( 'currency_id', acct_info.currency_id );
 
-        this._recordBalance( dbxfer, xfer, account, balance_field );
+        this._recordBalance( dbxfer, xfer, account, balance_field, acct_info.dec_places );
     }
 
-    _recordBalance( dbxfer, xfer, account, target_field ) {
+    _recordBalance( dbxfer, xfer, account, target_field, dec_places ) {
         const acct_q = dbxfer.select( DB_ACCOUNTS_TABLE, { selected: 1 } );
         acct_q.get( [ 'balance', 'reserved' ] ).where( 'uuidb64', account );
 
@@ -1053,6 +1058,7 @@ class XferTools {
             .set( 'ts', dbxfer.helpers().now() );
 
         const json_id = JSON.stringify( account );
+        dec_places = JSON.stringify( dec_places );
 
         // TODO: cleanup this mess
         //=========
@@ -1061,7 +1067,7 @@ class XferTools {
             evt_q.backref( acct_q, 'balance' ),
             evt_q.escape( '","raw_reserved":"' ),
             evt_q.backref( acct_q, 'reserved' ),
-            evt_q.escape( '"}' ),
+            evt_q.escape( `","dec_places":"${dec_places}"}` ),
         ];
         let evt_data;
 
@@ -1549,6 +1555,8 @@ class XferTools {
         if ( !SpecTools.checkType( TypeSpec, 'XferInfo', xfer ) ) {
             as.error( 'XferError', 'Invalid xfer data' );
         }
+
+        xfer.in_cancel = true;
 
         const dbxfer = this._ccm.db( 'xfer' ).newXfer();
 

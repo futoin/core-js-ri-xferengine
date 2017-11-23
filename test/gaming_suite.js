@@ -37,6 +37,8 @@ module.exports = function( describe, it, vars ) {
         const PaymentService = require( '../PaymentService' );
         const GamingFace = require( '../GamingFace' );
         const GamingService = require( '../GamingService' );
+        const BonusFace = require( '../BonusFace' );
+        const BonusService = require( '../BonusService' );
 
         let system_account;
         let account_holder;
@@ -46,6 +48,7 @@ module.exports = function( describe, it, vars ) {
         let game_transit;
         let peer1_external;
         let peer2_external;
+        let bonus_source;
         const user_ext_id = 'GamingUser';
         const user_transit_ext_id = 'GamingTransitUser';
 
@@ -72,6 +75,8 @@ module.exports = function( describe, it, vars ) {
                     GamingService.register( as, executor );
                     GamingFace.register( as, ccm, 'xfer.gaming', executor );
 
+                    BonusService.register( as, executor );
+                    BonusFace.register( as, ccm, 'xfer.bonus', executor );
 
                     PeerService.register( as, executor );
                     PeerFace.register( as, ccm, 'xfer.peer1', executor, 'game_peer2:pwd' );
@@ -240,6 +245,15 @@ module.exports = function( describe, it, vars ) {
                         xferacct.addAccount(
                             as,
                             holder,
+                            'System',
+                            'I:EUR',
+                            'Bonus Source'
+                        );
+                        as.add( ( as, id ) => bonus_source = id );
+
+                        xferacct.addAccount(
+                            as,
+                            holder,
                             'External',
                             'I:EUR',
                             'Game'
@@ -294,6 +308,149 @@ module.exports = function( describe, it, vars ) {
                 }
             );
         } );
+        it ( 'should process bonus operations', function( done ) {
+            this.timeout( 5e3 );
+            as.add(
+                ( as ) => {
+                    const payments = ccm.iface( 'xfer.payments' );
+                    const gaming = ccm.iface( 'xfer.gaming' );
+                    const bonus = ccm.iface( 'xfer.bonus' );
+
+                    gaming.gameBalance( as, user_ext_id, 'I:EUR' );
+                    as.add( ( as, { balance } ) => expect( balance ).to.equal( '0.00' ) );
+
+                    //---
+                    for ( let i = 0; i < 2; ++i ) {
+                        as.add( ( as ) => as.state.test_name = `Claim #1 ${i}` );
+
+                        bonus.claimBonus( as,
+                            user_ext_id,
+                            bonus_source,
+                            'Bonus 1',
+                            'I:EUR',
+                            '10.00',
+                            'B1',
+                            {},
+                            moment.utc().format()
+                        );
+                        gaming.gameBalance( as, user_ext_id, 'I:EUR' );
+                        as.add( ( as, { balance } ) => expect( balance ).to.equal( '10.00' ) );
+                    }
+
+
+                    //---
+                    for ( let i = 0; i < 2; ++i ) {
+                        as.add( ( as ) => as.state.test_name = `Claim #2 ${i}` );
+
+                        bonus.claimBonus( as,
+                            user_ext_id,
+                            bonus_source,
+                            'Bonus 2',
+                            'I:EUR',
+                            '5.00',
+                            'B2',
+                            {},
+                            moment.utc().format()
+                        );
+                        gaming.gameBalance( as, user_ext_id, 'I:EUR' );
+                        as.add( ( as, { balance } ) => expect( balance ).to.equal( '15.00' ) );
+                    }
+
+                    //---
+                    for ( let i = 0; i < 2; ++i ) {
+                        as.add( ( as ) => as.state.test_name = `Clear #1 ${i}` );
+
+                        bonus.clearBonus( as,
+                            user_ext_id,
+                            bonus_source,
+                            'B1'
+                        );
+                        gaming.gameBalance( as, user_ext_id, 'I:EUR' );
+                        as.add( ( as, { balance } ) => expect( balance ).to.equal( '5.00' ) );
+                    }
+
+
+                    //---
+                    for ( let i = 0; i < 2; ++i ) {
+                        as.add( ( as ) => as.state.test_name = `Release #2 ${i}` );
+
+                        bonus.releaseBonus( as,
+                            user_ext_id,
+                            bonus_source,
+                            'B2'
+                        );
+                        gaming.gameBalance( as, user_ext_id, 'I:EUR' );
+                        as.add( ( as, { balance } ) => expect( balance ).to.equal( '5.00' ) );
+                    }
+
+                    checkBalance( as, user_account, '5.00' );
+
+                    as.add( ( as ) => as.state.test_name = `OriginalMismatch` );
+                    as.add(
+                        ( as ) => {
+                            bonus.claimBonus( as,
+                                user_ext_id,
+                                bonus_source,
+                                'Bonus 1',
+                                'I:USD',
+                                '10.00',
+                                'B1',
+                                {},
+                                moment.utc().format()
+                            );
+                            as.add( ( as ) => as.error( 'Fail' ) );
+                        },
+                        ( as, err ) => {
+                            if ( err === 'OriginalMismatch' ) {
+                                as.success();
+                            }
+                        }
+                    );
+
+                    as.add( ( as ) => as.state.test_name = `AlreadyCanceled` );
+                    as.add(
+                        ( as ) => {
+                            bonus.releaseBonus( as,
+                                user_ext_id,
+                                bonus_source,
+                                'B1'
+                            );
+                            as.add( ( as ) => as.error( 'Fail' ) );
+                        },
+                        ( as, err ) => {
+                            if ( err === 'AlreadyCanceled' ) {
+                                as.success();
+                            }
+                        }
+                    );
+
+                    as.add( ( as ) => as.state.test_name = `AlreadyReleased` );
+                    as.add(
+                        ( as ) => {
+                            bonus.clearBonus( as,
+                                user_ext_id,
+                                bonus_source,
+                                'B2'
+                            );
+                            as.add( ( as ) => as.error( 'Fail' ) );
+                        },
+                        ( as, err ) => {
+                            if ( err === 'AlreadyReleased' ) {
+                                as.success();
+                            }
+                        }
+                    );
+                },
+                ( as, err ) => {
+                    console.log( as.state.test_name );
+                    console.log( err );
+                    console.log( as.state.error_info );
+                    done( as.state.last_exception || 'Fail' );
+                }
+            );
+            as.add( ( as ) => done() );
+            as.execute();
+        } );
 
         it ( 'should process games', function( done ) {
             this.timeout( 5e3 );
@@ -305,10 +462,19 @@ module.exports = function( describe, it, vars ) {
                     for ( let i = 0; i < 2; ++i ) {
                         as.add( ( as ) => as.state.test_name = `On inbound ${i}` );
                         payments.onInbound( as,
+                            bonus_source,
+                            system_account,
+                            'I:EUR',
+                            '5.00',
+                            'TB',
+                            {},
+                            moment.utc().format()
+                        );
+                        payments.onInbound( as,
                             user_account,
                             system_account,
                             'I:EUR',
-                            '50.00',
+                            '45.00',
                             'T1',
                             {},
                             moment.utc().format()

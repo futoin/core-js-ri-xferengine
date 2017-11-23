@@ -100,6 +100,12 @@ The concept is described in FutoIn specification: [FTN19: FutoIn Interface - Tra
 <dt><a href="#BaseService">BaseService</a></dt>
 <dd><p>Base Service with common registration logic</p>
 </dd>
+<dt><a href="#BonusFace">BonusFace</a></dt>
+<dd><p>Bonus Face</p>
+</dd>
+<dt><a href="#BonusService">BonusService</a></dt>
+<dd><p>Bonus Service</p>
+</dd>
 <dt><a href="#CachedAccountsFace">CachedAccountsFace</a></dt>
 <dd><p>Efficient cached AccountsFace with event-based cache invalidation</p>
 <p>Keeps local cache of limits and invalidates based on LIVE events.</p>
@@ -303,6 +309,35 @@ Register futoin.xfers.limits interface with Executor
 | executor | <code>Executor</code> | executor instance |
 | options | <code>object</code> | implementation defined options |
 
+<a name="BonusFace"></a>
+
+## BonusFace
+Bonus Face
+
+**Kind**: global class  
+<a name="BonusFace.register"></a>
+
+### BonusFace.register(as, ccm, name, endpoint, [credentials], [options])
+CCM registration helper
+
+**Kind**: static method of [<code>BonusFace</code>](#BonusFace)  
+
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| as | <code>AsyncSteps</code> |  | steps interface |
+| ccm | <code>AdvancedCCM</code> |  | CCM instance |
+| name | <code>string</code> |  | CCM registration name |
+| endpoint | <code>\*</code> |  | see AdvancedCCM#register |
+| [credentials] | <code>\*</code> | <code></code> | see AdvancedCCM#register |
+| [options] | <code>object</code> | <code>{}</code> | interface options |
+| [options.version] | <code>string</code> | <code>&quot;&lt;latest&gt;&quot;</code> | interface version to use |
+
+<a name="BonusService"></a>
+
+## BonusService
+Bonus Service
+
+**Kind**: global class  
 <a name="CachedAccountsFace"></a>
 
 ## CachedAccountsFace

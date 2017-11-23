@@ -252,6 +252,10 @@ describe( 'AmountTools', function() {
         expect( AmountTools.compare( '21.10', '21.101' ) ).to.be.below( 0 );
         expect( AmountTools.compare( '21.101', '21.10' ) ).to.be.above( 0 );
         expect( AmountTools.compare( '3.101', '21.10' ) ).to.be.below( 0 );
+        expect( AmountTools.isZero( '0' ) ).to.be.true;
+        expect( AmountTools.isZero( '0.00' ) ).to.be.true;
+        expect( AmountTools.isZero( '0.01' ) ).to.be.false;
+        expect( AmountTools.isZero( '30.00' ) ).to.be.false;
     } );
 
     it( 'should process misc', function() {
