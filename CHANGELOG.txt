@@ -1,5 +1,8 @@
 
 === (next) ===
+CHANGED: ACCT_BAL to record formatted amounts, event field name change:
+    * raw_balance -> balance
+    * raw_reserved -> reserved
 NEW: added BonusService operations (no in-game use yet)
 
 === 0.7.0 (2017-11-22) ===

@@ -291,7 +291,7 @@ module.exports = function( describe, it, vars ) {
         } );
 
         it ( 'should process peer xfers', function( done ) {
-            this.timeout( 5e3 );
+            this.timeout( 10e3 );
 
             as.add(
                 ( as ) => {

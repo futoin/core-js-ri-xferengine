@@ -35,16 +35,20 @@ class AmountTools {
         return amt.replace( /(((\.[0-9]*[1-9])0+)|(\.0*))$/, '$3' );
     }
 
+    static place2div( places ) {
+        return PLACES_TO_DIV[places];
+    }
+
     static fromStorage( amt, places ) {
         BigNumber.config( places, ROUND_DOWN );
         const res = new BigNumber( amt, 10 );
-        return res.dividedBy( PLACES_TO_DIV[places] ).toFixed( places );
+        return res.dividedBy( this.place2div( places ) ).toFixed( places );
     }
 
     static toStorage( amt, places ) {
         BigNumber.config( places, ROUND_DOWN );
         const res = new BigNumber( amt, 10 );
-        return res.times( PLACES_TO_DIV[places] ).toFixed( 0 );
+        return res.times( this.place2div( places ) ).toFixed( 0 );
     }
 
     static sellRate( rate, margin ) {

@@ -603,7 +603,7 @@ module.exports = function( describe, it, vars ) {
         } );
 
         it ( 'should process games with peers', function( done ) {
-            this.timeout( 5e3 );
+            this.timeout( 10e3 );
             as.add(
                 ( as ) => {
                     const payments = ccm.iface( 'xfer.payments' );

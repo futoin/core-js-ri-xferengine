@@ -983,7 +983,7 @@ class XferTools {
             acct_q.where( `(balance + COALESCE(overdraft, ${q_zero}) - reserved - ${q_amt}) >= 0` );
         }
 
-        this._recordBalance( dbxfer, xfer, account, balance_field );
+        this._recordBalance( dbxfer, xfer, account, balance_field, acct_info.dec_places );
     }
 
     _increaseBalance( dbxfer, xfer, cancel=false ) {
@@ -1045,6 +1045,8 @@ class XferTools {
     }
 
     _recordBalance( dbxfer, xfer, account, target_field, dec_places ) {
+        const helpers = dbxfer.helpers();
+
         const acct_q = dbxfer.select( DB_ACCOUNTS_TABLE, { selected: 1 } );
         acct_q.get( [ 'balance', 'reserved' ] ).where( 'uuidb64', account );
 
@@ -1055,34 +1057,27 @@ class XferTools {
         const evtgen = this._ccm.iface( EVTGEN_ALIAS );
         const evt_q = dbxfer.insert( evtgen.DB_EVENT_TABLE, { affected: 1 } )
             .set( 'type', 'ACCT_BAL' )
-            .set( 'ts', dbxfer.helpers().now() );
+            .set( 'ts', helpers.now() );
 
+        //=========
         const json_id = JSON.stringify( account );
-        dec_places = JSON.stringify( dec_places );
+        const format_amt = ( backref ) => helpers.cast(
+            helpers.div( backref, AmountTools.place2div( dec_places ) ),
+            `DECIMAL(${AmountTools.MAX_DIGITS},${dec_places})`
+        );
 
-        // TODO: cleanup this mess
-        //=========
-        const evt_data_parts = [
-            evt_q.escape( `{"id":${json_id},"raw_balance":"` ),
-            evt_q.backref( acct_q, 'balance' ),
-            evt_q.escape( '","raw_reserved":"' ),
-            evt_q.backref( acct_q, 'reserved' ),
-            evt_q.escape( `","dec_places":"${dec_places}"}` ),
+        let evt_data = [
+            `{"id":${json_id},"balance":"`,
+            format_amt( evt_q.backref( acct_q, 'balance' ) ),
+            '","reserved":"',
+            format_amt( evt_q.backref( acct_q, 'reserved' ) ),
+            `"}`,
         ];
-        let evt_data;
-
-        if ( dbxfer._db_type === 'mysql' ) {
-            evt_data = `CONCAT(${evt_data_parts.join( ',' )})`;
-        } else {
-            evt_data = evt_data_parts.join( '||' );
-        }
-
-        if ( dbxfer._db_type === 'postgresql' ) {
-            evt_data = `(${evt_data})::json`;
-        }
-
+        evt_data = helpers.concat( ...evt_data );
+        evt_data = helpers.cast( evt_data, 'JSON' );
         //=========
-        evt_q.set( 'data', evt_q.expr( evt_data ) );
+
+        evt_q.set( 'data', evt_data );
     }
 
     _createXfer( as, dbxfer, xfer ) {
