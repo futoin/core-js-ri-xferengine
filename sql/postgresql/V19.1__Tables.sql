@@ -251,6 +251,8 @@ CREATE TYPE xfer_status AS ENUM(
     'Rejected'
 );
 
+CREATE DOMAIN ext_xfer_id AS VARCHAR(128);
+
 CREATE TABLE active_xfers (
     "uuidb64" uuid_b64 NOT NULL PRIMARY KEY,
     "src" uuid_b64 NOT NULL REFERENCES accounts(uuidb64),
@@ -270,7 +272,14 @@ CREATE TABLE active_xfers (
     "xfer_fee_id" uuid_b64 NULL REFERENCES active_xfers(uuidb64)
         DEFERRABLE INITIALLY DEFERRED,
     -- Should be "real ext id : rel_account_id" - in that order
-    "ext_id" VARCHAR(128) NULL UNIQUE,
+    "ext_id" ext_xfer_id NULL UNIQUE,
     "misc_data" TEXT NULL
 );
 
+CREATE TABLE active_reservations (
+    "ext_id" ext_xfer_id NOT NULL,
+    "account" uuid_b64 NOT NULL REFERENCES accounts("uuidb64"),
+    "currency_id" SMALLINT NOT NULL REFERENCES currencies("id"),
+    "amount" amount NOT NULL,
+    PRIMARY KEY ("ext_id", "account")
+);

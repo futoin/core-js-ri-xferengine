@@ -288,3 +288,14 @@ CREATE TABLE active_xfers (
 )
     ENGINE=InnoDB
     CHARACTER SET 'utf8';
+
+CREATE TABLE active_reservations (
+    `_id` BIGINT UNSIGNED NOT NULL auto_increment PRIMARY KEY,
+    `ext_id` VARCHAR(128) NOT NULL,
+    `account` CHARACTER(22) NOT NULL REFERENCES accounts(uuidb64),
+    `currency_id` SMALLINT UNSIGNED NOT NULL REFERENCES currencies(id),
+    `amount` DECIMAL(22, 0) NOT NULL,
+    UNIQUE `src_ext_id` (`ext_id`, `account`)
+)
+    ENGINE=InnoDB
+    CHARACTER SET 'utf8';

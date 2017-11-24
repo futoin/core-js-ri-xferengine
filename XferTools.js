@@ -11,6 +11,7 @@ const {
     DB_ACCOUNTS_TABLE,
     DB_ACCOUNTS_VIEW,
     DB_XFERS_TABLE,
+    DB_RESERVATIONS_TABLE,
     EVTGEN_ALIAS,
     limitStatsTable,
     historyTimeBarrier,
@@ -938,6 +939,8 @@ class XferTools {
 
         const xfer_q = dbxfer.select( DB_XFERS_TABLE, { selected: 1 } )
             .where( 'uuidb64', xfer.id );
+
+        //---
         const acct_q = dbxfer.update( DB_ACCOUNTS_TABLE, { affected: 1 } );
 
         if ( cancel ) {
@@ -983,6 +986,19 @@ class XferTools {
             acct_q.where( `(balance + COALESCE(overdraft, ${q_zero}) - reserved - ${q_amt}) >= 0` );
         }
 
+        //---
+        if ( xfer.preauth ) {
+            assert( xfer.ext_id );
+
+            const reserve_q = dbxfer.insert( DB_RESERVATIONS_TABLE, { affected: 1 } );
+            reserve_q.set( {
+                ext_id: xfer.ext_id || null,
+                account: reserve_q.backref( xfer_q, 'src' ),
+                currency_id: reserve_q.backref( xfer_q, 'src_currency_id' ),
+                amount: reserve_q.backref( xfer_q, 'src_amount' ),
+            } );
+        }
+
         this._recordBalance( dbxfer, xfer, account, balance_field, acct_info.dec_places );
     }
 
@@ -1021,6 +1037,16 @@ class XferTools {
 
             if ( xfer.preauth ) {
                 acct_q.where( 'reserved >=', acct_q.backref( xfer_q, 'src_amount' ) );
+
+                // NOTE: it's only allowed to cancel full pre-auth - we check current amount
+                const reserve_q = dbxfer.update( DB_RESERVATIONS_TABLE, { affected: 1 } );
+                reserve_q.set( 'amount', 0 );
+                reserve_q.where( {
+                    ext_id: xfer.ext_id || null,
+                    account: reserve_q.backref( xfer_q, 'src' ),
+                    currency_id: reserve_q.backref( xfer_q, 'src_currency_id' ),
+                    amount: reserve_q.backref( xfer_q, 'src_amount' ),
+                } );
             }
         } else {
             acct_info = xfer.dst_info;

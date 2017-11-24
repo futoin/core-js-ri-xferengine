@@ -17,6 +17,7 @@ const main = {
     DB_LIMIT_GROUPS_TABLE : 'limit_groups',
     DB_UUID_HISTORY_TABLE : 'uuid_history',
     DB_XFERS_TABLE : 'active_xfers',
+    DB_RESERVATIONS_TABLE : 'active_reservations',
     limitStatsTable: ( domain ) => `limit_${domain.toLowerCase()}_stats`,
 
     DB_IFACEVER : 'futoin.db.l2:1.0',

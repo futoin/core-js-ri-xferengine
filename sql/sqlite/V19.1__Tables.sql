@@ -212,3 +212,10 @@ CREATE TABLE active_xfers (
     "misc_data" TEXT NULL
 );
 
+CREATE TABLE active_reservations (
+    "ext_id" VARCHAR(128) NOT NULL,
+    "account" CHARACTER(22) NOT NULL REFERENCES accounts("uuidb64"),
+    "currency_id" SMALLINT NOT NULL REFERENCES currencies("id"),
+    "amount" DECIMAL(22, 0) NOT NULL,
+    PRIMARY KEY ("ext_id", "account")
+);
