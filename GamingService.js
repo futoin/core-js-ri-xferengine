@@ -21,7 +21,7 @@ class GamingService extends BaseService {
         const p = reqinfo.params();
         const xt = this._xferTools( reqinfo );
 
-        xt.findAccount( as, p.user, p.currency );
+        xt.findAccount( as, p.user, p.currency, false );
 
         as.add( ( as, account, _bonus_accounts ) => {
             const xfer = {
@@ -39,6 +39,7 @@ class GamingService extends BaseService {
                 misc_data: {
                     info: p.ext_info,
                     orig_ts: p.orig_ts,
+                    round_id: xt.makeExtId( p.rel_account, p.round_id ),
                 },
             };
 
@@ -58,7 +59,7 @@ class GamingService extends BaseService {
         const p = reqinfo.params();
         const xt = this._xferTools( reqinfo );
 
-        xt.findAccount( as, p.user, p.currency );
+        xt.findAccount( as, p.user, p.currency, true );
 
         as.add( ( as, account ) => {
             const xfer = {
@@ -76,6 +77,7 @@ class GamingService extends BaseService {
                 misc_data: {
                     info: p.ext_info,
                     orig_ts: p.orig_ts,
+                    round_id: xt.makeExtId( p.rel_account, p.round_id ),
                 },
             };
 
@@ -90,7 +92,7 @@ class GamingService extends BaseService {
         const p = reqinfo.params();
         const xt = this._xferTools( reqinfo );
 
-        xt.findAccount( as, p.user, p.currency );
+        xt.findAccount( as, p.user, p.currency, true );
 
         as.add( ( as, account ) => {
             const xfer = {
@@ -107,8 +109,8 @@ class GamingService extends BaseService {
                 orig_ts: p.orig_ts,
                 misc_data: {
                     info: p.ext_info,
-                    rel_ext_bet: p.rel_bet,
                     orig_ts: p.orig_ts,
+                    round_id: xt.makeExtId( p.rel_account, p.round_id ),
                 },
             };
 

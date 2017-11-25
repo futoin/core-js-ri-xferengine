@@ -636,14 +636,7 @@ class XferTools {
             }
 
             for ( let i = 0; i < 2; ++i ) {
-                const r = rows[i];
-                r.balance = AmountTools.fromStorage( r.balance, r.dec_places );
-                r.reserved = AmountTools.fromStorage( r.reserved, r.dec_places );
-                r.overdraft = AmountTools.fromStorage( r.overdraft, r.dec_places );
-                r.available_balance = AmountTools.subtract(
-                    AmountTools.add( r.balance, r.overdraft ),
-                    r.reserved
-                );
+                AmountTools.accountFromStorage( rows[i] );
             }
 
             if ( rows[0].uuidb64 === xfer.src_account ) {
@@ -1492,11 +1485,13 @@ class XferTools {
     }
 
     processXfer( as, xfer ) {
-        // check data for consistency
-        // TODO; disable for production
-        if ( !SpecTools.checkType( TypeSpec, 'XferInfo', xfer ) ) {
-            as.error( 'XferError', 'Invalid xfer data' );
-        }
+        as.add( ( as ) => {
+            // check data for consistency
+            // TODO; disable for production
+            if ( !SpecTools.checkType( TypeSpec, 'XferInfo', xfer ) ) {
+                as.error( 'XferError', 'Invalid xfer data' );
+            }
+        } );
 
         const dbxfer = this._ccm.db( 'xfer' ).newXfer();
 
@@ -1571,13 +1566,15 @@ class XferTools {
     }
 
     processCancel( as, xfer ) {
-        // check data for consistency
-        // TODO; disable for production
-        if ( !SpecTools.checkType( TypeSpec, 'XferInfo', xfer ) ) {
-            as.error( 'XferError', 'Invalid xfer data' );
-        }
+        as.add( ( as ) => {
+            // check data for consistency
+            // TODO; disable for production
+            if ( !SpecTools.checkType( TypeSpec, 'XferInfo', xfer ) ) {
+                as.error( 'XferError', 'Invalid xfer data' );
+            }
 
-        xfer.in_cancel = true;
+            xfer.in_cancel = true;
+        } );
 
         const dbxfer = this._ccm.db( 'xfer' ).newXfer();
 

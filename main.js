@@ -18,6 +18,7 @@ const main = {
     DB_UUID_HISTORY_TABLE : 'uuid_history',
     DB_XFERS_TABLE : 'active_xfers',
     DB_RESERVATIONS_TABLE : 'active_reservations',
+    DB_ROUNDS_TABLE : 'active_rounds',
     limitStatsTable: ( domain ) => `limit_${domain.toLowerCase()}_stats`,
 
     DB_IFACEVER : 'futoin.db.l2:1.0',

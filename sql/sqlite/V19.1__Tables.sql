@@ -83,7 +83,8 @@ CREATE VIEW v_accounts AS
            C.code AS currency, C.dec_places,
            H.ext_id AS ext_holder_id,
            A.enabled AS account_enabled,
-           H.enabled AS holder_enabled
+           H.enabled AS holder_enabled,
+           A.created AS account_created
       FROM accounts A
       JOIN account_holders H ON (H.uuidb64 = A.holder)
       JOIN currencies C ON (C.id = A.currency_id);
@@ -218,4 +219,10 @@ CREATE TABLE active_reservations (
     "currency_id" SMALLINT NOT NULL REFERENCES currencies("id"),
     "amount" DECIMAL(22, 0) NOT NULL,
     PRIMARY KEY ("ext_id", "account")
+);
+
+CREATE TABLE active_rounds (
+    "round_id" ext_xfer_id NOT NULL,
+    "ext_id" ext_xfer_id NOT NULL,
+    PRIMARY KEY ("round_id", "ext_id")
 );

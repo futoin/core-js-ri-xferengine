@@ -102,6 +102,7 @@ module.exports = function( describe, it, vars ) {
                             const p = reqinfo.params();
                             expect( p.user ).to.equal( user_transit_ext_id );
                             p.user = user_ext_id;
+                            p.round_id = `FAKE:${p.round_id}`;
                         }
 
                         bet( as, reqinfo ) {
@@ -502,6 +503,7 @@ module.exports = function( describe, it, vars ) {
                                 game_account,
                                 'I:EUR',
                                 '0.40',
+                                'G1',
                                 'B1',
                                 {},
                                 moment.utc().format()
@@ -528,6 +530,7 @@ module.exports = function( describe, it, vars ) {
                             game_account,
                             'I:EUR',
                             '1.60',
+                            'G1',
                             'B2',
                             {},
                             moment.utc().format()
@@ -546,6 +549,7 @@ module.exports = function( describe, it, vars ) {
                             game_account,
                             'I:EUR',
                             '0.40',
+                            'G1',
                             'B1',
                             {},
                             moment.utc().format()
@@ -563,7 +567,7 @@ module.exports = function( describe, it, vars ) {
                             game_account,
                             'I:EUR',
                             '5.00',
-                            'B2',
+                            'G1',
                             'W1',
                             {},
                             moment.utc().format()
@@ -582,6 +586,7 @@ module.exports = function( describe, it, vars ) {
                         game_account,
                         'I:EUR',
                         '3.40',
+                        'G1',
                         'B3',
                         {},
                         moment.utc().format()
@@ -625,6 +630,7 @@ module.exports = function( describe, it, vars ) {
                                 game_transit,
                                 'I:EUR',
                                 '0.40',
+                                'G1',
                                 'B1',
                                 {},
                                 moment.utc().format()
@@ -656,6 +662,7 @@ module.exports = function( describe, it, vars ) {
                             game_transit,
                             'I:EUR',
                             '1.60',
+                            'G1',
                             'B2',
                             {},
                             moment.utc().format()
@@ -679,6 +686,7 @@ module.exports = function( describe, it, vars ) {
                             game_transit,
                             'I:EUR',
                             '0.40',
+                            'G1',
                             'B1',
                             {},
                             moment.utc().format()
@@ -701,7 +709,7 @@ module.exports = function( describe, it, vars ) {
                             game_transit,
                             'I:EUR',
                             '5.00',
-                            'B2',
+                            'G1',
                             'W1',
                             {},
                             moment.utc().format()
@@ -727,6 +735,7 @@ module.exports = function( describe, it, vars ) {
                         game_transit,
                         'I:EUR',
                         '3.40',
+                        'G1',
                         'B3',
                         {},
                         moment.utc().format()

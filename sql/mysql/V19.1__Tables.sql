@@ -111,7 +111,8 @@ CREATE VIEW v_accounts AS
            C.code AS currency, C.dec_places,
            H.ext_id AS ext_holder_id,
            A.enabled AS account_enabled,
-           H.enabled AS holder_enabled
+           H.enabled AS holder_enabled,
+           A.created AS account_created
       FROM accounts A
       JOIN account_holders H ON (H.uuidb64 = A.holder)
       JOIN currencies C ON (C.id = A.currency_id);
@@ -296,6 +297,15 @@ CREATE TABLE active_reservations (
     `currency_id` SMALLINT UNSIGNED NOT NULL REFERENCES currencies(id),
     `amount` DECIMAL(22, 0) NOT NULL,
     UNIQUE `src_ext_id` (`ext_id`, `account`)
+)
+    ENGINE=InnoDB
+    CHARACTER SET 'utf8';
+
+CREATE TABLE active_rounds (
+    `_id` BIGINT UNSIGNED NOT NULL auto_increment PRIMARY KEY,
+    `round_id` VARCHAR(128) NOT NULL,
+    `ext_id` VARCHAR(128) NOT NULL,
+    UNIQUE `round_xfer` (`round_id`, `ext_id`)
 )
     ENGINE=InnoDB
     CHARACTER SET 'utf8';

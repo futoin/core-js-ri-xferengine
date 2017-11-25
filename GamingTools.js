@@ -6,6 +6,7 @@ const AmountTools = require( './AmountTools' );
 const {
     DB_ACCOUNTS_TABLE,
     DB_ACCOUNTS_VIEW,
+    DB_ROUNDS_TABLE,
 } = require( './main' );
 
 
@@ -17,29 +18,45 @@ class GamingTools extends XferTools {
         super( ccm, 'Gaming' );
     }
 
-    findAccount( as, user_ext_id, currency ) {
-        const acctface = this._ccm.iface( 'xfer.accounts' );
-        acctface.getAccountHolderExt( as, user_ext_id );
+    findAccount( as, user_ext_id, currency, forced=false ) {
+        const db = this._ccm.db( 'xfer' );
 
-        as.add( ( as, holder ) => acctface.listAccounts( as, holder.id ) );
+        const q = db.select( DB_ACCOUNTS_VIEW )
+            .where( {
+                ext_holder_id: user_ext_id,
+                currency: currency,
+                account_enabled: 'Y',
+            } )
+            .order( 'account_created' );
+
+        if ( forced ) {
+            q.where( {
+                'acct_type <>': this.ACCT_BONUS,
+            } );
+        } else {
+            q.where( {
+                holder_enabled: 'Y',
+            } );
+        }
+
+        q.executeAssoc( as );
+
         as.add( ( as, accounts ) => {
             const bonus = [];
-            let main;
+            let main_id;
 
             for ( let a of accounts ) {
-                if ( ( a.currency === currency ) && a.enabled ) {
-                    if ( a.type === this.ACCT_BONUS ) {
-                        bonus.push( a.id );
-                    } else if ( !main ) {
-                        main = a.id;
-                    } else {
-                        as.error( 'InternalError', 'More than one currency account' );
-                    }
+                if ( a.acct_type === this.ACCT_BONUS ) {
+                    bonus.push( a );
+                } else if ( !main_id ) {
+                    main_id = a.uuidb64;
+                } else {
+                    as.error( 'InternalError', 'More than one currency account' );
                 }
             }
 
-            if ( main ) {
-                as.success( main, bonus );
+            if ( main_id ) {
+                as.success( main_id, bonus );
             } else {
                 as.error( 'CurrencyMismatch' );
             }
@@ -47,50 +64,40 @@ class GamingTools extends XferTools {
     }
 
     getGameBalance( as, user_ext_id, currency ) {
-        const currface = this._ccm.iface( 'currency.info' );
-        let currency_info;
+        const db = this._ccm.db( 'xfer' );
 
-        currface.getCurrency( as, currency );
-        as.add( ( as, res ) => currency_info = res );
+        db.select( DB_ACCOUNTS_VIEW )
+            .where( {
+                ext_holder_id: user_ext_id,
+                currency: currency,
+                account_enabled: 'Y',
+                holder_enabled: 'Y',
+            } )
+            .executeAssoc( as );
 
-        const acctface = this._ccm.iface( 'xfer.accounts' );
-        acctface.getAccountHolderExt( as, user_ext_id );
-
-        as.add( ( as, holder ) => acctface.listAccounts( as, holder.id ) );
         as.add( ( as, accounts ) => {
             let game_balance = '0';
             let main;
             let do_transit = false;
 
             for ( let a of accounts ) {
-                if ( ( a.currency === currency ) && a.enabled ) {
-                    if ( a.type === this.ACCT_BONUS ) {
-                        // pass
-                    } else if ( !main ) {
-                        main = a;
-                    } else {
-                        as.error( 'InternalError', 'More than one currency account' );
-                    }
+                if ( a.acct_type === this.ACCT_BONUS ) {
+                    // pass
+                } else if ( !main ) {
+                    main = a;
+                } else {
+                    as.error( 'InternalError', 'More than one currency account' );
+                }
 
-                    if ( a.type === this.ACCT_TRANSIT ) {
-                        do_transit = true;
-                    } else {
-                        game_balance = AmountTools.add(
-                            game_balance,
-                            a.balance,
-                            currency_info.dec_places
-                        );
-                        game_balance = AmountTools.add(
-                            game_balance,
-                            a.overdraft,
-                            currency_info.dec_places
-                        );
-                        game_balance = AmountTools.subtract(
-                            game_balance,
-                            a.reserved,
-                            currency_info.dec_places
-                        );
-                    }
+                if ( a.acct_type === this.ACCT_TRANSIT ) {
+                    do_transit = true;
+                } else {
+                    AmountTools.accountFromStorage( a );
+                    game_balance = AmountTools.add(
+                        game_balance,
+                        a.available_balance,
+                        a.dec_places
+                    );
                 }
             }
 
@@ -101,7 +108,7 @@ class GamingTools extends XferTools {
                     game_balance = AmountTools.add(
                         game_balance,
                         balance,
-                        currency_info.dec_places
+                        main.dec_places
                     );
                     as.success( game_balance );
                 } );
@@ -168,8 +175,25 @@ class GamingTools extends XferTools {
         }
     }
 
-    _domainDbStep( as, _dbxfer, xfer ) {
+    _recordRoundXfer( as, dbxfer, xfer ) {
+        switch ( xfer.type ) {
+        case 'Bet':
+        case 'Win':
+            dbxfer.insert( DB_ROUNDS_TABLE, { affected: 1 } )
+                .set( {
+                    round_id : xfer.misc_data.round_id,
+                    ext_id : xfer.ext_id,
+                } );
+            break;
+        }
+    }
+
+    _domainDbStep( as, dbxfer, xfer ) {
         this._calcGameBalance( xfer );
+
+        if ( !xfer.repeat ) {
+            this._recordRoundXfer( as, dbxfer, xfer );
+        }
     }
 
     _domainDbCancelStep( as, _dbxfer, xfer ) {
@@ -194,6 +218,7 @@ class GamingTools extends XferTools {
             currency: in_xfer.currency,
             amount: in_xfer.amount,
             // re-use external
+            round_id: xfer.misc_data.round_id,
             ext_id: xfer.ext_id,
             ext_info: xfer.misc_data.info,
             orig_ts: xfer.misc_data.orig_ts,
@@ -225,6 +250,7 @@ class GamingTools extends XferTools {
             currency: in_xfer.currency,
             amount: in_xfer.amount,
             // re-use external
+            round_id: xfer.misc_data.round_id,
             ext_id: xfer.ext_id,
             ext_info: xfer.misc_data.info,
             orig_ts: xfer.misc_data.orig_ts,
@@ -253,7 +279,7 @@ class GamingTools extends XferTools {
             currency: out_xfer.currency,
             amount: out_xfer.amount,
             // re-use external
-            rel_bet: xfer.misc_data.rel_ext_bet,
+            round_id: xfer.misc_data.round_id,
             ext_id: xfer.ext_id,
             ext_info: xfer.misc_data.info,
             orig_ts: xfer.misc_data.orig_ts,

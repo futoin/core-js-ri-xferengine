@@ -51,6 +51,14 @@ class AmountTools {
         return res.times( this.place2div( places ) ).toFixed( 0 );
     }
 
+    static accountFromStorage( account ) {
+        const dec_places = account.dec_places;
+        account.balance = AmountTools.fromStorage( account.balance, dec_places );
+        account.reserved = AmountTools.fromStorage( account.reserved, dec_places );
+        account.overdraft = AmountTools.fromStorage( account.overdraft, dec_places );
+        account.available_balance = AmountTools.availableBalance( account, dec_places );
+    }
+
     static sellRate( rate, margin ) {
         BigNumber.config( RATE_PRECISSION, ROUND_HALF_UP );
         const res = new BigNumber( rate, 10 );
@@ -175,6 +183,14 @@ class AmountTools {
         balance = balance.plus( overdraft, 10 ).minus( reserved, 10 );
 
         return balance.greaterThanOrEqualTo( amt );
+    }
+
+    static availableBalance( { balance, reserved, overdraft }, dec_places ) {
+        return AmountTools.subtract(
+            AmountTools.add( balance, overdraft, dec_places ),
+            reserved,
+            dec_places
+        );
     }
 
     static compare( a, b ) {
