@@ -1,6 +1,7 @@
 
 === (next) ===
 BREAKING CHANGE: added round_id to Gaming interface
+BREAKING CHANGE: dropped "active_" DB table prefix (requires manual change)
 CHANGED: ACCT_BAL to record formatted amounts, event field name change:
     * raw_balance -> balance
     * raw_reserved -> reserved

@@ -254,7 +254,7 @@ CREATE TYPE xfer_status AS ENUM(
 
 CREATE DOMAIN ext_xfer_id AS VARCHAR(128);
 
-CREATE TABLE active_xfers (
+CREATE TABLE xfers (
     "uuidb64" uuid_b64 NOT NULL PRIMARY KEY,
     "src" uuid_b64 NOT NULL REFERENCES accounts(uuidb64),
     "src_currency_id" SMALLINT NOT NULL REFERENCES currencies(id),
@@ -268,16 +268,16 @@ CREATE TABLE active_xfers (
     "xfer_status" xfer_status NOT NULL,
     "src_post_balance" amount NULL,
     "dst_post_balance" amount NULL,
-    "extra_fee_id" uuid_b64 NULL REFERENCES active_xfers(uuidb64)
+    "extra_fee_id" uuid_b64 NULL REFERENCES xfers(uuidb64)
         DEFERRABLE INITIALLY DEFERRED,
-    "xfer_fee_id" uuid_b64 NULL REFERENCES active_xfers(uuidb64)
+    "xfer_fee_id" uuid_b64 NULL REFERENCES xfers(uuidb64)
         DEFERRABLE INITIALLY DEFERRED,
     -- Should be "real ext id : rel_account_id" - in that order
     "ext_id" ext_xfer_id NULL UNIQUE,
     "misc_data" TEXT NULL
 );
 
-CREATE TABLE active_reservations (
+CREATE TABLE reservations (
     "ext_id" ext_xfer_id NOT NULL,
     "account" uuid_b64 NOT NULL REFERENCES accounts("uuidb64"),
     "currency_id" SMALLINT NOT NULL REFERENCES currencies("id"),
@@ -285,7 +285,7 @@ CREATE TABLE active_reservations (
     PRIMARY KEY ("ext_id", "account")
 );
 
-CREATE TABLE active_rounds (
+CREATE TABLE rounds (
     "round_id" ext_xfer_id NOT NULL,
     "ext_id" ext_xfer_id NOT NULL,
     PRIMARY KEY ("round_id", "ext_id")

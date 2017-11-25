@@ -917,7 +917,7 @@ module.exports = function( describe, it, vars ) {
 
                     //---
                     as.add( ( as ) => as.state.test_name = 'Ensure all xfers Done' );
-                    db.select( 'active_xfers' ).where( 'xfer_status !=', 'Done' ).execute( as );
+                    db.select( 'xfers' ).where( 'xfer_status !=', 'Done' ).execute( as );
                     as.add( ( as, { rows } ) => expect( rows.length ).to.equal( 0 ) );
                 },
                 ( as, err ) => {
@@ -1778,9 +1778,9 @@ module.exports = function( describe, it, vars ) {
 
                     //---
                     as.add( ( as ) => as.state.test_name = 'Ensure all xfers Done' );
-                    ccm.db( 'xfer' ).select( 'active_xfers' ).where( 'xfer_status !=', 'Done' ).execute( as );
+                    ccm.db( 'xfer' ).select( 'xfers' ).where( 'xfer_status !=', 'Done' ).execute( as );
                     as.add( ( as, { rows } ) => expect( rows.length ).to.equal( 0 ) );
-                    //ccm.db('xfer').select( 'active_xfers' ).where('xfer_type', 'Fee').executeAssoc(as);
+                    //ccm.db('xfer').select( 'xfers' ).where('xfer_type', 'Fee').executeAssoc(as);
                     //as.add( (as, rows ) => console.log(rows));
                 },
                 ( as, err ) => {
@@ -2245,9 +2245,9 @@ module.exports = function( describe, it, vars ) {
 
                     //---
                     as.add( ( as ) => as.state.test_name = 'Ensure all xfers Done' );
-                    ccm.db( 'xfer' ).select( 'active_xfers' ).where( 'xfer_status !=', 'Done' ).execute( as );
+                    ccm.db( 'xfer' ).select( 'xfers' ).where( 'xfer_status !=', 'Done' ).execute( as );
                     as.add( ( as, { rows } ) => expect( rows.length ).to.equal( 0 ) );
-                    //ccm.db('xfer').select( 'active_xfers' ).where('xfer_type', 'Fee').executeAssoc(as);
+                    //ccm.db('xfer').select( 'xfers' ).where('xfer_type', 'Fee').executeAssoc(as);
                     //as.add( (as, rows ) => console.log(rows));
                 },
                 ( as, err ) => {

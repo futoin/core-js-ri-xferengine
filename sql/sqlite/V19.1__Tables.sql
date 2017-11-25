@@ -192,7 +192,7 @@ CREATE TABLE limit_personnel_stats (
 
 -- Xfers
 
-CREATE TABLE active_xfers (
+CREATE TABLE xfers (
     "uuidb64" CHARACTER(22) NOT NULL PRIMARY KEY,
     "src" CHARACTER(22) NOT NULL REFERENCES accounts(uuidb64),
     "src_currency_id" SMALLINT NOT NULL REFERENCES currencies(id),
@@ -206,14 +206,14 @@ CREATE TABLE active_xfers (
     "xfer_status" VARCHAR(10) NOT NULL,
     "src_post_balance" DECIMAL(22, 0) NULL,
     "dst_post_balance" DECIMAL(22, 0) NULL,
-    "extra_fee_id" CHARACTER(22) NULL REFERENCES active_xfers(uuidb64),
-    "xfer_fee_id" CHARACTER(22) NULL REFERENCES active_xfers(uuidb64),
+    "extra_fee_id" CHARACTER(22) NULL REFERENCES xfers(uuidb64),
+    "xfer_fee_id" CHARACTER(22) NULL REFERENCES xfers(uuidb64),
     -- Should be "real ext id : rel_account_id" - in that order
     "ext_id" VARCHAR(128) NULL UNIQUE,
     "misc_data" TEXT NULL
 );
 
-CREATE TABLE active_reservations (
+CREATE TABLE reservations (
     "ext_id" VARCHAR(128) NOT NULL,
     "account" CHARACTER(22) NOT NULL REFERENCES accounts("uuidb64"),
     "currency_id" SMALLINT NOT NULL REFERENCES currencies("id"),
@@ -221,7 +221,7 @@ CREATE TABLE active_reservations (
     PRIMARY KEY ("ext_id", "account")
 );
 
-CREATE TABLE active_rounds (
+CREATE TABLE rounds (
     "round_id" ext_xfer_id NOT NULL,
     "ext_id" ext_xfer_id NOT NULL,
     PRIMARY KEY ("round_id", "ext_id")

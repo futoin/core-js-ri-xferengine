@@ -239,7 +239,7 @@ CREATE TABLE limit_personnel_stats (
     
 -- Xfers
 
-CREATE TABLE active_xfers (
+CREATE TABLE xfers (
     `_id` BIGINT UNSIGNED NOT NULL auto_increment PRIMARY KEY,
     `uuidb64` CHARACTER(22) NOT NULL UNIQUE,
     `src` CHARACTER(22) NOT NULL REFERENCES accounts(uuidb64),
@@ -281,8 +281,8 @@ CREATE TABLE active_xfers (
     ) NOT NULL,
     `src_post_balance` DECIMAL(22, 0) NULL,
     `dst_post_balance` DECIMAL(22, 0) NULL,
-    `extra_fee_id` CHARACTER(22) NULL REFERENCES active_xfers(uuidb64),
-    `xfer_fee_id` CHARACTER(22) NULL REFERENCES active_xfers(uuidb64),
+    `extra_fee_id` CHARACTER(22) NULL REFERENCES xfers(uuidb64),
+    `xfer_fee_id` CHARACTER(22) NULL REFERENCES xfers(uuidb64),
     -- Should be "real ext id : rel_account_id" - in that order
     `ext_id` VARCHAR(128) NULL UNIQUE,
     `misc_data` TEXT NULL
@@ -290,7 +290,7 @@ CREATE TABLE active_xfers (
     ENGINE=InnoDB
     CHARACTER SET 'utf8';
 
-CREATE TABLE active_reservations (
+CREATE TABLE reservations (
     `_id` BIGINT UNSIGNED NOT NULL auto_increment PRIMARY KEY,
     `ext_id` VARCHAR(128) NOT NULL,
     `account` CHARACTER(22) NOT NULL REFERENCES accounts(uuidb64),
@@ -301,7 +301,7 @@ CREATE TABLE active_reservations (
     ENGINE=InnoDB
     CHARACTER SET 'utf8';
 
-CREATE TABLE active_rounds (
+CREATE TABLE rounds (
     `_id` BIGINT UNSIGNED NOT NULL auto_increment PRIMARY KEY,
     `round_id` VARCHAR(128) NOT NULL,
     `ext_id` VARCHAR(128) NOT NULL,
