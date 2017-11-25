@@ -4,6 +4,7 @@ BREAKING CHANGE: added round_id to Gaming interface
 BREAKING CHANGE: dropped "active_" DB table prefix (requires manual change)
 FIXED: to disallow cancelBet after wins
 FIXED: to properly return actual game balance
+FIXED: license disclaimers
 CHANGED: ACCT_BAL to record formatted amounts, event field name change:
     * raw_balance -> balance
     * raw_reserved -> reserved
