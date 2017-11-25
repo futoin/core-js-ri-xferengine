@@ -129,7 +129,11 @@ module.exports = function( describe, it, vars ) {
                     FakeGamingService.register( as, inner_executor );
                     GamingFace.register( as, ccm, 'xfer.gaming2', inner_executor );
 
-                    ccm.xferIface = function( as, iface, name ) {
+                    ccm.xferIface = function( as, iface, rel_id ) {
+                        if ( peer1_external ) {
+                            expect( rel_id ).to.equal( peer1_external );
+                        }
+
                         switch ( iface ) {
                         case 'futoin.xfer.gaming': iface = 'xfer.gaming2'; break;
                         case 'futoin.xfer.peer': iface = 'xfer.peer1'; break;
@@ -511,6 +515,11 @@ module.exports = function( describe, it, vars ) {
 
                             if ( i ) {
                                 as.add( ( as ) => as.error( 'Fail' ) );
+                            } else {
+                                as.add( ( as, { balance, bonus_part } ) => {
+                                    expect( balance ) .to.equal( '49.60' );
+                                    expect( bonus_part ) .to.equal( '0.00' );
+                                } );
                             }
                         }, ( as, err ) => {
                             if ( i && err === 'AlreadyCanceled' ) {
@@ -536,6 +545,11 @@ module.exports = function( describe, it, vars ) {
                             moment.utc().format()
                         );
 
+                        as.add( ( as, { balance, bonus_part } ) => {
+                            expect( balance ) .to.equal( i ? '53.40' : '48.00' );
+                            expect( bonus_part ) .to.equal( '0.00' );
+                        } );
+
                         if ( i === 0 ) {
                             checkBalance( as, user_account, '48.00' );
                             checkBalance( as, game_account, '12.00' );
@@ -554,6 +568,9 @@ module.exports = function( describe, it, vars ) {
                             {},
                             moment.utc().format()
                         );
+                        as.add( ( as, { balance } ) => {
+                            expect( balance ) .to.equal( i ? '53.40' : '48.40' );
+                        } );
 
                         if ( i === 0 ) {
                             checkBalance( as, user_account, '48.40' );
@@ -572,6 +589,9 @@ module.exports = function( describe, it, vars ) {
                             {},
                             moment.utc().format()
                         );
+                        as.add( ( as, { balance } ) => {
+                            expect( balance ) .to.equal( '53.40' );
+                        } );
                     }
 
                     checkBalance( as, user_account, '53.40' );
@@ -638,6 +658,11 @@ module.exports = function( describe, it, vars ) {
 
                             if ( i ) {
                                 as.add( ( as ) => as.error( 'Fail' ) );
+                            } else {
+                                as.add( ( as, { balance, bonus_part } ) => {
+                                    expect( balance ) .to.equal( '49.60' );
+                                    expect( bonus_part ) .to.equal( '0.00' );
+                                } );
                             }
                         }, ( as, err ) => {
                             if ( i && err === 'AlreadyCanceled' ) {
@@ -667,6 +692,10 @@ module.exports = function( describe, it, vars ) {
                             {},
                             moment.utc().format()
                         );
+                        as.add( ( as, { balance, bonus_part } ) => {
+                            expect( balance ) .to.equal( i ? '53.40' : '48.00' );
+                            expect( bonus_part ) .to.equal( '0.00' );
+                        } );
 
                         checkBalance( as, user_transit, '0.00' );
                         checkBalance( as, game_transit, '0.00' );
@@ -691,6 +720,9 @@ module.exports = function( describe, it, vars ) {
                             {},
                             moment.utc().format()
                         );
+                        as.add( ( as, { balance } ) => {
+                            expect( balance ) .to.equal( i ? '53.40' : '48.40' );
+                        } );
 
                         checkBalance( as, user_transit, '0.00' );
                         checkBalance( as, game_transit, '0.00' );
@@ -714,6 +746,9 @@ module.exports = function( describe, it, vars ) {
                             {},
                             moment.utc().format()
                         );
+                        as.add( ( as, { balance } ) => {
+                            expect( balance ) .to.equal( '53.40' );
+                        } );
                     }
 
                     checkBalance( as, user_transit, '0.00' );

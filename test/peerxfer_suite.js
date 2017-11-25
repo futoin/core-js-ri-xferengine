@@ -84,7 +84,11 @@ module.exports = function( describe, it, vars ) {
                     BasicAuthFace.register( as, ccm, executor );
 
                     // mock
-                    ccm.xferIface = function( as, iface, name ) {
+                    ccm.xferIface = function( as, iface, rel_id ) {
+                        if ( peer_external ) {
+                            expect( rel_id ).to.equal( peer_external );
+                        }
+
                         switch ( iface ) {
                         case 'futoin.xfer.deposit': iface = 'xfer.deposits'; break;
                         case 'futoin.xfer.withdraw': iface = 'xfer.withdrawals'; break;
@@ -237,13 +241,17 @@ module.exports = function( describe, it, vars ) {
                     as.add( ( as ) => as.state.test_name = 'External accounts on peers' );
                     xferacct.addAccountHolder( as, 'peer1', 'PeerTest', true, true, {}, {} );
                     as.add( ( as, holder ) => {
+                        let first_id;
                         xt.pairPeer( as, holder, 'I:EUR' );
-                        as.add( ( as, id ) => peer_external = id );
+                        as.add( ( as, id ) => first_id = id );
 
                         xt.pairPeer( as, holder, 'I:USD' );
 
                         xt.pairPeer( as, holder, 'I:EUR' );
-                        as.add( ( as, id ) => expect( id ).to.equal( peer_external ) );
+                        as.add( ( as, id ) => {
+                            expect( id ).to.equal( first_id );
+                            peer_external = id;
+                        } );
 
                         xferacct.getAccountHolderExt( as, 'peer2' );
                         as.add( ( as, info ) => {

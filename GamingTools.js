@@ -7,6 +7,7 @@ const {
     DB_ACCOUNTS_TABLE,
     DB_ACCOUNTS_VIEW,
     DB_ROUNDS_TABLE,
+    DB_XFERS_TABLE,
 } = require( './main' );
 
 
@@ -102,7 +103,7 @@ class GamingTools extends XferTools {
             }
 
             if ( do_transit ) {
-                this._ccm.xferIface( as, 'futoin.xfer.gaming', main.rel_id );
+                this._ccm.xferIface( as, 'futoin.xfer.gaming', main.rel_uuidb64 );
                 as.add( ( as, iface ) => iface.gameBalance( as, user_ext_id, currency ) );
                 as.add( ( as, { balance } ) => {
                     game_balance = AmountTools.add(
@@ -144,36 +145,46 @@ class GamingTools extends XferTools {
         } );
     }
 
-    _calcGameBalance( xfer ) {
+    //-----------------------
+    _dbGameBalance( dbxfer, xfer ) {
+        // NOTE: always get actual balance
         let acct_info;
 
-        // Optimistic actual balance, not the post-xfer one!
         switch ( xfer.type ) {
         case 'Bet':
             acct_info = xfer.src_info;
-            xfer.game_balance = AmountTools.subtract(
-                acct_info.available_balance,
-                xfer.amount,
-                acct_info.dec_places
-            );
-            xfer.bonus_part = AmountTools.fromStorage(
-                '0', acct_info.dec_places
-            );
             break;
 
         case 'Win':
             acct_info = xfer.dst_info;
-            xfer.game_balance = AmountTools.add(
-                acct_info.available_balance,
-                xfer.amount,
-                acct_info.dec_places
-            );
+            break;
+        }
+
+        if ( acct_info ) {
             xfer.bonus_part = AmountTools.fromStorage(
                 '0', acct_info.dec_places
             );
-            break;
+
+            dbxfer.select( DB_ACCOUNTS_VIEW, { result: true } )
+                .get( 'game_balance', 'COALESCE(SUM(balance + COALESCE(overdraft, 0) - reserved), 0)' )
+                .where( {
+                    holder: acct_info.holder,
+                    holder_enabled: 'Y',
+                    account_enabled: 'Y',
+                } );
+            xfer.game_balance_dec_places = acct_info.dec_places;
         }
     }
+
+    _handleGameBalance( as, xfer, result ) {
+        if ( xfer.game_balance_dec_places ) {
+            xfer.game_balance = AmountTools.fromStorage(
+                result.rows[0]['game_balance'],
+                xfer.game_balance_dec_places
+            );
+        }
+    }
+    //-----------------------
 
     _recordRoundXfer( as, dbxfer, xfer ) {
         switch ( xfer.type ) {
@@ -189,19 +200,39 @@ class GamingTools extends XferTools {
     }
 
     _domainDbStep( as, dbxfer, xfer ) {
-        this._calcGameBalance( xfer );
+        this._dbGameBalance( dbxfer, xfer );
 
         if ( !xfer.repeat ) {
             this._recordRoundXfer( as, dbxfer, xfer );
         }
     }
 
-    _domainDbCancelStep( as, _dbxfer, xfer ) {
-        this._calcGameBalance( xfer );
-
-        // TODO: forbid cancel bet after win
+    _domainDbResult( as, xfer, result ) {
+        this._handleGameBalance( as, xfer, result[0] );
     }
 
+    //-----------------------
+    _domainDbCancelStep( as, dbxfer, xfer ) {
+        this._dbGameBalance( dbxfer, xfer );
+
+        // forbid cancel bet after win
+        //---
+        if ( !xfer.repeat ) {
+            dbxfer.select( DB_XFERS_TABLE, { selected: 0 } )
+                .where( 'xfer_id IN',
+                    dbxfer.lface( DB_ROUNDS_TABLE )
+                        .where( 'round_id', xfer.misc_data.round_id )
+                )
+                .where( 'xfer_type', 'Win' );
+        }
+        //---
+    }
+
+    _domainDbCancelResult( as, xfer, result ) {
+        this._handleGameBalance( as, xfer, result[0] );
+    }
+
+    //-----------------------
     _domainExtIn( as, xfer ) {
         if ( xfer.type !== 'Bet' ) {
             return super._domainExtIn( as, xfer );
@@ -228,6 +259,7 @@ class GamingTools extends XferTools {
             xfer.game_balance = AmountTools.add(
                 xfer.game_balance, balance, acct_info.dec_places
             );
+            xfer.game_balance_ext = balance;
             xfer.bonus_part = AmountTools.add(
                 xfer.bonus_part, bonus_part, acct_info.dec_places
             );
@@ -260,9 +292,11 @@ class GamingTools extends XferTools {
             xfer.game_balance = AmountTools.add(
                 xfer.game_balance, balance, acct_info.dec_places
             );
+            xfer.game_balance_ext = balance;
         } );
     }
 
+    //-----------------------
     _domainExtOut( as, xfer ) {
         if ( xfer.type !== 'Win' ) {
             return super._domainExtOut( as, xfer );
@@ -289,6 +323,7 @@ class GamingTools extends XferTools {
             xfer.game_balance = AmountTools.add(
                 xfer.game_balance, balance, acct_info.dec_places
             );
+            xfer.game_balance_ext = balance;
             xfer.bonus_part = AmountTools.add(
                 xfer.bonus_part, bonus_part, acct_info.dec_places
             );
@@ -301,6 +336,33 @@ class GamingTools extends XferTools {
         }
 
         as.error( 'InternalError', 'Win cancellation is not allowed' );
+    }
+    //-----------------------
+    _domainPostExternal( as, xfer ) {
+        if ( ( xfer.type === 'Bet' || xfer.type === 'Win' ) &&
+             !xfer.game_balance_ext
+        ) {
+            const acct_info = ( xfer.type === 'Bet' ) ? xfer.src_info : xfer.dst_info;
+
+            if ( acct_info.acct_type === this.ACCT_TRANSIT ) {
+                this._ccm.xferIface( as, 'futoin.xfer.gaming', acct_info.rel_uuidb64 );
+
+                as.add( ( as, iface ) => {
+                    iface.gameBalance(
+                        as,
+                        acct_info.ext_holder_id,
+                        xfer.currency
+                    );
+                } );
+                as.add( ( as, { balance } ) => {
+                    xfer.game_balance = AmountTools.add(
+                        xfer.game_balance,
+                        balance,
+                        xfer.game_balance_dec_places
+                    );
+                } );
+            }
+        }
     }
 }
 
