@@ -301,9 +301,18 @@ CREATE TABLE reservations (
     ENGINE=InnoDB
     CHARACTER SET 'utf8';
 
+
 CREATE TABLE rounds (
     `_id` BIGINT UNSIGNED NOT NULL auto_increment PRIMARY KEY,
-    `round_id` VARCHAR(128) NOT NULL,
+    `round_id` CHARACTER(22) NOT NULL UNIQUE,
+    `ext_round_id` VARCHAR(128) NOT NULL UNIQUE
+)
+    ENGINE=InnoDB
+    CHARACTER SET 'utf8';
+
+CREATE TABLE round_xfers (
+    `_id` BIGINT UNSIGNED NOT NULL auto_increment PRIMARY KEY,
+    `round_id` CHARACTER(22) NOT NULL REFERENCES rounds(round_id),
     `ext_id` VARCHAR(128) NOT NULL,
     UNIQUE `round_xfer` (`round_id`, `ext_id`)
 )

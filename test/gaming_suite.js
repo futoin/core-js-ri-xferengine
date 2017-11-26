@@ -321,7 +321,7 @@ module.exports = function( describe, it, vars ) {
                     const gaming = ccm.iface( 'xfer.gaming' );
                     const bonus = ccm.iface( 'xfer.bonus' );
 
-                    gaming.gameBalance( as, user_ext_id, 'I:EUR' );
+                    gaming.gameBalance( as, user_ext_id, 'I:EUR', {} );
                     as.add( ( as, { balance } ) => expect( balance ).to.equal( '0.00' ) );
 
                     //---
@@ -338,7 +338,7 @@ module.exports = function( describe, it, vars ) {
                             {},
                             moment.utc().format()
                         );
-                        gaming.gameBalance( as, user_ext_id, 'I:EUR' );
+                        gaming.gameBalance( as, user_ext_id, 'I:EUR', {} );
                         as.add( ( as, { balance } ) => expect( balance ).to.equal( '10.00' ) );
                     }
 
@@ -357,7 +357,7 @@ module.exports = function( describe, it, vars ) {
                             {},
                             moment.utc().format()
                         );
-                        gaming.gameBalance( as, user_ext_id, 'I:EUR' );
+                        gaming.gameBalance( as, user_ext_id, 'I:EUR', {} );
                         as.add( ( as, { balance } ) => expect( balance ).to.equal( '15.00' ) );
                     }
 
@@ -370,7 +370,7 @@ module.exports = function( describe, it, vars ) {
                             bonus_source,
                             'B1'
                         );
-                        gaming.gameBalance( as, user_ext_id, 'I:EUR' );
+                        gaming.gameBalance( as, user_ext_id, 'I:EUR', {} );
                         as.add( ( as, { balance } ) => expect( balance ).to.equal( '5.00' ) );
                     }
 
@@ -384,7 +384,7 @@ module.exports = function( describe, it, vars ) {
                             bonus_source,
                             'B2'
                         );
-                        gaming.gameBalance( as, user_ext_id, 'I:EUR' );
+                        gaming.gameBalance( as, user_ext_id, 'I:EUR', {} );
                         as.add( ( as, { balance } ) => expect( balance ).to.equal( '5.00' ) );
                     }
 
@@ -598,7 +598,7 @@ module.exports = function( describe, it, vars ) {
                     checkBalance( as, game_account, '6.60' );
                     checkBalance( as, system_account, '-60.00' );
 
-                    gaming.gameBalance( as, user_ext_id, 'I:EUR' );
+                    gaming.gameBalance( as, user_ext_id, 'I:EUR', {} );
                     as.add( ( as, { balance } ) => expect( balance ).to.equal( '53.40' ) );
 
                     gaming.bet( as,
@@ -761,7 +761,7 @@ module.exports = function( describe, it, vars ) {
                     checkBalance( as, game_account, '6.60' );
                     checkBalance( as, system_account, '-60.00' );
 
-                    gaming.gameBalance( as, user_transit_ext_id, 'I:EUR' );
+                    gaming.gameBalance( as, user_transit_ext_id, 'I:EUR', {} );
                     as.add( ( as, { balance } ) => expect( balance ).to.equal( '53.40' ) );
 
 

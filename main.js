@@ -38,6 +38,7 @@ const main = {
     DB_XFERS_TABLE : 'xfers',
     DB_RESERVATIONS_TABLE : 'reservations',
     DB_ROUNDS_TABLE : 'rounds',
+    DB_ROUND_XFERS_TABLE : 'round_xfers',
     limitStatsTable: ( domain ) => `limit_${domain.toLowerCase()}_stats`,
 
     DB_IFACEVER : 'futoin.db.l2:1.0',

@@ -154,15 +154,15 @@ class BonusService extends BaseService {
                     as.error( 'AlreadyCanceled' );
                 }
             } else {
-                xt.findAccount( as, p.user, info.currency );
+                xt.findAccounts( as, p.user, info.currency, null );
 
-                as.add( ( as, main_account ) => {
+                as.add( ( as, main ) => {
                     const xfer = {
                         type: 'ReleaseBonus',
                         src_limit_prefix: false,
                         dst_limit_prefix: false,
                         src_account: info.id,
-                        dst_account: main_account,
+                        dst_account: main.uuidb64,
                         currency: info.currency,
                     };
 

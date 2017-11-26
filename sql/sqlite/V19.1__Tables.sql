@@ -221,8 +221,15 @@ CREATE TABLE reservations (
     PRIMARY KEY ("ext_id", "account")
 );
 
+
 CREATE TABLE rounds (
-    "round_id" ext_xfer_id NOT NULL,
-    "ext_id" ext_xfer_id NOT NULL,
+    "round_id" CHARACTER(22) NOT NULL,
+    "ext_round_id" VARCHAR(128) NOT NULL,
+    PRIMARY KEY ("round_id", "ext_round_id")
+);
+
+CREATE TABLE round_xfers (
+    "round_id" CHARACTER(22) NOT NULL REFERENCES rounds(round_id),
+    "ext_id" VARCHAR(128) NOT NULL,
     PRIMARY KEY ("round_id", "ext_id")
 );

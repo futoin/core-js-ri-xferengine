@@ -21,11 +21,14 @@
 
 const XferTools = require( './XferTools' );
 const AmountTools = require( './AmountTools' );
+const UUIDTool = require( './UUIDTool' );
 
 const {
     DB_ACCOUNTS_TABLE,
     DB_ACCOUNTS_VIEW,
+    DB_RESERVATIONS_TABLE,
     DB_ROUNDS_TABLE,
+    DB_ROUND_XFERS_TABLE,
     DB_XFERS_TABLE,
 } = require( './main' );
 
@@ -38,7 +41,7 @@ class GamingTools extends XferTools {
         super( ccm, 'Gaming' );
     }
 
-    findAccount( as, user_ext_id, currency, forced=false ) {
+    findAccounts( as, user_ext_id, currency, _info ) {
         const db = this._ccm.db( 'xfer' );
 
         const q = db.select( DB_ACCOUNTS_VIEW )
@@ -49,41 +52,31 @@ class GamingTools extends XferTools {
             } )
             .order( 'account_created' );
 
-        if ( forced ) {
-            q.where( {
-                'acct_type <>': this.ACCT_BONUS,
-            } );
-        } else {
-            q.where( {
-                holder_enabled: 'Y',
-            } );
-        }
-
         q.executeAssoc( as );
 
         as.add( ( as, accounts ) => {
             const bonus = [];
-            let main_id;
+            let main;
 
             for ( let a of accounts ) {
                 if ( a.acct_type === this.ACCT_BONUS ) {
                     bonus.push( a );
-                } else if ( !main_id ) {
-                    main_id = a.uuidb64;
+                } else if ( !main ) {
+                    main = a;
                 } else {
                     as.error( 'InternalError', 'More than one currency account' );
                 }
             }
 
-            if ( main_id ) {
-                as.success( main_id, bonus );
+            if ( main ) {
+                as.success( main, bonus );
             } else {
                 as.error( 'CurrencyMismatch' );
             }
         } );
     }
 
-    getGameBalance( as, user_ext_id, currency ) {
+    getGameBalance( as, user_ext_id, currency, info ) {
         const db = this._ccm.db( 'xfer' );
 
         db.select( DB_ACCOUNTS_VIEW )
@@ -123,7 +116,7 @@ class GamingTools extends XferTools {
 
             if ( do_transit ) {
                 this._ccm.xferIface( as, 'futoin.xfer.gaming', main.rel_uuidb64 );
-                as.add( ( as, iface ) => iface.gameBalance( as, user_ext_id, currency ) );
+                as.add( ( as, iface ) => iface.gameBalance( as, user_ext_id, currency, info ) );
                 as.add( ( as, { balance } ) => {
                     game_balance = AmountTools.add(
                         game_balance,
@@ -138,6 +131,7 @@ class GamingTools extends XferTools {
         } );
     }
 
+    //-----------------------
     closeBonus( as, xfer ) {
         const dbxfer = this._ccm.db( 'xfer' ).newXfer();
 
@@ -164,6 +158,80 @@ class GamingTools extends XferTools {
         } );
     }
 
+    reserveBet( as, xfer, _main, bonus_accounts ) {
+        if ( bonus_accounts.length <= 0 ) {
+            return;
+        }
+
+        const db = this._ccm.db( 'xfer' );
+        const dbxfer = db.newXfer();
+        const helpers = db.helpers();
+        const dec_places = bonus_accounts[0].dec_places;
+        const amt_q = db.escape( AmountTools.toStorage( xfer.amount, dec_places ) );
+
+        // Make sure there are no previous reservations
+        dbxfer.select( DB_RESERVATIONS_TABLE, { selected: 0 } )
+            .where( 'ext_id', xfer.ext_id );
+
+        let prev_q;
+
+        for ( let a of bonus_accounts ) {
+            const sq = dbxfer.select( DB_ACCOUNTS_TABLE, { result: true } );
+            sq.where( 'uuidb64', a.uuidb64 ).forUpdate();
+
+            const leftover = prev_q ? sq.backref( prev_q, 'leftover' ) : amt_q;
+            const part = `GREATEST(LEAST((balance-reserved), ${leftover}), 0)`;
+            sq.get( 'leftover', `(${leftover} - ${part})` );
+            sq.get( 'part', part );
+            sq.get( 'account', 'uuidb64' );
+
+            //---
+            const uq = dbxfer.update( DB_ACCOUNTS_TABLE );
+            uq.where( 'uuidb64', a.uuidb64 );
+
+            const new_reserved = helpers.expr( `reserved + ${uq.backref( sq, 'part' )}` );
+            uq.set( 'reserved', new_reserved );
+            uq.where( 'balance >=', new_reserved );
+
+            //---
+            const reserve_q = dbxfer.insert( DB_RESERVATIONS_TABLE );
+            reserve_q.set( {
+                ext_id: xfer.ext_id,
+                account: a.uuidb64,
+                currency_id: a.currency_id,
+                amount: xfer.amount,
+            } );
+
+            //---
+            prev_q = sq;
+        }
+
+        as.add(
+            ( as ) => dbxfer.executeAssoc( as ),
+            ( as, err ) => {
+                if ( err === 'XferCondition' ) {
+                    db.select( DB_RESERVATIONS_TABLE )
+                        .get( 'part', 'amount' )
+                        .get( 'account' )
+                        .where( 'ext_id', xfer.ext_id )
+                        .execute( as );
+                }
+            }
+        );
+        as.add( ( as, result ) => {
+            const bonus_parts = [];
+            xfer.misc_data.bonus_parts = bonus_parts;
+
+            for ( let r of result ) {
+                r = r.rows[0];
+                bonus_parts.push( {
+                    id: r.account,
+                    part: AmountTools.fromStorage( r.part, dec_places ),
+                } );
+            }
+        } );
+    }
+
     //-----------------------
     _dbGameBalance( dbxfer, xfer ) {
         // NOTE: always get actual balance
@@ -172,6 +240,10 @@ class GamingTools extends XferTools {
         switch ( xfer.type ) {
         case 'Bet':
             acct_info = xfer.src_info;
+
+            xfer.bonus_part = AmountTools.fromStorage(
+                '0', acct_info.dec_places
+            );
             break;
 
         case 'Win':
@@ -180,10 +252,6 @@ class GamingTools extends XferTools {
         }
 
         if ( acct_info ) {
-            xfer.bonus_part = AmountTools.fromStorage(
-                '0', acct_info.dec_places
-            );
-
             dbxfer.select( DB_ACCOUNTS_VIEW, { result: true } )
                 .get( 'game_balance', 'COALESCE(SUM(balance + COALESCE(overdraft, 0) - reserved), 0)' )
                 .where( {
@@ -205,11 +273,42 @@ class GamingTools extends XferTools {
     }
     //-----------------------
 
+    genRoundID( as, xfer, ext_round_id ) {
+        const db = this._ccm.db( 'xfer' );
+
+        const ext_info = xfer.misc_data.info;
+        ext_info.orig_round_id = ext_info.orig_round_id || ext_round_id;
+
+        // TODO: caching
+        as.add(
+            ( as ) => {
+                const dbxfer = db.newXfer();
+                const round_id = xfer.misc_data.round_id = UUIDTool.genB64();
+
+                dbxfer.insert( DB_ROUNDS_TABLE, { affected: 1 } )
+                    .set( { round_id, ext_round_id } );
+                UUIDTool.addXfer( dbxfer, round_id ); // minimize locking of global UUID table
+                dbxfer.execute( as );
+            },
+            ( as, err ) => {
+                if ( err === 'Duplicate' ) {
+                    db.select( DB_ROUNDS_TABLE )
+                        .get( 'round_id' )
+                        .where( { ext_round_id } )
+                        .execute( as );
+                    as.add( ( as, { rows } ) => {
+                        xfer.misc_data.round_id = rows[0][0];
+                    } );
+                }
+            }
+        );
+    }
+
     _recordRoundXfer( as, dbxfer, xfer ) {
         switch ( xfer.type ) {
         case 'Bet':
         case 'Win':
-            dbxfer.insert( DB_ROUNDS_TABLE, { affected: 1 } )
+            dbxfer.insert( DB_ROUND_XFERS_TABLE, { affected: 1 } )
                 .set( {
                     round_id : xfer.misc_data.round_id,
                     ext_id : xfer.ext_id,
@@ -217,6 +316,22 @@ class GamingTools extends XferTools {
             break;
         }
     }
+
+    _checkCancelRoundXfer( dbxfer, xfer ) {
+        // forbid cancel bet after win
+        if ( xfer.status !== this.ST_CANCELED ) {
+            dbxfer.select( DB_XFERS_TABLE, { selected: 0 } )
+                .where( 'ext_id IN',
+                    dbxfer.lface()
+                        .select( DB_ROUND_XFERS_TABLE )
+                        .get( 'ext_id' )
+                        .where( 'round_id', xfer.misc_data.round_id )
+                )
+                .where( 'xfer_type', 'Win' );
+        }
+    }
+
+    //-----------------------
 
     _domainDbStep( as, dbxfer, xfer ) {
         this._dbGameBalance( dbxfer, xfer );
@@ -233,18 +348,7 @@ class GamingTools extends XferTools {
     //-----------------------
     _domainDbCancelStep( as, dbxfer, xfer ) {
         this._dbGameBalance( dbxfer, xfer );
-
-        // forbid cancel bet after win
-        //---
-        if ( !xfer.repeat ) {
-            dbxfer.select( DB_XFERS_TABLE, { selected: 0 } )
-                .where( 'xfer_id IN',
-                    dbxfer.lface( DB_ROUNDS_TABLE )
-                        .where( 'round_id', xfer.misc_data.round_id )
-                )
-                .where( 'xfer_type', 'Win' );
-        }
-        //---
+        this._checkCancelRoundXfer( dbxfer, xfer );
     }
 
     _domainDbCancelResult( as, xfer, result ) {
@@ -337,15 +441,12 @@ class GamingTools extends XferTools {
             ext_info: xfer.misc_data.info,
             orig_ts: xfer.misc_data.orig_ts,
         } ) );
-        as.add( ( as, { balance, bonus_part } ) => {
+        as.add( ( as, { balance } ) => {
             // add local amounts
             xfer.game_balance = AmountTools.add(
                 xfer.game_balance, balance, acct_info.dec_places
             );
             xfer.game_balance_ext = balance;
-            xfer.bonus_part = AmountTools.add(
-                xfer.bonus_part, bonus_part, acct_info.dec_places
-            );
         } );
     }
 
@@ -370,7 +471,8 @@ class GamingTools extends XferTools {
                     iface.gameBalance(
                         as,
                         acct_info.ext_holder_id,
-                        xfer.currency
+                        xfer.currency,
+                        xfer.misc_data.info
                     );
                 } );
                 as.add( ( as, { balance } ) => {
