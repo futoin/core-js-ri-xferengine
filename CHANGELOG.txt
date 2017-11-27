@@ -1,5 +1,5 @@
 
-=== (next) ===
+=== 0.8.0 (2017-11-27) ===
 BREAKING CHANGE: added round_id to Gaming interface
 BREAKING CHANGE: dropped "active_" DB table prefix (requires manual change)
 FIXED: to disallow cancelBet after wins
