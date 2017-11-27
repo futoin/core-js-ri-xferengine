@@ -252,13 +252,13 @@ class AmountTools {
 
         for ( k in contributions ) {
             let part = new BigNumber( contributions[k], 10 );
-            part = part.times( amount ).dividedBy( total_contrib, 10 );
+            part = part.times( amount ).dividedBy( total_contrib );
 
             res[k] = part;
             distributed = distributed.plus( part );
         }
 
-        // add rounding errors
+        // add rounding errors (random by fact)
         res[k] = res[k].plus( amount.minus( distributed ) );
 
         for ( k in res ) {

@@ -54,7 +54,12 @@ module.exports = function( describe, it, vars ) {
 
         const checkBalance = ( as, account, balance ) => {
             ccm.iface( 'xfer.accounts' ).getAccount( as, account );
-            as.add( ( as, info ) => expect( info.balance ).to.equal( balance ) );
+
+            if ( typeof balance === 'string' ) {
+                as.add( ( as, info ) => expect( info.balance ).to.equal( balance ) );
+            } else {
+                as.add( ( as, info ) => expect( info.balance ).to.oneOf( balance ) );
+            }
         };
 
         beforeEach( 'payments', function() {
@@ -966,6 +971,11 @@ module.exports = function( describe, it, vars ) {
                     // Test with bonus accounts released/cleared
                     //-----------------------------
                     for ( let i = 0; i < 2; ++i ) {
+                        const post_clear_balance = [ '4.91', '4.92' ];
+                        const post_bet2_balance = [ '3.31', '3.32' ];
+                        const post_cancel_balance = [ '3.51', '3.52' ];
+                        const end_user_balance = [ '4.51', '4.52' ];
+
                         as.add( ( as ) => as.state.test_name = `On bet #2-1 ${i}` );
                         as.add( ( as ) => {
                             gaming.bet( as,
@@ -1013,7 +1023,7 @@ module.exports = function( describe, it, vars ) {
                             checkBalance( as, game_account, '7.10' );
 
                             gaming.gameBalance( as, user_ext_id, 'I:EUR', {} );
-                            as.add( ( as, { balance } ) => expect( balance ).to.equal( '4.92' ) );
+                            as.add( ( as, { balance } ) => expect( balance ).to.oneOf( post_clear_balance ) );
                         }
 
 
@@ -1030,7 +1040,7 @@ module.exports = function( describe, it, vars ) {
                         );
 
                         as.add( ( as, { balance, bonus_part } ) => {
-                            expect( balance ) .to.equal( i ? '4.52' : '3.32' );
+                            expect( balance ) .to.oneOf( i ? end_user_balance : post_bet2_balance );
                             expect( bonus_part ) .to.equal( '1.60' );
                         } );
 
@@ -1039,7 +1049,7 @@ module.exports = function( describe, it, vars ) {
                             checkBalance( as, game_account, '8.70' );
 
                             gaming.gameBalance( as, user_ext_id, 'I:EUR', {} );
-                            as.add( ( as, { balance } ) => expect( balance ).to.equal( '3.32' ) );
+                            as.add( ( as, { balance } ) => expect( balance ).to.oneOf( post_bet2_balance ) );
                         }
 
                         as.add( ( as ) => as.state.test_name = `Release bonus #2-1 #{i}` );
@@ -1050,11 +1060,11 @@ module.exports = function( describe, it, vars ) {
                         );
 
                         if ( i === 0 ) {
-                            checkBalance( as, user_account, '3.32' );
+                            checkBalance( as, user_account, post_bet2_balance );
                             checkBalance( as, game_account, '8.70' );
 
                             gaming.gameBalance( as, user_ext_id, 'I:EUR', {} );
-                            as.add( ( as, { balance } ) => expect( balance ).to.equal( '3.32' ) );
+                            as.add( ( as, { balance } ) => expect( balance ).to.oneOf( post_bet2_balance ) );
                         }
 
 
@@ -1070,15 +1080,15 @@ module.exports = function( describe, it, vars ) {
                             moment.utc().format()
                         );
                         as.add( ( as, { balance } ) => {
-                            expect( balance ) .to.equal( i ? '4.52' : '3.52' );
+                            expect( balance ) .to.oneOf( i ? end_user_balance : post_cancel_balance );
                         } );
 
                         if ( i === 0 ) {
-                            checkBalance( as, user_account, '3.52' );
+                            checkBalance( as, user_account, post_cancel_balance );
                             checkBalance( as, game_account, '8.20' );
 
                             gaming.gameBalance( as, user_ext_id, 'I:EUR', {} );
-                            as.add( ( as, { balance } ) => expect( balance ).to.equal( '3.52' ) );
+                            as.add( ( as, { balance } ) => expect( balance ).to.oneOf( post_cancel_balance ) );
                         }
 
                         as.add( ( as ) => as.state.test_name = `On win #1 ${i}` );
@@ -1093,14 +1103,14 @@ module.exports = function( describe, it, vars ) {
                             moment.utc().format()
                         );
                         as.add( ( as, { balance } ) => {
-                            expect( balance ).to.equal( '4.52' );
+                            expect( balance ).to.oneOf( end_user_balance );
                         } );
 
                         gaming.gameBalance( as, user_ext_id, 'I:EUR', {} );
-                        as.add( ( as, { balance } ) => expect( balance ).to.equal( '4.52' ) );
+                        as.add( ( as, { balance } ) => expect( balance ).to.oneOf( end_user_balance ) );
 
                         // TODO:
-                        checkBalance( as, user_account, '4.52' );
+                        checkBalance( as, user_account, end_user_balance );
                         checkBalance( as, game_account, '7.20' );
                     }
                 },
