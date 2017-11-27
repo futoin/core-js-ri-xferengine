@@ -445,7 +445,6 @@ class GamingTools extends XferTools {
                         // extra safety
                         enabled: 'Y', // only for Bonus here
                         currency_id: dst_info.currency_id,
-                        holder: dst_info.holder,
                     } );
             }
         } );
@@ -482,7 +481,6 @@ class GamingTools extends XferTools {
                     // extra safety
                     enabled: 'Y', // only for Bonus here
                     currency_id: src_info.currency_id,
-                    holder: src_info.holder,
                 } );
         }
 
@@ -624,8 +622,6 @@ class GamingTools extends XferTools {
     //-----------------------
 
     _domainDbStep( as, dbxfer, xfer ) {
-        this._dbGameBalance( dbxfer, xfer );
-
         if ( !xfer.repeat ) {
             this._recordRoundXfer( as, dbxfer, xfer );
 
@@ -639,6 +635,9 @@ class GamingTools extends XferTools {
                 break;
             }
         }
+
+        // Must be the last after all sub-steps
+        as.add( ( as ) => this._dbGameBalance( dbxfer, xfer ) );
     }
 
     _domainDbResult( as, xfer, result ) {

@@ -851,6 +851,9 @@ module.exports = function( describe, it, vars ) {
                     as.add( ( as, { balance } ) => expect( balance ).to.equal( '4.20' ) );
                     //-----------
 
+                    //-----------------------------
+                    // Test with Bonus accounts in place
+                    //-----------------------------
                     for ( let i = 0; i < 2; ++i ) {
                         as.add( ( as ) => as.state.test_name = `On bet #1 ${i}` );
                         as.add( ( as ) => {
@@ -957,6 +960,148 @@ module.exports = function( describe, it, vars ) {
                         // TODO:
                         checkBalance( as, user_account, '0.20' );
                         checkBalance( as, game_account, '6.60' );
+                    }
+
+                    //-----------------------------
+                    // Test with bonus accounts released/cleared
+                    //-----------------------------
+                    for ( let i = 0; i < 2; ++i ) {
+                        as.add( ( as ) => as.state.test_name = `On bet #2-1 ${i}` );
+                        as.add( ( as ) => {
+                            gaming.bet( as,
+                                user_ext_id,
+                                game_account,
+                                'I:EUR',
+                                '0.50',
+                                'BG2',
+                                'BB21',
+                                {},
+                                moment.utc().format()
+                            );
+
+                            if ( i ) {
+                                as.add( ( as ) => as.error( 'Fail' ) );
+                            } else {
+                                as.add( ( as, { balance, bonus_part } ) => {
+                                    expect( balance ) .to.equal( '7.10' );
+                                    expect( bonus_part ) .to.equal( '0.30' );
+                                } );
+                            }
+                        }, ( as, err ) => {
+                            if ( i && err === 'AlreadyCanceled' ) {
+                                as.success();
+                            }
+                        } );
+
+                        if ( i === 0 ) {
+                            checkBalance( as, user_account, '0.00' );
+                            checkBalance( as, game_account, '7.10' );
+
+                            gaming.gameBalance( as, user_ext_id, 'I:EUR', {} );
+                            as.add( ( as, { balance } ) => expect( balance ).to.equal( '7.10' ) );
+                        }
+
+                        as.add( ( as ) => as.state.test_name = `Clear bonus #2-1 #{i}` );
+                        bonus.clearBonus( as,
+                            user_ext_id,
+                            bonus_source,
+                            'BB1'
+                        );
+
+                        if ( i === 0 ) {
+                            checkBalance( as, user_account, '0.00' );
+                            checkBalance( as, game_account, '7.10' );
+
+                            gaming.gameBalance( as, user_ext_id, 'I:EUR', {} );
+                            as.add( ( as, { balance } ) => expect( balance ).to.equal( '4.92' ) );
+                        }
+
+
+                        as.add( ( as ) => as.state.test_name = `On bet #2-2 ${i}` );
+                        gaming.bet( as,
+                            user_ext_id,
+                            game_account,
+                            'I:EUR',
+                            '1.60',
+                            'BG2',
+                            'BB22',
+                            {},
+                            moment.utc().format()
+                        );
+
+                        as.add( ( as, { balance, bonus_part } ) => {
+                            expect( balance ) .to.equal( i ? '4.52' : '3.32' );
+                            expect( bonus_part ) .to.equal( '1.60' );
+                        } );
+
+                        if ( i === 0 ) {
+                            checkBalance( as, user_account, '0.00' );
+                            checkBalance( as, game_account, '8.70' );
+
+                            gaming.gameBalance( as, user_ext_id, 'I:EUR', {} );
+                            as.add( ( as, { balance } ) => expect( balance ).to.equal( '3.32' ) );
+                        }
+
+                        as.add( ( as ) => as.state.test_name = `Release bonus #2-1 #{i}` );
+                        bonus.releaseBonus( as,
+                            user_ext_id,
+                            bonus_source,
+                            'BB2'
+                        );
+
+                        if ( i === 0 ) {
+                            checkBalance( as, user_account, '3.32' );
+                            checkBalance( as, game_account, '8.70' );
+
+                            gaming.gameBalance( as, user_ext_id, 'I:EUR', {} );
+                            as.add( ( as, { balance } ) => expect( balance ).to.equal( '3.32' ) );
+                        }
+
+
+                        as.add( ( as ) => as.state.test_name = `Cancel bet #2-1 ${i}` );
+                        gaming.cancelBet( as,
+                            user_ext_id,
+                            game_account,
+                            'I:EUR',
+                            '0.50',
+                            'BG2',
+                            'BB21',
+                            {},
+                            moment.utc().format()
+                        );
+                        as.add( ( as, { balance } ) => {
+                            expect( balance ) .to.equal( i ? '4.52' : '3.52' );
+                        } );
+
+                        if ( i === 0 ) {
+                            checkBalance( as, user_account, '3.52' );
+                            checkBalance( as, game_account, '8.20' );
+
+                            gaming.gameBalance( as, user_ext_id, 'I:EUR', {} );
+                            as.add( ( as, { balance } ) => expect( balance ).to.equal( '3.52' ) );
+                        }
+
+                        as.add( ( as ) => as.state.test_name = `On win #1 ${i}` );
+                        gaming.win( as,
+                            user_ext_id,
+                            game_account,
+                            'I:EUR',
+                            '1.00',
+                            'BG2',
+                            'BW2',
+                            {},
+                            moment.utc().format()
+                        );
+                        as.add( ( as, { balance } ) => {
+                            expect( balance ).to.equal( '4.52' );
+                        } );
+
+                        gaming.gameBalance( as, user_ext_id, 'I:EUR', {} );
+                        as.add( ( as, { balance } ) => expect( balance ).to.equal( '4.52' ) );
+
+                        // TODO:
+                        checkBalance( as, user_account, '4.52' );
+                        checkBalance( as, game_account, '7.20' );
                     }
                 },
                 ( as, err ) => {
