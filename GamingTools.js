@@ -220,10 +220,10 @@ class GamingTools extends XferTools {
                 `DECIMAL(${AmountTools.MAX_DIGITS},0)`
             );
 
-            // TODO: abtract through helpers
-            const part = ( dbxfer._db_type === 'sqlite' ) ?
-                `MAX(MIN((balance-reserved), ${leftover}), 0)` :
-                `GREATEST(LEAST((balance-reserved), ${leftover}), 0)`;
+            const part = helpers.greatest(
+                helpers.least( helpers.expr( '(balance - reserved)' ), leftover ),
+                0
+            );
 
             sq.get( 'leftover', `(${leftover} - ${part})` );
             sq.get( 'part', helpers.cast( helpers.expr( part ), 'TEXT' ) );

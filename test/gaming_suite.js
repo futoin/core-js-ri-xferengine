@@ -962,7 +962,6 @@ module.exports = function( describe, it, vars ) {
                         gaming.gameBalance( as, user_ext_id, 'I:EUR', {} );
                         as.add( ( as, { balance } ) => expect( balance ).to.equal( '7.60' ) );
 
-                        // TODO:
                         checkBalance( as, user_account, '0.20' );
                         checkBalance( as, game_account, '6.60' );
                     }
@@ -1109,7 +1108,6 @@ module.exports = function( describe, it, vars ) {
                         gaming.gameBalance( as, user_ext_id, 'I:EUR', {} );
                         as.add( ( as, { balance } ) => expect( balance ).to.oneOf( end_user_balance ) );
 
-                        // TODO:
                         checkBalance( as, user_account, end_user_balance );
                         checkBalance( as, game_account, '7.20' );
                     }
