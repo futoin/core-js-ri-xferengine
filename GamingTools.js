@@ -140,7 +140,6 @@ class GamingTools extends XferTools {
         dbxfer.update( DB_ACCOUNTS_TABLE, { affected: 1 } )
             .set( 'rel_uuidb64', xfer.dst_account )
             .set( 'enabled', 'N' )
-            .set( 'reserved', dbxfer.expr( 'reserved + balance' ) )
             .where( 'uuidb64', xfer.src_account );
 
         dbxfer.select( DB_ACCOUNTS_VIEW, { selected: 1, result: true } )
@@ -151,7 +150,8 @@ class GamingTools extends XferTools {
         as.add( ( as, res ) => {
             const info = res[0].rows[0];
 
-            xfer.amount = AmountTools.fromStorage( info.balance, info.dec_places );
+            AmountTools.accountFromStorage( info );
+            xfer.amount = info.available_balance;
             xfer.force = true;
 
             if ( !AmountTools.isZero( xfer.amount ) ) {
@@ -198,16 +198,22 @@ class GamingTools extends XferTools {
 
         // Make sure there are no previous reservations or xfers
         dbxfer.select( DB_RESERVATIONS_TABLE, { selected: 0 } )
-            .where( 'ext_id', xfer.ext_id );
+            .where( 'ext_id', xfer.ext_id )
+            .forUpdate();
         dbxfer.select( DB_XFERS_TABLE, { selected: 0 } )
-            .where( 'ext_id', xfer.ext_id );
+            .where( 'ext_id', xfer.ext_id )
+            .forUpdate();
 
         //---
         let prev_q;
 
         for ( let a of accounts ) {
             const sq = dbxfer.select( DB_ACCOUNTS_TABLE, { result: true } );
-            sq.where( 'uuidb64', a.uuidb64 ).forUpdate();
+            sq.where( {
+                uuidb64: a.uuidb64,
+                enabled: 'Y',
+            } );
+            sq.forUpdate();
 
             const leftover = helpers.cast(
                 prev_q ? sq.backref( prev_q, 'leftover' ) : amt_q,
@@ -286,7 +292,10 @@ class GamingTools extends XferTools {
 
         if ( !rows ) {
             db.select( DB_RESERVATIONS_TABLE )
+                .innerJoin( DB_ACCOUNTS_TABLE, 'uuidb64 = account' )
                 .get( 'account' )
+                .get( 'enabled' )
+                .get( 'rel_uuidb64' )
                 .where( 'ext_id', xfer.ext_id )
                 .executeAssoc( as );
             as.add( ( as, r ) => rows = r );
@@ -316,11 +325,30 @@ class GamingTools extends XferTools {
 
                 // release account
                 const uaq = dbxfer.update( DB_ACCOUNTS_TABLE, { affected: 1 } );
-                uaq.set( 'reserved', uaq.expr( `reserved - ${uaq.backref( sq, 'amount' )}` ) );
-                uaq.where( {
-                    uuidb64: r.account,
-                    'reserved >=': uaq.backref( sq, 'amount' ),
-                } );
+                const amt_q = uaq.backref( sq, 'amount' );
+                uaq.set( 'reserved', uaq.expr( `reserved - ${amt_q}` ) );
+
+                if ( r.enabled === 'Y' ) {
+                    uaq.where( {
+                        uuidb64: r.account,
+                        enabled: 'Y',
+                        'reserved >=': amt_q,
+                    } );
+                } else {
+                    uaq.set( 'balance', uaq.expr( `balance - ${amt_q}` ) );
+                    uaq.where( {
+                        uuidb64: r.account,
+                        enabled: 'N',
+                        'reserved >=': amt_q,
+                        'balance >=': amt_q,
+                    } );
+
+                    // Move to passthrough target
+                    const dst_uaq = dbxfer.update( DB_ACCOUNTS_TABLE, { affected: 1 } );
+                    dst_uaq.set( 'balance',
+                        dst_uaq.expr( `balance - ${dst_uaq.backref( sq, 'amount' )}` ) );
+                    dst_uaq.where( 'uuidb64', r.rel_uuidb64 );
+                }
             }
         } );
     }
@@ -413,8 +441,9 @@ class GamingTools extends XferTools {
                     .set( 'balance',
                         helpers.expr( `balance + ${helpers.escape( amt )}` ) )
                     .where( {
-                        uuidb64: account,
+                        uuidb64: this._bonusAccountTarget( dbxfer, account ),
                         // extra safety
+                        enabled: 'Y', // only for Bonus here
                         currency_id: dst_info.currency_id,
                         holder: dst_info.holder,
                     } );
@@ -449,8 +478,9 @@ class GamingTools extends XferTools {
                 .set( 'balance',
                     helpers.expr( `balance + ${helpers.escape( amount )}` ) )
                 .where( {
-                    uuidb64: account,
+                    uuidb64: this._bonusAccountTarget( dbxfer, account ),
                     // extra safety
+                    enabled: 'Y', // only for Bonus here
                     currency_id: src_info.currency_id,
                     holder: src_info.holder,
                 } );
@@ -467,6 +497,22 @@ class GamingTools extends XferTools {
                     holder: src_info.holder,
                 } );
         }
+    }
+
+    _bonusAccountTarget( dbxfer, account ) {
+        let dst_account_q = dbxfer.lface()
+            .select( DB_ACCOUNTS_TABLE )
+            .get( 'account', dbxfer.expr(
+                // TODO: move to DB helpers
+                `CASE WHEN enabled=${dbxfer.escape( 'Y' )} THEN uuidb64 ELSE rel_uuidb64 END` ) )
+            .where( 'uuidb64', account );
+
+        if ( dbxfer._db_type === 'mysql' ) {
+            // ER_UPDATE_TABLE_USED: workaround
+            dst_account_q = dbxfer.lface().select( [ dst_account_q, 'Q' ] );
+        }
+
+        return dst_account_q;
     }
 
     //-----------------------

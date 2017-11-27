@@ -1186,6 +1186,7 @@ class XferTools {
                                 'reserved >=': r.amount,
                                 'balance >=': r.amount,
                                 // extra safety
+                                enabled: 'Y', // only for Bonus here
                                 currency_id: src_info.currency_id,
                                 holder: src_info.holder,
                             } );
