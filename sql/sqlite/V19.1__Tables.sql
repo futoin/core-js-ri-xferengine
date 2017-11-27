@@ -218,14 +218,15 @@ CREATE TABLE reservations (
     "account" CHARACTER(22) NOT NULL REFERENCES accounts("uuidb64"),
     "currency_id" SMALLINT NOT NULL REFERENCES currencies("id"),
     "amount" DECIMAL(22, 0) NOT NULL,
+    "created" TIMESTAMP NOT NULL,
+    "cleared" TIMESTAMP NULL,
     PRIMARY KEY ("ext_id", "account")
 );
 
-
+-- Gaming
 CREATE TABLE rounds (
-    "round_id" CHARACTER(22) NOT NULL,
-    "ext_round_id" VARCHAR(128) NOT NULL,
-    PRIMARY KEY ("round_id", "ext_round_id")
+    "round_id" CHARACTER(22) NOT NULL PRIMARY KEY,
+    "ext_round_id" VARCHAR(128) NOT NULL UNIQUE
 );
 
 CREATE TABLE round_xfers (

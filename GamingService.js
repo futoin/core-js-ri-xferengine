@@ -42,7 +42,7 @@ class GamingService extends BaseService {
 
         xt.findAccounts( as, p.user, p.currency, p.ext_info );
 
-        as.add( ( as, main, _bonus_accounts ) => {
+        as.add( ( as, main, bonus_accounts ) => {
             const xfer = {
                 type: 'Bet',
                 src_limit_domain: 'Gaming',
@@ -65,14 +65,22 @@ class GamingService extends BaseService {
             };
 
             xt.genRoundID( as, xfer, xt.makeExtId( p.rel_account, p.round_id ) );
-            //xt.reserveBet( as, xfer, main, bonus_accounts );
-            xt.processXfer( as, xfer );
+            xt.reserveBet( as, xfer, main, bonus_accounts );
+
+            as.add(
+                ( as ) => xt.processXfer( as, xfer ),
+                ( as, err ) => {
+                    const ei = as.state.error_info;
+                    xt.clearReservedBet( as, xfer );
+                    as.add( ( as ) => as.error( err, ei ) );
+                }
+            );
 
             as.add( ( as, xfer_id ) => {
                 reqinfo.result( {
                     xfer_id,
                     balance: xfer.game_balance,
-                    bonus_part: xfer.bonus_part,
+                    bonus_part: xfer.misc_data.bonus_part,
                 } );
             } );
         } );
@@ -107,6 +115,7 @@ class GamingService extends BaseService {
             };
 
             xt.genRoundID( as, xfer, xt.makeExtId( p.rel_account, p.round_id ) );
+            xt.clearReservedBet( as, xfer );
             xt.processCancel( as, xfer );
 
             xt.getGameBalance( as, p.user, p.currency, p.ext_info );

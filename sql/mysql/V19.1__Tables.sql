@@ -296,12 +296,14 @@ CREATE TABLE reservations (
     `account` CHARACTER(22) NOT NULL REFERENCES accounts(uuidb64),
     `currency_id` SMALLINT UNSIGNED NOT NULL REFERENCES currencies(id),
     `amount` DECIMAL(22, 0) NOT NULL,
+    `created` TIMESTAMP NOT NULL,
+    `cleared` TIMESTAMP NULL,
     UNIQUE `src_ext_id` (`ext_id`, `account`)
 )
     ENGINE=InnoDB
     CHARACTER SET 'utf8';
 
-
+-- Gaming
 CREATE TABLE rounds (
     `_id` BIGINT UNSIGNED NOT NULL auto_increment PRIMARY KEY,
     `round_id` CHARACTER(22) NOT NULL UNIQUE,

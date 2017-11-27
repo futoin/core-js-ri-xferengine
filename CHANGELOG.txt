@@ -8,8 +8,9 @@ FIXED: license disclaimers
 CHANGED: ACCT_BAL to record formatted amounts, event field name change:
     * raw_balance -> balance
     * raw_reserved -> reserved
-NEW: added BonusService operations (no in-game use yet)
+NEW: added BonusService operations
 NEW: active_reservations table for pre-auth xfers
+NEW: Bonus amount support in xfers
 
 === 0.7.0 (2017-11-22) ===
 CHANGED: Harmonized UnknownAccountHolder/UnknownHolderID errors

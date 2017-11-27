@@ -262,4 +262,12 @@ describe( 'AmountTools', function() {
         expect( AmountTools.MAX_DIGITS ).to.equal( 22 );
         expect( AmountTools.RATE_PRECISSION ).to.equal( 12 );
     } );
+
+    it( 'should distribute win', function() {
+        expect( AmountTools.distributeWin( { a: '1' }, '3.33', 2 ) ).to.eql( { a: '3.33' } );
+        expect( AmountTools.distributeWin( { a: '1', b: '1', c: '1' }, '3.33', 2 ) )
+            .to.eql( { a: '1.11', b: '1.11', c: '1.11' } );
+        expect( AmountTools.distributeWin( { a: '11', b: '22' }, '3.33', 2 ) )
+            .to.eql( { a: '1.11', b: '2.22' } );
+    } );
 } );

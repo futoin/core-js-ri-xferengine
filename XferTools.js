@@ -122,6 +122,10 @@ const TypeSpec = {
                     type: 'Fee',
                     optional: true,
                 },
+                use_preauth: {
+                    type: "string",
+                    optional: true,
+                },
             },
         },
     },
@@ -498,10 +502,7 @@ class XferTools {
             xfer.status = r.xfer_status;
             xfer.created = moment.utc( r.created ).format();
             xfer.updated = moment.utc( r.updated ).format();
-            xfer.misc_data = Object.assign(
-                xfer.misc_data,
-                r.misc_data
-            );
+            Object.assign( xfer.misc_data, r.misc_data );
             xfer.repeat = true;
 
             if ( xfer.misc_data.rel_in_id ) {
@@ -571,10 +572,7 @@ class XferTools {
             xfer.status = r.xfer_status;
             xfer.created = moment.utc( r.created ).format();
             xfer.updated = moment.utc( r.updated ).format();
-            xfer.misc_data = Object.assign(
-                xfer.misc_data,
-                JSON.parse( r.misc_data )
-            );
+            Object.assign( xfer.misc_data, JSON.parse( r.misc_data ) );
 
             // fee amounts may change on repeat calls - use original
             xfer.src_amount = AmountTools.fromStorage(
@@ -621,10 +619,7 @@ class XferTools {
             fee_xfer.status = r.xfer_status;
             fee_xfer.created = moment.utc( r.created ).format();
             fee_xfer.updated = moment.utc( r.updated ).format();
-            fee_xfer.misc_data = Object.assign(
-                fee_xfer.misc_data,
-                JSON.parse( r.misc_data )
-            );
+            Object.assign( fee_xfer.misc_data, JSON.parse( r.misc_data ) );
 
             // fee amounts may change on repeat calls - use original
             fee_xfer.src_amount = AmountTools.fromStorage(
@@ -792,7 +787,7 @@ class XferTools {
                     );
                 }
 
-                if ( !AmountTools.checkXferAmount( req_amt, xfer.src_info ) ) {
+                if ( !AmountTools.checkXferAmount( req_amt, xfer.src_info, xfer.preauth_amount ) ) {
                     as.error( 'NotEnoughFunds' );
                 }
             }
@@ -1020,6 +1015,7 @@ class XferTools {
                 account: reserve_q.backref( xfer_q, 'src' ),
                 currency_id: reserve_q.backref( xfer_q, 'src_currency_id' ),
                 amount: reserve_q.backref( xfer_q, 'src_amount' ),
+                created: reserve_q.helpers().now(),
             } );
         }
 
@@ -1064,7 +1060,10 @@ class XferTools {
 
                 // NOTE: it's only allowed to cancel full pre-auth - we check current amount
                 const reserve_q = dbxfer.update( DB_RESERVATIONS_TABLE, { affected: 1 } );
-                reserve_q.set( 'amount', 0 );
+                reserve_q.set( {
+                    amount: 0,
+                    cleared: reserve_q.helpers().now(),
+                } );
                 reserve_q.where( {
                     ext_id: xfer.ext_id || null,
                     account: reserve_q.backref( xfer_q, 'src' ),
@@ -1128,6 +1127,130 @@ class XferTools {
         //=========
 
         evt_q.set( 'data', evt_data );
+    }
+
+    _usePreAuth( as, dbxfer, xfer ) {
+        if ( !xfer.use_preauth ) {
+            return;
+        }
+
+        const src_info = xfer.src_info;
+        const helpers = dbxfer.helpers();
+
+        dbxfer.lface().select( DB_RESERVATIONS_TABLE )
+            .get( [ 'account', 'amount' ] )
+            .where( {
+                ext_id: xfer.ext_id,
+                currency_id: src_info.currency_id,
+            } )
+            .executeAssoc( as );
+
+        as.add( ( as, rows ) => {
+            if ( xfer.type === 'Bet' ) {
+                const used_amounts = {};
+                let total_reserved = '0';
+                let main;
+
+                for ( let r of rows ) {
+                    if ( r.account === src_info.uuidb64 ) {
+                        main = r;
+                    }
+
+                    if ( AmountTools.isZero( r.amount ) ) {
+                        continue;
+                    }
+
+                    used_amounts[ r.account ] = AmountTools.fromStorage(
+                        r.amount, src_info.dec_places );
+                    total_reserved = AmountTools.add( total_reserved, r.amount, 0 );
+
+                    dbxfer.update( DB_RESERVATIONS_TABLE, { affected: 1 } )
+                        .set( {
+                            amount: 0,
+                            cleared: helpers.now(),
+                        } )
+                        .where( {
+                            ext_id: xfer.ext_id,
+                            account: r.account,
+                            amount: r.amount,
+                        } );
+
+                    if ( r.account !== src_info.uuidb64 ) {
+                        const amt_q = helpers.escape( r.amount );
+
+                        dbxfer.update( DB_ACCOUNTS_TABLE, { affected: 1 } )
+                            .set( 'reserved', helpers.expr( `reserved - ${amt_q}` ) )
+                            .set( 'balance', helpers.expr( `balance - ${amt_q}` ) )
+                            .where( {
+                                uuidb64: r.account,
+                                'reserved >=': r.amount,
+                                'balance >=': r.amount,
+                                // extra safety
+                                currency_id: src_info.currency_id,
+                                holder: src_info.holder,
+                            } );
+                    }
+                }
+
+                assert( main );
+
+                let bonus_part = AmountTools.subtract( total_reserved, main.amount, 0 );
+
+                dbxfer.update( DB_ACCOUNTS_TABLE, { affected: 1 } )
+                    .set( 'reserved', helpers.expr( `reserved - ${helpers.escape( main.amount )}` ) )
+                    .set( 'balance', helpers.expr( `balance + ${helpers.escape( bonus_part )}` ) )
+                    .where( {
+                        uuidb64: main.account,
+                        'reserved >=': main.amount,
+                        // extra safety
+                        currency_id: src_info.currency_id,
+                        holder: src_info.holder,
+                    } );
+
+                //---
+                total_reserved = AmountTools.fromStorage( total_reserved, src_info.dec_places );
+                bonus_part = AmountTools.fromStorage( bonus_part, src_info.dec_places );
+
+                if ( !AmountTools.isEqual( total_reserved, xfer.src_amount ) ) {
+                    as.error( 'InternalError',
+                        `Bet reservation mismatch ${total_reserved} != ${xfer.src_amount}` );
+                }
+
+                xfer.misc_data.used_amounts = used_amounts;
+                xfer.misc_data.bonus_part = bonus_part;
+                xfer.preauth_amount = total_reserved;
+            } else if ( rows.length === 1 ) {
+                const r = rows[0];
+
+                if ( r.account !== xfer.src_account ) {
+                    as.error( 'InternalError', 'Pre-auth account mismatch' );
+                }
+
+                dbxfer.update( DB_RESERVATIONS_TABLE, { affected: 1 } )
+                    .set( {
+                        amount: 0,
+                        cleared: helpers.now(),
+                    } )
+                    .where( {
+                        ext_id: xfer.ext_id,
+                        account: r.account,
+                        amount: r.amount,
+                    } );
+                dbxfer.update( DB_ACCOUNTS_TABLE, { affected: 1 } )
+                    .set( 'reserved', dbxfer.expr( `reserved - ${dbxfer.escape( r.amount )}` ) )
+                    .where( {
+                        uuidb64: r.account,
+                        'reserved >=': r.amount,
+                        // extra safety
+                        currency_id: src_info.currency_id,
+                        holder: src_info.holder,
+                    } );
+                xfer.misc_data.used_preauth = xfer.use_preauth;
+                xfer.preauth_amount = AmountTools.fromStorage( r.amount, src_info.dec_places );
+            } else {
+                as.error( 'UnknownPreAuth' );
+            }
+        } );
     }
 
     _createXfer( as, dbxfer, xfer ) {
@@ -1283,6 +1406,7 @@ class XferTools {
                     this._startXfer( as, dbxfer, xfer.extra_fee );
                 }
 
+                this._usePreAuth( as, dbxfer, xfer );
                 this._checkXferLimits( as, dbxfer, xfer );
                 this._analyzeXferRisk( as, xfer );
 
@@ -1318,6 +1442,19 @@ class XferTools {
             .addXferEvent( dbxfer, 'XFER_UPD', {
                 id: xfer.id,
                 status: xfer.status,
+            } );
+    }
+
+    _updateMiscData( dbxfer, xfer ) {
+        dbxfer.update( DB_XFERS_TABLE, { affected: 1 } )
+            .set( 'misc_data', JSON.stringify( xfer.misc_data ) )
+            .where( 'uuidb64', xfer.id );
+
+        //---
+        this._ccm.iface( EVTGEN_ALIAS )
+            .addXferEvent( dbxfer, 'XFER_UPD', {
+                id: xfer.id,
+                misc_data: xfer.misc_data,
             } );
     }
 
@@ -1409,6 +1546,11 @@ class XferTools {
                 this._completeXfer( dbxfer, xfer.xfer_fee );
                 this._increaseBalance( dbxfer, xfer.xfer_fee );
             }
+        }
+
+        if ( xfer.update_misc_data ) {
+            this._updateMiscData( dbxfer, xfer );
+            xfer.update_misc_data = false;
         }
 
         dbxfer.execute( as );

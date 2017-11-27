@@ -191,7 +191,7 @@ class AmountTools {
         return true;
     }
 
-    static checkXferAmount( amt, { balance, reserved, overdraft } ) {
+    static checkXferAmount( amt, { balance, reserved, overdraft }, preauth=null ) {
         amt = new BigNumber( amt, 10 );
 
         if ( amt.lessThanOrEqualTo( 0 ) ) {
@@ -200,6 +200,10 @@ class AmountTools {
 
         balance = new BigNumber( balance, 10 );
         balance = balance.plus( overdraft, 10 ).minus( reserved, 10 );
+
+        if ( preauth ) {
+            balance = balance.plus( preauth, 10 );
+        }
 
         return balance.greaterThanOrEqualTo( amt );
     }
@@ -223,6 +227,45 @@ class AmountTools {
 
     static isZero( a ) {
         return this.isEqual( a, '0' );
+    }
+
+    static distributeWin( contributions, amount, dec_places ) {
+        BigNumber.config( dec_places, ROUND_DOWN );
+
+        let total_contrib = new BigNumber( 0 );
+        let cnt = 0;
+        let k;
+
+        for ( k in contributions ) {
+            total_contrib = total_contrib.plus( contributions[k], 10 );
+            ++cnt;
+        }
+
+        if ( cnt === 1 ) {
+            return { [k]: amount };
+        }
+
+        //---
+        const res = {};
+        let distributed = new BigNumber( 0 );
+        amount = new BigNumber( amount, 10 );
+
+        for ( k in contributions ) {
+            let part = new BigNumber( contributions[k], 10 );
+            part = part.times( amount ).dividedBy( total_contrib, 10 );
+
+            res[k] = part;
+            distributed = distributed.plus( part );
+        }
+
+        // add rounding errors
+        res[k] = res[k].plus( amount.minus( distributed ) );
+
+        for ( k in res ) {
+            res[k] = res[k].toFixed( dec_places );
+        }
+
+        return res;
     }
 }
 

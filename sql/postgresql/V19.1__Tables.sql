@@ -282,10 +282,12 @@ CREATE TABLE reservations (
     "account" uuid_b64 NOT NULL REFERENCES accounts("uuidb64"),
     "currency_id" SMALLINT NOT NULL REFERENCES currencies("id"),
     "amount" amount NOT NULL,
+    "created" TIMESTAMP NOT NULL,
+    "cleared" TIMESTAMP NULL,
     PRIMARY KEY ("ext_id", "account")
 );
 
-
+-- Gaming
 CREATE TABLE rounds (
     "round_id" uuid_b64 PRIMARY KEY,
     "ext_round_id" ext_xfer_id UNIQUE
