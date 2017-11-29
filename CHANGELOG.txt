@@ -1,5 +1,5 @@
 
-=== (next) ===
+=== 0.8.1 (2017-11-29) ===
 FIXED: to add ACCT_BAL events for bonus-related operations
 FIXED: "pre-flight" locking of accounts involved in transaction to avoid deadlocks
 
