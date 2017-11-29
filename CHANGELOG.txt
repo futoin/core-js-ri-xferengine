@@ -1,4 +1,7 @@
 
+=== (next) ===
+FIXED: to add ACCT_BAL events for bonus-related operations
+
 === 0.8.0 (2017-11-27) ===
 BREAKING CHANGE: added round_id to Gaming interface
 BREAKING CHANGE: dropped "active_" DB table prefix (requires manual change)

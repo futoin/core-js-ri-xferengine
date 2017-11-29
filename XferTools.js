@@ -457,6 +457,7 @@ class XferTools {
                 r.src_amount, xfer.src_info.dec_places );
             r.dst_amount = AmountTools.fromStorage(
                 r.dst_amount, xfer.dst_info.dec_places );
+            xfer.orig_misc_data = r.misc_data;
             r.misc_data = JSON.parse( r.misc_data );
 
             if ( ( xfer.src_account !== r.src ) ||
@@ -572,6 +573,7 @@ class XferTools {
             xfer.status = r.xfer_status;
             xfer.created = moment.utc( r.created ).format();
             xfer.updated = moment.utc( r.updated ).format();
+            xfer.orig_misc_data = r.misc_data;
             Object.assign( xfer.misc_data, JSON.parse( r.misc_data ) );
 
             // fee amounts may change on repeat calls - use original
@@ -619,6 +621,7 @@ class XferTools {
             fee_xfer.status = r.xfer_status;
             fee_xfer.created = moment.utc( r.created ).format();
             fee_xfer.updated = moment.utc( r.updated ).format();
+            fee_xfer.orig_misc_data = r.misc_data;
             Object.assign( fee_xfer.misc_data, JSON.parse( r.misc_data ) );
 
             // fee amounts may change on repeat calls - use original
@@ -1099,9 +1102,11 @@ class XferTools {
         const acct_q = dbxfer.select( DB_ACCOUNTS_TABLE, { selected: 1 } );
         acct_q.get( [ 'balance', 'reserved' ] ).where( 'uuidb64', account );
 
-        const xfer_q = dbxfer.update( DB_XFERS_TABLE, { affected: 1 } );
-        xfer_q.set( target_field, xfer_q.backref( acct_q, 'balance' ) );
-        xfer_q.where( 'uuidb64', xfer.id );
+        if ( target_field ) {
+            const xfer_q = dbxfer.update( DB_XFERS_TABLE, { affected: 1 } );
+            xfer_q.set( target_field, xfer_q.backref( acct_q, 'balance' ) );
+            xfer_q.where( 'uuidb64', xfer.id );
+        }
 
         const evtgen = this._ccm.iface( EVTGEN_ALIAS );
         const evt_q = dbxfer.insert( evtgen.DB_EVENT_TABLE, { affected: 1 } )
@@ -1109,19 +1114,31 @@ class XferTools {
             .set( 'ts', helpers.now() );
 
         //=========
-        const json_id = JSON.stringify( account );
+        let evt_data;
+
+        if ( typeof account === 'string' ) {
+            evt_data = [
+                `{"id":${JSON.stringify( account )},"balance":"`,
+            ];
+        } else {
+            evt_data = [
+                '{"id":"',
+                evt_q.backref( account, 'account' ),
+                '","balance":"',
+            ];
+        }
+
         const format_amt = ( backref ) => helpers.cast(
             helpers.div( backref, AmountTools.place2div( dec_places ) ),
             `DECIMAL(${AmountTools.MAX_DIGITS},${dec_places})`
         );
 
-        let evt_data = [
-            `{"id":${json_id},"balance":"`,
+        evt_data = evt_data.concat( [
             format_amt( evt_q.backref( acct_q, 'balance' ) ),
             '","reserved":"',
             format_amt( evt_q.backref( acct_q, 'reserved' ) ),
             `"}`,
-        ];
+        ] );
         evt_data = helpers.concat( ...evt_data );
         evt_data = helpers.cast( evt_data, 'JSON' );
         //=========
@@ -1190,6 +1207,9 @@ class XferTools {
                                 currency_id: src_info.currency_id,
                                 holder: src_info.holder,
                             } );
+
+                        this._recordBalance( dbxfer, null, r.account,
+                            null, src_info.dec_places );
                     }
                 }
 
@@ -1207,6 +1227,9 @@ class XferTools {
                         currency_id: src_info.currency_id,
                         holder: src_info.holder,
                     } );
+
+                this._recordBalance( dbxfer, null, main.account, null, src_info.dec_places );
+
 
                 //---
                 total_reserved = AmountTools.fromStorage( total_reserved, src_info.dec_places );
@@ -1246,6 +1269,8 @@ class XferTools {
                         currency_id: src_info.currency_id,
                         holder: src_info.holder,
                     } );
+                this._recordBalance( dbxfer, null, r.account, null, src_info.dec_places );
+
                 xfer.misc_data.used_preauth = xfer.use_preauth;
                 xfer.preauth_amount = AmountTools.fromStorage( r.amount, src_info.dec_places );
             } else {
@@ -1325,7 +1350,8 @@ class XferTools {
             }
 
             if ( misc_data ) {
-                xfer_q.set( 'misc_data', JSON.stringify( misc_data ) );
+                xfer.orig_misc_data = JSON.stringify( misc_data );
+                xfer_q.set( 'misc_data', xfer.orig_misc_data );
                 xfer_event.misc_data = misc_data;
             }
 
@@ -1447,9 +1473,14 @@ class XferTools {
     }
 
     _updateMiscData( dbxfer, xfer ) {
+        const new_misc_data = JSON.stringify( xfer.misc_data );
+
         dbxfer.update( DB_XFERS_TABLE, { affected: 1 } )
-            .set( 'misc_data', JSON.stringify( xfer.misc_data ) )
-            .where( 'uuidb64', xfer.id );
+            .set( 'misc_data', new_misc_data )
+            .where( 'uuidb64', xfer.id )
+            .where( 'misc_data', xfer.orig_misc_data );
+
+        xfer.orig_misc_data = new_misc_data;
 
         //---
         this._ccm.iface( EVTGEN_ALIAS )
