@@ -1279,6 +1279,35 @@ class XferTools {
         } );
     }
 
+    _preLockAccounts( dbxfer, xfer ) {
+        const accounts = [
+            xfer.src_account,
+            xfer.dst_account,
+        ];
+
+        //---
+        const in_xfer = xfer.in_xfer;
+        in_xfer && accounts.push( in_xfer.src_account );
+
+        //---
+        const out_xfer = xfer.out_xfer;
+        out_xfer && accounts.push( out_xfer.dst_account );
+
+        //---
+        const fee_xfer = xfer.fee_xfer;
+        fee_xfer && accounts.push( fee_xfer.dst_account );
+
+        //---
+        const extra_fee = xfer.extra_fee;
+        extra_fee && accounts.push( extra_fee.dst_account );
+
+        //---
+        dbxfer.select( DB_ACCOUNTS_TABLE )
+            .get( 'enabled' )
+            .where( 'uuidb64 IN', accounts )
+            .forUpdate();
+    }
+
     _createXfer( as, dbxfer, xfer ) {
         as.add( ( as ) => {
             let cancel = ( xfer.status === this.ST_CANCELED );
@@ -1425,6 +1454,11 @@ class XferTools {
                 xfer.id = UUIDTool.genXfer( dbxfer );
                 xfer.status = xfer.status || this.ST_DONE;
 
+                if ( !xfer.in_xfer ) {
+                    // useless to lock with no balance moves
+                    this._preLockAccounts( dbxfer, xfer );
+                }
+
                 // Extra Fee
                 if ( xfer.extra_fee ) {
                     xfer.extra_fee.type = 'Fee';
@@ -1551,6 +1585,7 @@ class XferTools {
 
     _completeExtIn( as, xfer ) {
         const dbxfer = this._ccm.db( 'xfer' ).newXfer();
+        this._preLockAccounts( dbxfer, xfer );
         this._decreaseBalance( dbxfer, xfer.in_xfer );
         this._completeXfer( dbxfer, xfer.in_xfer );
 
@@ -1591,6 +1626,8 @@ class XferTools {
     _completeCancelExtIn( as, xfer ) {
         const dbxfer = this._ccm.db( 'xfer' ).newXfer();
 
+        this._preLockAccounts( dbxfer, xfer );
+
         if ( ( xfer.in_xfer.status === this.ST_DONE ) &&
              !xfer.out_xfer &&
              ( xfer.status !== this.ST_WAIT_USER )
@@ -1608,6 +1645,8 @@ class XferTools {
     _completeExtOut( as, xfer ) {
         const dbxfer = this._ccm.db( 'xfer' ).newXfer();
 
+        this._preLockAccounts( dbxfer, xfer );
+
         this._completeXfer( dbxfer, xfer, this.ST_DONE );
 
         this._increaseBalance( dbxfer, xfer );
@@ -1621,6 +1660,9 @@ class XferTools {
 
     _completeCancelExtOut( as, xfer ) {
         const dbxfer = this._ccm.db( 'xfer' ).newXfer();
+
+        this._preLockAccounts( dbxfer, xfer );
+
         const xfer_status = xfer.status;
 
         if ( xfer.out_xfer.status === this.ST_DONE ) {
