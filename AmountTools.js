@@ -228,6 +228,22 @@ class AmountTools {
     static isZero( a ) {
         return this.isEqual( a, '0' );
     }
+    
+    static isLess( a, b ) {
+        return this.compare( a, b ) < 0;
+    }
+
+    static isLessOrEqual( a, b ) {
+        return this.compare( a, b ) <= 0;
+    }
+
+    static isGreater( a, b ) {
+        return this.compare( a, b ) > 0;
+    }
+
+    static isGreaterOrEqual( a, b ) {
+        return this.compare( a, b ) >= 0;
+    }
 
     static distributeWin( contributions, amount, dec_places ) {
         BigNumber.config( dec_places, ROUND_DOWN );

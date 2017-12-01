@@ -256,6 +256,22 @@ describe( 'AmountTools', function() {
         expect( AmountTools.isZero( '0.00' ) ).to.be.true;
         expect( AmountTools.isZero( '0.01' ) ).to.be.false;
         expect( AmountTools.isZero( '30.00' ) ).to.be.false;
+
+        expect( AmountTools.isLess( '10', '10' ) ).to.be.false;
+        expect( AmountTools.isLess( '2', '10' ) ).to.be.true;
+        expect( AmountTools.isLess( '100', '10' ) ).to.be.false;
+
+        expect( AmountTools.isLessOrEqual( '10', '10' ) ).to.be.true;
+        expect( AmountTools.isLessOrEqual( '2', '10' ) ).to.be.true;
+        expect( AmountTools.isLessOrEqual( '100', '10' ) ).to.be.false;
+
+        expect( AmountTools.isGreater( '10', '10' ) ).to.be.false;
+        expect( AmountTools.isGreater( '2', '10' ) ).to.be.false;
+        expect( AmountTools.isGreater( '100', '10' ) ).to.be.true;
+
+        expect( AmountTools.isGreaterOrEqual( '10', '10' ) ).to.be.true;
+        expect( AmountTools.isGreaterOrEqual( '2', '10' ) ).to.be.false;
+        expect( AmountTools.isGreaterOrEqual( '100', '10' ) ).to.be.true;
     } );
 
     it( 'should process misc', function() {
