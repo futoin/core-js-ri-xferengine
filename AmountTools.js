@@ -228,7 +228,7 @@ class AmountTools {
     static isZero( a ) {
         return this.isEqual( a, '0' );
     }
-    
+
     static isLess( a, b ) {
         return this.compare( a, b ) < 0;
     }

@@ -153,6 +153,15 @@ The concept is described in FutoIn specification: [FTN19: FutoIn Interface - Tra
 <dt><a href="#PeerService">PeerService</a></dt>
 <dd><p>Peer Service</p>
 </dd>
+<dt><a href="#RetailFace">RetailFace</a></dt>
+<dd><p>Payments Face</p>
+</dd>
+<dt><a href="#RetailService">RetailService</a></dt>
+<dd><p>Retail Service</p>
+</dd>
+<dt><a href="#RetailTools">RetailTools</a></dt>
+<dd><p>XferTools with focus on Retail use case</p>
+</dd>
 <dt><a href="#UUIDTool">UUIDTool</a></dt>
 <dd><p>Common tool for UUID generation and use in transactions</p>
 </dd>
@@ -563,6 +572,41 @@ CCM registration helper
 
 ## PeerService
 Peer Service
+
+**Kind**: global class  
+<a name="RetailFace"></a>
+
+## RetailFace
+Payments Face
+
+**Kind**: global class  
+<a name="RetailFace.register"></a>
+
+### RetailFace.register(as, ccm, name, endpoint, [credentials], [options])
+CCM registration helper
+
+**Kind**: static method of [<code>RetailFace</code>](#RetailFace)  
+
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| as | <code>AsyncSteps</code> |  | steps interface |
+| ccm | <code>AdvancedCCM</code> |  | CCM instance |
+| name | <code>string</code> |  | CCM registration name |
+| endpoint | <code>\*</code> |  | see AdvancedCCM#register |
+| [credentials] | <code>\*</code> | <code></code> | see AdvancedCCM#register |
+| [options] | <code>object</code> | <code>{}</code> | interface options |
+| [options.version] | <code>string</code> | <code>&quot;&lt;latest&gt;&quot;</code> | interface version to use |
+
+<a name="RetailService"></a>
+
+## RetailService
+Retail Service
+
+**Kind**: global class  
+<a name="RetailTools"></a>
+
+## RetailTools
+XferTools with focus on Retail use case
 
 **Kind**: global class  
 <a name="UUIDTool"></a>

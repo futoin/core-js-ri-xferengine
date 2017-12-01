@@ -992,6 +992,12 @@ module.exports = function( describe, it, vars ) {
                             retail_weekly_cnt: 0,
                             retail_monthly_amt: '0.00',
                             retail_monthly_cnt: 0,
+                            preauth_daily_amt: '0.00',
+                            preauth_daily_cnt: 0,
+                            preauth_weekly_amt: '0.00',
+                            preauth_weekly_cnt: 0,
+                            preauth_monthly_amt: '0.00',
+                            preauth_monthly_cnt: 0,
                         },
                     };
 

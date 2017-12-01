@@ -116,6 +116,13 @@ module.exports = function( describe, it, vars ) {
                         retail_monthly_amt : "1.00",
                         retail_monthly_cnt : 1,
                         retail_min_amt : "1.00",
+                        preauth_daily_amt : "1.00",
+                        preauth_daily_cnt : 1,
+                        preauth_weekly_amt : "1.00",
+                        preauth_weekly_cnt : 1,
+                        preauth_monthly_amt : "1.00",
+                        preauth_monthly_cnt : 1,
+                        preauth_min_amt : "1.00",
                     }, false, false );
 
                     xferlim.setLimits( as, 'default', 'Deposits', 'I:USD', {
@@ -232,6 +239,13 @@ module.exports = function( describe, it, vars ) {
                             retail_monthly_amt : "1.00",
                             retail_monthly_cnt : 1,
                             retail_min_amt : "1.00",
+                            preauth_daily_amt : "1.00",
+                            preauth_daily_cnt : 1,
+                            preauth_weekly_amt : "1.00",
+                            preauth_weekly_cnt : 1,
+                            preauth_monthly_amt : "1.00",
+                            preauth_monthly_cnt : 1,
+                            preauth_min_amt : "1.00",
                         },
                         check: false,
                         risk: false,

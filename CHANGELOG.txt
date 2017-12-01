@@ -1,4 +1,10 @@
 
+=== (next) ===
+FIXED: xfer fee balance decrease time with WaitUser state
+FIXED: xfer fee processing on cancel
+NEW: full Retail domain support
+NEW: AmountTools.isLess()/isLessOrEqual()/isGreater()/isGreaterOrEqual()
+
 === 0.8.1 (2017-11-29) ===
 FIXED: to add ACCT_BAL events for bonus-related operations
 FIXED: "pre-flight" locking of accounts involved in transaction to avoid deadlocks

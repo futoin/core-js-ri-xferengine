@@ -71,6 +71,13 @@ module.exports = function( describe, it, vars ) {
                         retail_monthly_amt : "5.00",
                         retail_monthly_cnt : 60,
                         retail_min_amt : "0.10",
+                        preauth_daily_amt : "1.00",
+                        preauth_daily_cnt : 20,
+                        preauth_weekly_amt : "3.00",
+                        preauth_weekly_cnt : 40,
+                        preauth_monthly_amt : "5.00",
+                        preauth_monthly_cnt : 60,
+                        preauth_min_amt : "0.10",
                     }, {
                         retail_daily_amt : "0.50",
                         retail_daily_cnt : 10,
@@ -79,6 +86,13 @@ module.exports = function( describe, it, vars ) {
                         retail_monthly_amt : "4.50",
                         retail_monthly_cnt : 30,
                         retail_min_amt : "0.11",
+                        preauth_daily_amt : "0.50",
+                        preauth_daily_cnt : 10,
+                        preauth_weekly_amt : "2.50",
+                        preauth_weekly_cnt : 20,
+                        preauth_monthly_amt : "4.50",
+                        preauth_monthly_cnt : 30,
+                        preauth_min_amt : "0.11",
                     }, {
                         retail_daily_amt : "0.70",
                         retail_daily_cnt : 10,
@@ -87,6 +101,13 @@ module.exports = function( describe, it, vars ) {
                         retail_monthly_amt : "4.70",
                         retail_monthly_cnt : 30,
                         retail_min_amt : "0.12",
+                        preauth_daily_amt : "0.70",
+                        preauth_daily_cnt : 10,
+                        preauth_weekly_amt : "2.70",
+                        preauth_weekly_cnt : 20,
+                        preauth_monthly_amt : "4.70",
+                        preauth_monthly_cnt : 30,
+                        preauth_min_amt : "0.12",
                     } );
 
                     const xferacct = ccm.iface( 'xfer.accounts' );

@@ -183,7 +183,7 @@ class GamingTools extends XferTools {
                     total_balance, a.available_balance, a.dec_places );
             } );
 
-            if ( AmountTools.compare( total_balance, xfer.amount ) < 0 ) {
+            if ( AmountTools.isLess( total_balance, xfer.amount ) ) {
                 // Let if fail through default path
                 return;
             }

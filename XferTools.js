@@ -290,7 +290,7 @@ class XferTools {
     }
 
     addLimitProcessing( as, dbxfer, domain, holder, currency, amount, prefix, extra={} ) {
-        let deltas = Object.assign( {
+        let deltas = prefix ? {
             [`${prefix}_min_amt`] : amount,
             [`${prefix}_daily_amt`] : amount,
             [`${prefix}_daily_cnt`] : 1,
@@ -298,7 +298,8 @@ class XferTools {
             [`${prefix}_weekly_cnt`] : 1,
             [`${prefix}_monthly_amt`] : amount,
             [`${prefix}_monthly_cnt`] : 1,
-        }, extra );
+        } : {};
+        Object.assign( deltas, extra );
 
         this._processLimits( as, dbxfer, domain, holder, currency, deltas );
     }
@@ -387,14 +388,15 @@ class XferTools {
     addStatsCancel( as, dbxfer, domain, holder, date, currency, amount, prefix, extra={} ) {
         // cancel must be accounted as transaction for security reasons
         // cnt - (-1) = cnt + 1
-        let deltas = Object.assign( {
+        let deltas = prefix ? {
             [`${prefix}_daily_amt`] : amount,
             [`${prefix}_daily_cnt`] : -1,
             [`${prefix}_weekly_amt`] : amount,
             [`${prefix}_weekly_cnt`] : -1,
             [`${prefix}_monthly_amt`] : amount,
             [`${prefix}_monthly_cnt`] : -1,
-        }, extra );
+        } : {};
+        Object.assign( deltas, extra );
 
         this._cancelStats( as, dbxfer, domain, holder, date, currency, deltas );
     }
@@ -500,6 +502,7 @@ class XferTools {
             }
 
             xfer.id = r.uuidb64;
+            xfer.ext_id = r.ext_id;
             xfer.status = r.xfer_status;
             xfer.created = moment.utc( r.created ).format();
             xfer.updated = moment.utc( r.updated ).format();
@@ -752,7 +755,9 @@ class XferTools {
                 };
             }
 
-            if ( xfer.dst_info.acct_type === this.ACCT_TRANSIT ) {
+            if ( ( xfer.dst_info.acct_type === this.ACCT_TRANSIT ) &&
+                 !xfer.preauth
+            ) {
                 xfer.out_xfer = {
                     id: xfer.misc_data.rel_out_id,
                     src_account: xfer.dst_account,
@@ -797,7 +802,7 @@ class XferTools {
 
             const misc_data = xfer.misc_data;
 
-            if ( xfer.src_limit_prefix ) {
+            if ( xfer.src_limit_prefix || xfer.src_limit_extra ) {
                 misc_data.src_limit = {
                     domain: xfer.src_limit_domain || this._domain,
                     prefix: xfer.src_limit_prefix,
@@ -817,7 +822,7 @@ class XferTools {
                 } );
             }
 
-            if ( xfer.dst_limit_prefix ) {
+            if ( xfer.dst_limit_prefix || xfer.dst_limit_extra ) {
                 misc_data.dst_limit = {
                     domain: xfer.dst_limit_domain || this._domain,
                     prefix: xfer.dst_limit_prefix,
@@ -1154,10 +1159,19 @@ class XferTools {
         const src_info = xfer.src_info;
         const helpers = dbxfer.helpers();
 
-        dbxfer.lface().select( DB_RESERVATIONS_TABLE )
+        const db = dbxfer.lface();
+        const preauth_ext_id = ( xfer.type == 'Bet' )
+            ? xfer.use_preauth
+            : db.select( DB_XFERS_TABLE )
+                .get( 'ext_id' )
+                .where( {
+                    uuidb64 : xfer.use_preauth,
+                    xfer_status : this.ST_DONE,
+                } );
+        db.select( DB_RESERVATIONS_TABLE )
             .get( [ 'account', 'amount' ] )
             .where( {
-                ext_id: xfer.ext_id,
+                ext_id: preauth_ext_id,
                 currency_id: src_info.currency_id,
             } )
             .executeAssoc( as );
@@ -1256,7 +1270,7 @@ class XferTools {
                         cleared: helpers.now(),
                     } )
                     .where( {
-                        ext_id: xfer.ext_id,
+                        ext_id: preauth_ext_id,
                         account: r.account,
                         amount: r.amount,
                     } );
@@ -1273,8 +1287,12 @@ class XferTools {
 
                 xfer.misc_data.used_preauth = xfer.use_preauth;
                 xfer.preauth_amount = AmountTools.fromStorage( r.amount, src_info.dec_places );
+
+                if ( AmountTools.isLessOrEqual( xfer.src_amount, xfer.preauth_amount ) ) {
+                    xfer.user_confirm = true;
+                }
             } else {
-                as.error( 'UnknownPreAuth' );
+                as.error( 'UnavailablePreAuth' );
             }
         } );
     }
@@ -1325,8 +1343,9 @@ class XferTools {
                 // pass all
             } else if ( xfer.status === this.ST_WAIT_EXT_IN ) {
                 /// pass all
-            } else if ( xfer.in_transit &&
-                       ( xfer.status === this.ST_WAIT_USER || xfer.status === this.ST_WAIT_EXT_OUT )
+            } else if ( ( xfer.in_transit || xfer.in_xfer_fee ) &&
+                        ( xfer.status === this.ST_WAIT_USER ||
+                          xfer.status === this.ST_WAIT_EXT_OUT )
             ) {
                 // pass only on out
             } else {
@@ -1568,11 +1587,25 @@ class XferTools {
     _completeCancel( as, xfer ) {
         const dbxfer = this._ccm.db( 'xfer' ).newXfer();
 
-        if ( xfer.status === this.ST_DONE ) {
-            if ( xfer.xfer_fee && xfer.xfer_fee.id ) {
-                this._completeCancel( as, xfer.xfer_fee );
+        //---
+        const xfer_fee = xfer.xfer_fee;
+
+        if ( xfer_fee && xfer_fee.id ) {
+            const move_balance = ( xfer_fee.status === this.ST_DONE );
+
+            if ( move_balance ) {
+                this._decreaseBalance( dbxfer, xfer_fee, true );
             }
 
+            this._completeXfer( dbxfer, xfer_fee, this.ST_CANCELED );
+
+            if ( move_balance ) {
+                this._increaseBalance( dbxfer, xfer_fee, true );
+            }
+        }
+
+        //---
+        if ( xfer.status === this.ST_DONE ) {
             this._decreaseBalance( dbxfer, xfer, true );
         }
 
@@ -1597,6 +1630,10 @@ class XferTools {
 
             if ( xfer.out_xfer ) {
                 this._completeXfer( dbxfer, xfer.out_xfer, this.ST_WAIT_USER );
+            }
+
+            if ( xfer.xfer_fee ) {
+                this._completeXfer( dbxfer, xfer.xfer_fee, this.ST_WAIT_USER );
             }
         } else if ( xfer.out_xfer ) {
             this._completeXfer( dbxfer, xfer, this.ST_WAIT_EXT_OUT );
@@ -1706,6 +1743,12 @@ class XferTools {
         } else {
             this._completeXfer( dbxfer, xfer );
             this._increaseBalance( dbxfer, xfer );
+
+            if ( xfer.xfer_fee ) {
+                this._decreaseBalance( dbxfer, xfer.xfer_fee );
+                this._completeXfer( dbxfer, xfer.xfer_fee );
+                this._increaseBalance( dbxfer, xfer.xfer_fee );
+            }
         }
 
         dbxfer.execute( as );

@@ -130,7 +130,13 @@ CREATE TABLE limit_retail_stats (
     "retail_weekly_amt" amount NOT NULL DEFAULT '0',
     "retail_weekly_cnt" INTEGER NOT NULL DEFAULT 0,
     "retail_monthly_amt" amount NOT NULL DEFAULT '0',
-    "retail_monthly_cnt" INTEGER NOT NULL DEFAULT 0
+    "retail_monthly_cnt" INTEGER NOT NULL DEFAULT 0,
+    "preauth_daily_amt" amount NOT NULL DEFAULT '0',
+    "preauth_daily_cnt" INTEGER NOT NULL DEFAULT 0,
+    "preauth_weekly_amt" amount NOT NULL DEFAULT '0',
+    "preauth_weekly_cnt" INTEGER NOT NULL DEFAULT 0,
+    "preauth_monthly_amt" amount NOT NULL DEFAULT '0',
+    "preauth_monthly_cnt" INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE limit_deposits_stats (
@@ -230,7 +236,6 @@ CREATE TYPE xfer_type AS ENUM(
     'Purchase',
     'Refund',
     'PreAuth',
-    'ClearAuth',
     -- Gaming
     'Bet',
     'Win',

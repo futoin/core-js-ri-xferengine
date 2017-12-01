@@ -100,7 +100,13 @@ CREATE TABLE limit_retail_stats (
     "retail_weekly_amt" DECIMAL(22, 0) NOT NULL DEFAULT '0',
     "retail_weekly_cnt" INTEGER NOT NULL DEFAULT 0,
     "retail_monthly_amt" DECIMAL(22, 0) NOT NULL DEFAULT '0',
-    "retail_monthly_cnt" INTEGER NOT NULL DEFAULT 0
+    "retail_monthly_cnt" INTEGER NOT NULL DEFAULT 0,
+    "preauth_daily_amt" DECIMAL(22, 0) NOT NULL DEFAULT '0',
+    "preauth_daily_cnt" INTEGER NOT NULL DEFAULT 0,
+    "preauth_weekly_amt" DECIMAL(22, 0) NOT NULL DEFAULT '0',
+    "preauth_weekly_cnt" INTEGER NOT NULL DEFAULT 0,
+    "preauth_monthly_amt" DECIMAL(22, 0) NOT NULL DEFAULT '0',
+    "preauth_monthly_cnt" INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE limit_deposits_stats (
