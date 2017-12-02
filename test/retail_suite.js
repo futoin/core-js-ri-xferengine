@@ -945,5 +945,134 @@ module.exports = function( describe, it, vars ) {
             as.add( ( as ) => done() );
             as.execute();
         } );
+
+
+        it ( 'should process purchase using preauth over limits plus', function( done ) {
+            this.timeout( 5e3 );
+            as.add(
+                ( as ) => {
+                    const payments = ccm.iface( 'xfer.payments' );
+                    const retail = ccm.iface( 'xfer.retail' );
+
+                    for ( let i = 0; i < 2; ++i ) {
+                        as.add( ( as ) => as.state.test_name = `iter ${i}` );
+
+                        retail.preAuth( as,
+                            user_account,
+                            system_account,
+                            'I:EUR',
+                            '11.00',
+                            'OLP1',
+                            {},
+                            moment.utc().format()
+                        );
+                        as.add( ( as, { xfer_id, wait_user } ) => {
+                            expect( xfer_id ).to.be.ok;
+                            expect( wait_user ).to.be.equal( i === 0 );
+
+
+                            if ( i === 0 ) {
+                                checkBalance( as, user_account, '300.00', '11.00' );
+                                checkBalance( as, fee_account, '0.00' );
+                                checkBalance( as, system_account, '-300.00' );
+
+                                as.add( ( as ) => as.state.test_name = `On purchase #1 ${i}` );
+                                as.add( ( as ) => {
+                                    retail.purchase( as,
+                                        user_account,
+                                        system_account,
+                                        'I:EUR',
+                                        '12.00',
+                                        'OLP2',
+                                        {},
+                                        moment.utc().format(),
+                                        null,
+                                        xfer_id
+                                    );
+                                    as.add( ( as ) => as.error( 'Fail' ) );
+                                }, ( as, err ) => {
+                                    if ( err === 'UnavailablePreAuth' ) {
+                                        as.success();
+                                    }
+                                } );
+                            }
+
+                            retail.confirmPreAuth( as,
+                                xfer_id,
+                                user_account,
+                                system_account,
+                                'I:EUR',
+                                '11.00',
+                                moment.utc().format()
+                            );
+
+                            if ( i === 0 ) {
+                                checkBalance( as, user_account, '300.00', '11.00' );
+                                checkBalance( as, fee_account, '0.00' );
+                                checkBalance( as, system_account, '-300.00' );
+                            }
+
+                            retail.purchase( as,
+                                user_account,
+                                system_account,
+                                'I:EUR',
+                                '12.00',
+                                'OLP2',
+                                {},
+                                moment.utc().format(),
+                                null,
+                                xfer_id
+                            );
+
+                            as.add( ( as, { xfer_id, wait_user } ) => {
+                                expect( xfer_id ).to.be.ok;
+                                expect( wait_user ).to.be.equal( i === 0 );
+
+                                if ( i === 0 ) {
+                                    checkBalance( as, user_account, '288.00', '0.00' );
+                                    checkBalance( as, fee_account, '0.00' );
+                                    checkBalance( as, system_account, '-300.00' );
+                                }
+
+                                retail.confirmPurchase( as,
+                                    xfer_id,
+                                    user_account,
+                                    system_account,
+                                    'I:EUR',
+                                    '12.00',
+                                    moment.utc().format()
+                                );
+
+                                checkBalance( as, user_account, '288.00', '0.00' );
+                                checkBalance( as, fee_account, '0.00' );
+                                checkBalance( as, system_account, '-288.00' );
+                            } );
+                        } );
+                    }
+
+                    retail.cancelPurchase( as,
+                        user_account,
+                        system_account,
+                        'I:EUR',
+                        '12.00',
+                        'OLP2',
+                        {},
+                        moment.utc().format()
+                    );
+
+                    checkBalance( as, user_account, '300.00', '0.00' );
+                    checkBalance( as, fee_account, '0.00' );
+                    checkBalance( as, system_account, '-300.00' );
+                },
+                ( as, err ) => {
+                    console.log( as.state.test_name );
+                    console.log( err );
+                    console.log( as.state.error_info );
+                    done( as.state.last_exception || 'Fail' );
+                }
+            );
+            as.add( ( as ) => done() );
+            as.execute();
+        } );
     } );
 };

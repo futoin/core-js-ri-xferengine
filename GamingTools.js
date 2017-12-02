@@ -43,7 +43,7 @@ class GamingTools extends XferTools {
     }
 
     findAccounts( as, user_ext_id, currency, _info ) {
-        const db = this._ccm.db( 'xfer' );
+        const db = this.db;
 
         const q = db.select( DB_ACCOUNTS_VIEW )
             .where( {
@@ -78,7 +78,7 @@ class GamingTools extends XferTools {
     }
 
     getGameBalance( as, user_ext_id, currency, info ) {
-        const db = this._ccm.db( 'xfer' );
+        const db = this.db;
 
         db.select( DB_ACCOUNTS_VIEW )
             .where( {
@@ -136,7 +136,7 @@ class GamingTools extends XferTools {
 
     //-----------------------
     closeBonus( as, xfer ) {
-        const dbxfer = this._ccm.db( 'xfer' ).newXfer();
+        const dbxfer = this.db.newXfer();
 
         dbxfer.update( DB_ACCOUNTS_TABLE, { affected: 1 } )
             .set( 'rel_uuidb64', xfer.dst_account )
@@ -189,7 +189,7 @@ class GamingTools extends XferTools {
             }
         }
 
-        const db = this._ccm.db( 'xfer' );
+        const db = this.db;
         const dbxfer = db.newXfer();
         const helpers = db.helpers();
         const dec_places = bonus_accounts[0].dec_places;
@@ -291,7 +291,7 @@ class GamingTools extends XferTools {
     }
 
     clearReservedBet( as, xfer, rows=null ) {
-        const db = this._ccm.db( 'xfer' );
+        const db = this.db;
 
         if ( !rows ) {
             db.select( [ DB_RESERVATIONS_TABLE, 'R' ] )
@@ -567,7 +567,7 @@ class GamingTools extends XferTools {
     //-----------------------
 
     genRoundID( as, xfer, ext_round_id ) {
-        const db = this._ccm.db( 'xfer' );
+        const db = this.db;
 
         const ext_info = xfer.misc_data.info;
         ext_info.orig_round_id = ext_info.orig_round_id || ext_round_id;

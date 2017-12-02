@@ -181,6 +181,10 @@ class XferTools {
         this._domain = domain;
     }
 
+    get db() {
+        return this._ccm.db( 'xfer' );
+    }
+
     // Processing of Limits & Stats
     //-----------------------
 
@@ -426,7 +430,7 @@ class XferTools {
             }
 
             //---
-            this._ccm.db( 'xfer' )
+            this.db
                 .getPrepared( BY_EXT_ID, ( db ) => {
                     const q = db.select( DB_XFERS_TABLE );
                     q.where( 'ext_id', q.param( 'ext_id' ) );
@@ -434,7 +438,7 @@ class XferTools {
                 } )
                 .executeAssoc( as, { ext_id } );
         } else if ( xfer.id ) {
-            this._ccm.db( 'xfer' )
+            this.db
                 .getPrepared( BY_XFER_ID, ( db ) => {
                     const q = db.select( DB_XFERS_TABLE );
                     q.where( 'uuidb64', q.param( 'id' ) );
@@ -549,7 +553,7 @@ class XferTools {
         this._getAccountsInfo( as, xfer );
         this._convXferAmounts( as, xfer );
 
-        this._ccm.db( 'xfer' )
+        this.db
             .getPrepared( BY_FEE_ID, ( db ) => {
                 const q = db.select( DB_XFERS_TABLE );
                 q.where( 'uuidb64', q.param( 'uuidb64' ) );
@@ -597,7 +601,7 @@ class XferTools {
         this._convXferAmounts( as, fee_xfer );
         this._prepareTransit( as, fee_xfer );
 
-        this._ccm.db( 'xfer' )
+        this.db
             .getPrepared( BY_FEE_ID, ( db ) => {
                 const q = db.select( DB_XFERS_TABLE );
                 q.where( 'uuidb64', q.param( 'uuidb64' ) );
@@ -643,7 +647,7 @@ class XferTools {
     }
 
     _getAccountsInfo( as, xfer ) {
-        this._ccm.db( 'xfer' )
+        this.db
             .getPrepared( ACC_INFO, ( db ) => {
                 const q = db.select( DB_ACCOUNTS_VIEW );
                 q.where( 'uuidb64 IN', [
@@ -1585,7 +1589,7 @@ class XferTools {
     }
 
     _completeCancel( as, xfer ) {
-        const dbxfer = this._ccm.db( 'xfer' ).newXfer();
+        const dbxfer = this.db.newXfer();
 
         //---
         const xfer_fee = xfer.xfer_fee;
@@ -1617,7 +1621,7 @@ class XferTools {
     }
 
     _completeExtIn( as, xfer ) {
-        const dbxfer = this._ccm.db( 'xfer' ).newXfer();
+        const dbxfer = this.db.newXfer();
         this._preLockAccounts( dbxfer, xfer );
         this._decreaseBalance( dbxfer, xfer.in_xfer );
         this._completeXfer( dbxfer, xfer.in_xfer );
@@ -1661,7 +1665,7 @@ class XferTools {
     }
 
     _completeCancelExtIn( as, xfer ) {
-        const dbxfer = this._ccm.db( 'xfer' ).newXfer();
+        const dbxfer = this.db.newXfer();
 
         this._preLockAccounts( dbxfer, xfer );
 
@@ -1680,7 +1684,7 @@ class XferTools {
     }
 
     _completeExtOut( as, xfer ) {
-        const dbxfer = this._ccm.db( 'xfer' ).newXfer();
+        const dbxfer = this.db.newXfer();
 
         this._preLockAccounts( dbxfer, xfer );
 
@@ -1696,7 +1700,7 @@ class XferTools {
     }
 
     _completeCancelExtOut( as, xfer ) {
-        const dbxfer = this._ccm.db( 'xfer' ).newXfer();
+        const dbxfer = this.db.newXfer();
 
         this._preLockAccounts( dbxfer, xfer );
 
@@ -1732,7 +1736,7 @@ class XferTools {
     }
 
     _completeUser( as, xfer ) {
-        const dbxfer = this._ccm.db( 'xfer' ).newXfer();
+        const dbxfer = this.db.newXfer();
 
         if ( xfer.out_xfer ) {
             this._completeXfer( dbxfer, xfer, this.ST_WAIT_EXT_OUT );
@@ -1783,7 +1787,7 @@ class XferTools {
             }
         } );
 
-        const dbxfer = this._ccm.db( 'xfer' ).newXfer();
+        const dbxfer = this.db.newXfer();
 
         // Main logic
         as.add(
@@ -1871,7 +1875,7 @@ class XferTools {
             xfer.in_cancel = true;
         } );
 
-        const dbxfer = this._ccm.db( 'xfer' ).newXfer();
+        const dbxfer = this.db.newXfer();
 
         // Main logic
         as.add(
@@ -2100,7 +2104,7 @@ class XferTools {
     validatePeerRequest( as, holder, peer_account, rel_account ) {
         // NOTE: it's NOT security, it's only consistency check !!!
 
-        const dbxfer = this._ccm.db( 'xfer' ).newXfer();
+        const dbxfer = this.db.newXfer();
         // 1. peer_account belongs to holder and External
         dbxfer.select( DB_ACCOUNTS_VIEW, { selected: 1 } )
             .where( 'uuidb64', peer_account )
