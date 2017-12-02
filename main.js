@@ -37,6 +37,7 @@ const main = {
     DB_UUID_HISTORY_TABLE : 'uuid_history',
     DB_XFERS_TABLE : 'xfers',
     DB_RESERVATIONS_TABLE : 'reservations',
+    DB_REFUNDS_TABLE : 'refunds',
     DB_ROUNDS_TABLE : 'rounds',
     DB_ROUND_XFERS_TABLE : 'round_xfers',
     limitStatsTable: ( domain ) => `limit_${domain.toLowerCase()}_stats`,

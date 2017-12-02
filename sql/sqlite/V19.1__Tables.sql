@@ -240,3 +240,9 @@ CREATE TABLE round_xfers (
     "ext_id" VARCHAR(128) NOT NULL,
     PRIMARY KEY ("round_id", "ext_id")
 );
+
+CREATE TABLE refunds (
+    "purchase_id" CHARACTER(22) NOT NULL REFERENCES xfers(uuidb64),
+    "refund_id" CHARACTER(22) NOT NULL REFERENCES xfers(uuidb64),
+    PRIMARY KEY ("purchase_id", "refund_id")
+);

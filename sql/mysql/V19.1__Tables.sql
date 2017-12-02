@@ -325,3 +325,14 @@ CREATE TABLE round_xfers (
 )
     ENGINE=InnoDB
     CHARACTER SET 'utf8';
+    
+-- Retail
+CREATE TABLE refunds (
+    `_id` BIGINT UNSIGNED NOT NULL auto_increment PRIMARY KEY,
+    `purchase_id` CHARACTER(22) NOT NULL REFERENCES xfers(uuidb64),
+    `refund_id` CHARACTER(22) NOT NULL REFERENCES xfers(uuidb64),
+    UNIQUE purchase_refund (`purchase_id`, `refund_id`)
+)
+    ENGINE=InnoDB
+    CHARACTER SET 'utf8';
+

@@ -303,3 +303,10 @@ CREATE TABLE round_xfers (
     "ext_id" ext_xfer_id NOT NULL,
     PRIMARY KEY ("round_id", "ext_id")
 );
+    
+-- Retail
+CREATE TABLE refunds (
+    "purchase_id" uuid_b64 NOT NULL REFERENCES xfers(uuidb64),
+    "refund_id" uuid_b64 NOT NULL REFERENCES xfers(uuidb64),
+    PRIMARY KEY ("purchase_id", "refund_id")
+);

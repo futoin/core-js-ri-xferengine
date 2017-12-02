@@ -1074,5 +1074,183 @@ module.exports = function( describe, it, vars ) {
             as.add( ( as ) => done() );
             as.execute();
         } );
+
+        it ( 'should process refunds', function( done ) {
+            this.timeout( 5e3 );
+            as.add(
+                ( as ) => {
+                    const payments = ccm.iface( 'xfer.payments' );
+                    const retail = ccm.iface( 'xfer.retail' );
+
+                    for ( let i = 0; i < 2; ++i ) {
+                        as.add( ( as ) => as.state.test_name = `iter ${i}` );
+
+                        retail.purchase( as,
+                            user_account,
+                            system_account,
+                            'I:EUR',
+                            '10.00',
+                            'RFD1',
+                            {},
+                            moment.utc().format()
+                        );
+                        as.add( ( as, { xfer_id, wait_user } ) => {
+                            expect( xfer_id ).to.be.ok;
+                            expect( wait_user ).to.be.false;
+
+                            retail.refund( as,
+                                xfer_id,
+                                moment.utc().format(),
+                                user_account,
+                                system_account,
+                                'I:EUR',
+                                '2.00',
+                                'RFD2',
+                                {},
+                                moment.utc().format()
+                            );
+
+                            if ( i === 0 ) {
+                                checkBalance( as, user_account, '292.00', '0.00' );
+                                checkBalance( as, fee_account, '0.00' );
+                                checkBalance( as, system_account, '-292.00' );
+
+                                as.add(
+                                    ( as ) => {
+                                        retail.refund( as,
+                                            xfer_id,
+                                            moment.utc().format(),
+                                            user_account,
+                                            system_account,
+                                            'I:EUR',
+                                            '8.01',
+                                            'RFD3',
+                                            {},
+                                            moment.utc().format()
+                                        );
+                                        as.add( ( as ) => as.error( 'Fail' ) );
+                                    },
+                                    ( as, err ) => {
+                                        if ( err === 'AmountTooLarge' ) {
+                                            as.success();
+                                        }
+                                    }
+                                );
+
+                                as.add(
+                                    ( as ) => {
+                                        retail.refund( as,
+                                            '0123456789012345678901',
+                                            moment.utc().format(),
+                                            user_account,
+                                            system_account,
+                                            'I:EUR',
+                                            '8.00',
+                                            'RFD4',
+                                            {},
+                                            moment.utc().format()
+                                        );
+                                        as.add( ( as ) => as.error( 'Fail' ) );
+                                    },
+                                    ( as, err ) => {
+                                        if ( err === 'PurchaseNotFound' ) {
+                                            as.success();
+                                        }
+                                    }
+                                );
+
+                                as.add(
+                                    ( as ) => {
+                                        retail.refund( as,
+                                            xfer_id,
+                                            moment.utc().format(),
+                                            fee_account,
+                                            system_account,
+                                            'I:EUR',
+                                            '8.00',
+                                            'RFD4',
+                                            {},
+                                            moment.utc().format()
+                                        );
+                                        as.add( ( as ) => as.error( 'Fail' ) );
+                                    },
+                                    ( as, err ) => {
+                                        if ( err === 'OriginalMismatch' ) {
+                                            as.success();
+                                        }
+                                    }
+                                );
+
+                                as.add(
+                                    ( as ) => {
+                                        retail.refund( as,
+                                            xfer_id,
+                                            moment.utc().format(),
+                                            user_account,
+                                            system_account,
+                                            'I:EUR',
+                                            '8.00',
+                                            'RFD5',
+                                            {},
+                                            moment.utc( '2017-01-01' ).format()
+                                        );
+                                        as.add( ( as ) => as.error( 'Fail' ) );
+                                    },
+                                    ( as, err ) => {
+                                        if ( err === 'OriginalTooOld' ) {
+                                            as.success();
+                                        }
+                                    }
+                                );
+                            }
+
+                            retail.refund( as,
+                                xfer_id,
+                                moment.utc().format(),
+                                user_account,
+                                system_account,
+                                'I:EUR',
+                                '8.00',
+                                'RFD6',
+                                {},
+                                moment.utc().format()
+                            );
+                        } );
+                    }
+
+                    as.add(
+                        ( as ) => {
+                            retail.cancelPurchase( as,
+                                user_account,
+                                system_account,
+                                'I:EUR',
+                                '10.00',
+                                'RFD1',
+                                {},
+                                moment.utc().format()
+                            );
+                            as.add( ( as ) => as.error( 'Fail' ) );
+                        },
+                        ( as, err ) => {
+                            if ( err === 'AlreadyRefunded' ) {
+                                as.success();
+                            }
+                        }
+                    );
+
+                    checkBalance( as, user_account, '300.00', '0.00' );
+                    checkBalance( as, fee_account, '0.00' );
+                    checkBalance( as, system_account, '-300.00' );
+                },
+                ( as, err ) => {
+                    console.log( as.state.test_name );
+                    console.log( err );
+                    console.log( as.state.error_info );
+                    done( as.state.last_exception || 'Fail' );
+                }
+            );
+            as.add( ( as ) => done() );
+            as.execute();
+        } );
     } );
 };

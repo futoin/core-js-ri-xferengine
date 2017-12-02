@@ -155,9 +155,9 @@ class RetailService extends BaseService {
             ext_id: p.ext_id ? xt.makeExtId( p.rel_account, p.ext_id ) : null,
             orig_ts: p.orig_ts,
             misc_data: {
-                info: p.ext_info || {},
-                rel_purchase: p.ref_id,
-                rel_purchase_ts: p.purchase_ts,
+                info: p.ext_info,
+                purchase_id: p.purchase_id,
+                purchase_ts: p.purchase_ts,
             },
         };
 
