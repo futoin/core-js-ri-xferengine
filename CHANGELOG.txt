@@ -6,6 +6,7 @@ NEW: full Retail domain support
 NEW: AmountTools.isLess()/isLessOrEqual()/isGreater()/isGreaterOrEqual()
 NEW: futoin.xfer.generic implementation
 NEW: futoin.xfer.message face/service support
+NEW: auto-disable of holder on "limithit" & "failure" limits hit
 
 === 0.8.1 (2017-11-29) ===
 FIXED: to add ACCT_BAL events for bonus-related operations

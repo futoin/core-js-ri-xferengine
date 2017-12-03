@@ -128,6 +128,19 @@ module.exports = function( describe, it, vars ) {
                         preauth_min_amt : "1.00",
                     }, false );
 
+                    xferlim.setLimits( as, 'RetailUserTest', 'Misc', 'I:EUR', {
+                        message_daily_cnt : 1000,
+                        failure_daily_cnt : 1000,
+                        limithit_daily_cnt : 1000,
+                        message_weekly_cnt : 1000,
+                        failure_weekly_cnt : 1000,
+                        limithit_weekly_cnt : 1000,
+                        message_monthly_cnt : 1000,
+                        failure_monthly_cnt : 1000,
+                        limithit_monthly_cnt : 1000,
+                    }, false, false );
+
+
                     xferlim.addLimitGroup( as, 'RetailSystemTest' );
 
                     xferlim.setLimits( as, 'RetailSystemTest', 'Payments', 'I:EUR', {

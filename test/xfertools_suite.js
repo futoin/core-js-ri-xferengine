@@ -313,6 +313,17 @@ module.exports = function( describe, it, vars ) {
                         inbound_monthly_cnt : 2,
                         outbound_min_amt : "0",
                     }, false, false );
+                    xferlim.setLimits( as, 'XferTools', 'Misc', 'I:USD', {
+                        message_daily_cnt : 1000,
+                        failure_daily_cnt : 1000,
+                        limithit_daily_cnt : 1000,
+                        message_weekly_cnt : 1000,
+                        failure_weekly_cnt : 1000,
+                        limithit_weekly_cnt : 1000,
+                        message_monthly_cnt : 1000,
+                        failure_monthly_cnt : 1000,
+                        limithit_monthly_cnt : 1000,
+                    }, false, false );
 
                     const xferacct = ccm.iface( 'xfer.accounts' );
                     xferacct.addAccountHolder( as, 'XferToolsP', 'XferTools', true, true, {}, {} );
@@ -478,6 +489,81 @@ module.exports = function( describe, it, vars ) {
             const xt = new XferTools( ccm, 'Retail' );
         } );
 
+
+        it ( 'should disable holder on limits hit limit', function( done ) {
+            as.add(
+                ( as ) => {
+                    const xt = new XferTools( ccm, 'Payments' );
+                    const xferlim = ccm.iface( 'xfer.limits' );
+
+                    //--
+                    xferlim.addLimitGroup( as, 'AutoDisable' );
+                    xferlim.setLimits( as, 'AutoDisable', 'Misc', 'I:EUR', {
+                        message_daily_cnt : 1,
+                        failure_daily_cnt : 1,
+                        limithit_daily_cnt : 1,
+                        message_weekly_cnt : 1,
+                        failure_weekly_cnt : 1,
+                        limithit_weekly_cnt : 1,
+                        message_monthly_cnt : 1,
+                        failure_monthly_cnt : 1,
+                        limithit_monthly_cnt : 1,
+                    }, false, false );
+
+                    const xferacct = ccm.iface( 'xfer.accounts' );
+
+                    xferacct.addAccountHolder( as, 'AutoDisable', 'AutoDisable', true, true, {}, {} );
+                    as.add( ( as, holder ) => {
+                        const call_limits = ( as ) => {
+                            const dbxfer = ccm.db( 'xfer' ).newXfer();
+                            xt._processLimits(
+                                as,
+                                dbxfer,
+                                'Misc',
+                                holder,
+                                null,
+                                {
+                                    message_daily_cnt: 1,
+                                    message_weekly_cnt: 1,
+                                    message_monthly_cnt: 1,
+                                }
+                            );
+                            as.add( ( as ) => dbxfer.execute( as ) );
+                        };
+
+                        // First no limit
+                        call_limits( as );
+
+                        //--
+                        // Second just limit
+                        // Third - limit + limithit limit -> auto-disable
+                        for ( let i = 0; i < 2; ++i ) {
+                            as.add(
+                                ( as ) => {
+                                    call_limits( as );
+                                    as.add( ( as ) => as.error( 'Fail' ) );
+                                },
+                                ( as, err ) => {
+                                    if ( err === 'LimitReject' ) {
+                                        as.success();
+                                    }
+                                }
+                            );
+
+                            xferacct.getAccountHolder( as, holder );
+                            as.add( ( as, info ) => expect( info.enabled ).to.be.equal( i === 0 ) );
+                        }
+                    } );
+                },
+                ( as, err ) => {
+                    console.log( err );
+                    console.log( as.state.error_info );
+                    done( as.state.last_exception || 'Fail' );
+                }
+            );
+            as.add( ( as ) => done() );
+            as.execute();
+        } );
 
         let system_account;
         let first_account;

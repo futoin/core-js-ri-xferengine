@@ -120,6 +120,17 @@ module.exports = function( describe, it, vars ) {
                         deposit_min_amt : "0.10",
                         withdrawal_min_amt : "0.01",
                     }, false );
+                    xferlim.setLimits( as, 'DepositTest', 'Misc', 'I:EUR', {
+                        message_daily_cnt : 1000,
+                        failure_daily_cnt : 1000,
+                        limithit_daily_cnt : 1000,
+                        message_weekly_cnt : 1000,
+                        failure_weekly_cnt : 1000,
+                        limithit_weekly_cnt : 1000,
+                        message_monthly_cnt : 1000,
+                        failure_monthly_cnt : 1000,
+                        limithit_monthly_cnt : 1000,
+                    }, false, false );
 
                     xferlim.addLimitGroup( as, 'DepositSystemTest' );
 

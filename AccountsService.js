@@ -540,8 +540,12 @@ class AccountsService extends BaseService {
                 }
 
                 if ( !row ) {
-                    const sel_currency_id = db
-                        .select( [ DB_ACCOUNT_HOLDERS_TABLE, 'A' ] )
+                    const xfer = db.newXfer();
+                    //---
+                    const sel_currency_q = xfer.select(
+                        [ DB_ACCOUNT_HOLDERS_TABLE, 'A' ],
+                        { selected: 1 }
+                    )
                         .innerJoin( [ DB_DOMAIN_LIMITS_TABLE, 'L' ],
                             'L.lim_id = A.group_id' )
                         .get( 'L.currency_id' )
@@ -549,14 +553,14 @@ class AccountsService extends BaseService {
                             'A.uuidb64': holder,
                             'L.lim_domain' : domain,
                         } );
-
-                    const xfer = db.newXfer();
-                    xfer.insert( table )
-                        .set( {
-                            holder,
-                            currency_id: sel_currency_id,
-                            stats_date: today,
-                        } );
+                    //---
+                    const insert_q = xfer.insert( table );
+                    insert_q.set( {
+                        holder,
+                        currency_id: insert_q.backref( sel_currency_q, 'currency_id' ),
+                        stats_date: today,
+                    } );
+                    //---
                     xfer.select( [ table, 'S' ],
                         { selected: 1,
                             result: true } )
@@ -564,7 +568,7 @@ class AccountsService extends BaseService {
                             'C.id = S.currency_id' )
                         .get( [ 'S.*', 'C.code', 'C.dec_places' ] )
                         .where( 'holder', holder );
-
+                    //---
                     xfer.executeAssoc( as );
 
                     as.add( ( as, res ) => {
@@ -579,6 +583,11 @@ class AccountsService extends BaseService {
             ( as, err ) => {
                 if ( err === 'Duplicate' ) {
                     as.success( 'Select' );
+                }
+
+                if ( err === 'XferCondition' ) {
+                    as.error( 'InternalError',
+                        `Missing ${domain} limits config for ${holder}` );
                 }
             }
         );

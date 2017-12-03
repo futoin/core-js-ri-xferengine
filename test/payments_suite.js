@@ -101,6 +101,17 @@ module.exports = function( describe, it, vars ) {
                         inbound_monthly_cnt : 1000,
                         outbound_min_amt : "0.01",
                     }, false );
+                    xferlim.setLimits( as, 'PaymentUserTest', 'Misc', 'I:EUR', {
+                        message_daily_cnt : 1000,
+                        failure_daily_cnt : 1000,
+                        limithit_daily_cnt : 1000,
+                        message_weekly_cnt : 1000,
+                        failure_weekly_cnt : 1000,
+                        limithit_weekly_cnt : 1000,
+                        message_monthly_cnt : 1000,
+                        failure_monthly_cnt : 1000,
+                        limithit_monthly_cnt : 1000,
+                    }, false, false );
 
                     xferlim.addLimitGroup( as, 'PaymentSystemTest' );
 

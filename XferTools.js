@@ -258,7 +258,42 @@ class XferTools {
             const new_stats = AmountTools.prepNewStats( stats, deltas );
 
             if ( !AmountTools.checkStatsLimit( new_stats, lim_hard ) ) {
-                as.error( 'LimitReject' );
+                if ( 'limithit_daily_cnt' in deltas ) {
+                    // inner loop
+                    as.error( 'LimitReject' );
+                }
+
+                as.add(
+                    ( as ) => {
+                        if ( 'failure_daily_cnt' in deltas ) {
+                            // no need to update limit-hit on failure limit
+                            as.error( 'LimitReject' );
+                        }
+
+                        const dbxfer2 = this.db.newXfer();
+
+                        this._processLimits(
+                            as, dbxfer2, 'Misc', holder, null,
+                            {
+                                limithit_daily_cnt: 1,
+                                limithit_weekly_cnt: 1,
+                                limithit_monthly_cnt: 1,
+                            }
+                        );
+
+                        as.add( ( as ) => dbxfer2.execute( as ) );
+                    },
+                    ( as, err ) => {
+                        if ( err === 'LimitReject' ) {
+                            acctface.call( as, 'updateAccountHolder', {
+                                id: holder,
+                                enabled: false,
+                            } );
+                        }
+                    }
+                );
+                as.add( ( as ) => as.error( 'LimitReject' ) );
+                return;
             }
 
             const do_check = lim_check && !AmountTools.checkStatsLimit( new_stats, lim_check );
@@ -1759,7 +1794,14 @@ class XferTools {
         dbxfer.execute( as );
     }
 
-    _handleError( as, err, evt_type, xfer ) {
+    _handleError( as, err, evt_type, xfer, holder=null ) {
+        if ( ( err === 'DisabledAccount' ) &&
+             ( evt_type === 'XFER_ERR' )
+        ) {
+            // minimize impact on DB
+            return;
+        }
+
         const error_info = as.state.error_info;
         const async_stack = as.state.async_stack;
         this._ccm.iface( EVTGEN_ALIAS ).addEvent(
@@ -1768,9 +1810,33 @@ class XferTools {
             {
                 err: err,
                 info: error_info,
-                xfer: xfer,
+                [evt_type === 'MSG_ERR' ? 'msg' : 'xfer']: xfer,
             }
         );
+
+        if ( holder ) {
+            as.add(
+                ( as ) => {
+                    const dbxfer = this.db.newXfer();
+                    this._processLimits(
+                        as, dbxfer, 'Misc', holder, null, {
+                            failure_daily_cnt: 1,
+                            failure_weekly_cnt: 1,
+                            failure_monthly_cnt: 1,
+                        }
+                    );
+                    as.add( ( as ) => dbxfer.execute( as ) );
+                },
+                ( as, err ) => {
+                    if ( err === 'LimitReject' ) {
+                        // ignore
+                        as.success();
+                    }
+                }
+            );
+        }
+
+        //---
         as.add(
             ( as ) => as.error( err, error_info ),
             ( as, err ) => {
@@ -1817,13 +1883,17 @@ class XferTools {
         // Process external logic
         as.add( ( as ) => {
             if ( xfer.in_xfer && ( xfer.in_xfer.status === this.ST_WAIT_EXT_IN ) ) {
-                if ( xfer.extra_fee && ( xfer.extra_fee.status !== this.ST_DONE ) ) {
+                const extra_fee = xfer.extra_fee;
+
+                if ( extra_fee && ( extra_fee.status !== this.ST_DONE ) ) {
                     as.add(
                         ( as ) => {
-                            as.add( ( as ) => this._rawExtIn( as, xfer.extra_fee ) );
-                            as.add( ( as ) => this._completeExtIn( as, xfer.extra_fee ) );
+                            as.add( ( as ) => this._rawExtIn( as, extra_fee ) );
+                            as.add( ( as ) => this._completeExtIn( as, extra_fee ) );
                         },
-                        ( as, err ) => this._handleError( as, err, 'XFER_EXTERR', xfer.extra_fee )
+                        ( as, err ) => this._handleError(
+                            as, err, 'XFER_EXTERR',
+                            extra_fee, extra_fee.src_info.holder )
                     );
                 }
 
@@ -1832,7 +1902,8 @@ class XferTools {
                         as.add( ( as ) => this._domainExtIn( as, xfer ) );
                         as.add( ( as ) => this._completeExtIn( as, xfer ) );
                     },
-                    ( as, err ) => this._handleError( as, err, 'XFER_EXTERR', xfer )
+                    ( as, err ) => this._handleError(
+                        as, err, 'XFER_EXTERR', xfer, xfer.src_info.holder )
                 );
             }
 
@@ -1853,7 +1924,8 @@ class XferTools {
                         as.add( ( as ) => this._completeExtOut( as, xfer ) );
                     }
                 },
-                ( as, err ) => this._handleError( as, err, 'XFER_EXTERR', xfer )
+                ( as, err ) => this._handleError(
+                    as, err, 'XFER_EXTERR', xfer, xfer.dst_info.holder )
             );
 
             as.add( ( as ) => this._domainPostExternal( as, xfer ) );
@@ -1919,12 +1991,13 @@ class XferTools {
 
                         as.add( ( as ) => this._completeCancelExtOut( as, xfer ) );
                     },
-                    ( as, err ) => this._handleError( as, err, 'XFER_EXTERR', xfer )
+                    ( as, err ) => this._handleError(
+                        as, err, 'XFER_EXTERR', xfer, xfer.dst_info.holder )
                 );
             } else if ( xfer.status !== this.ST_CANCELED ) {
                 as.add(
                     ( as ) => this._completeCancel( as, xfer ),
-                    ( as, err ) => this._handleError( as, err, 'XFER_EXTERR', xfer )
+                    ( as, err ) => this._handleError( as, err, 'XFER_ERR', xfer )
                 );
             }
 
@@ -1935,7 +2008,8 @@ class XferTools {
                         as.add( ( as ) => this._domainCancelExtIn( as, xfer ) );
                         as.add( ( as ) => this._completeCancelExtIn( as, xfer ) );
                     },
-                    ( as, err ) => this._handleError( as, err, 'XFER_EXTERR', xfer )
+                    ( as, err ) => this._handleError(
+                        as, err, 'XFER_EXTERR', xfer, xfer.src_info.holder )
                 );
             }
 
@@ -1945,7 +2019,7 @@ class XferTools {
                 if ( extra_fee.status != this.ST_CANCELED ) {
                     as.add(
                         ( as ) => this._completeCancel( as, extra_fee ),
-                        ( as, err ) => this._handleError( as, err, 'XFER_EXTERR', extra_fee )
+                        ( as, err ) => this._handleError( as, err, 'XFER_ERR', extra_fee )
                     );
                 }
 
@@ -1955,7 +2029,8 @@ class XferTools {
                             as.add( ( as ) => this._rawCancelExtIn( as, extra_fee ) );
                             as.add( ( as ) => this._completeCancelExtIn( as, extra_fee ) );
                         },
-                        ( as, err ) => this._handleError( as, err, 'XFER_EXTERR', extra_fee )
+                        ( as, err ) => this._handleError(
+                            as, err, 'XFER_EXTERR', extra_fee, extra_fee.src_info.holder )
                     );
                 }
             }

@@ -169,10 +169,15 @@ class MessageTools extends XferTools {
                 as.error( 'XferError', 'Invalid message data' );
             }
         } );
-        as.add( ( as ) => this._checkExistingMessage( as, msg ) );
-        as.add( ( as ) => this._checkRelId( as, msg ) );
-        as.add( ( as ) => this._recordMessage( as, msg ) );
-        as.add( ( as ) => as.success( msg.id ) );
+        as.add(
+            ( as ) => {
+                as.add( ( as ) => this._checkExistingMessage( as, msg ) );
+                as.add( ( as ) => this._checkRelId( as, msg ) );
+                as.add( ( as ) => this._recordMessage( as, msg ) );
+                as.add( ( as ) => as.success( msg.id ) );
+            },
+            ( as, err ) => this._handleError( as, err, 'MSG_ERR', msg, msg.sender )
+        );
     }
 }
 
