@@ -144,6 +144,15 @@ The concept is described in FutoIn specification: [FTN19: FutoIn Interface - Tra
 <dt><a href="#LimitsService">LimitsService</a></dt>
 <dd><p>Limits Service</p>
 </dd>
+<dt><a href="#MessageFace">MessageFace</a></dt>
+<dd><p>Message Face</p>
+</dd>
+<dt><a href="#MessageService">MessageService</a></dt>
+<dd><p>Message Service</p>
+</dd>
+<dt><a href="#MessageTools">MessageTools</a></dt>
+<dd><p>XferTools with focus on Message processing</p>
+</dd>
 <dt><a href="#PaymentFace">PaymentFace</a></dt>
 <dd><p>Payments Face</p>
 </dd>
@@ -545,6 +554,41 @@ Register futoin.xfers.limits interface with Executor
 | executor | <code>Executor</code> | executor instance |
 | options | <code>object</code> | implementation defined options |
 
+<a name="MessageFace"></a>
+
+## MessageFace
+Message Face
+
+**Kind**: global class  
+<a name="MessageFace.register"></a>
+
+### MessageFace.register(as, ccm, name, endpoint, [credentials], [options])
+CCM registration helper
+
+**Kind**: static method of [<code>MessageFace</code>](#MessageFace)  
+
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| as | <code>AsyncSteps</code> |  | steps interface |
+| ccm | <code>AdvancedCCM</code> |  | CCM instance |
+| name | <code>string</code> |  | CCM registration name |
+| endpoint | <code>\*</code> |  | see AdvancedCCM#register |
+| [credentials] | <code>\*</code> | <code></code> | see AdvancedCCM#register |
+| [options] | <code>object</code> | <code>{}</code> | interface options |
+| [options.version] | <code>string</code> | <code>&quot;&lt;latest&gt;&quot;</code> | interface version to use |
+
+<a name="MessageService"></a>
+
+## MessageService
+Message Service
+
+**Kind**: global class  
+<a name="MessageTools"></a>
+
+## MessageTools
+XferTools with focus on Message processing
+
+**Kind**: global class  
 <a name="PaymentFace"></a>
 
 ## PaymentFace

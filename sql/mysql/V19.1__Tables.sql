@@ -335,4 +335,18 @@ CREATE TABLE refunds (
 )
     ENGINE=InnoDB
     CHARACTER SET 'utf8';
+    
+-- Messages
+CREATE TABLE messages (
+    `_id` BIGINT UNSIGNED NOT NULL auto_increment PRIMARY KEY,
+    `uuidb64` CHARACTER(22) NOT NULL UNIQUE,
+    `ext_id` VARCHAR(128) NOT NULL UNIQUE,
+    `sender`  CHARACTER(22) NOT NULL REFERENCES account_holders(uuidb64),
+    `recipient`  CHARACTER(22) NULL REFERENCES account_holders(uuidb64),
+    `rel_uuidb64` CHARACTER(22) NULL REFERENCES messages(uuidb64),
+    `data` TEXT NOT NULL,
+    `created` TIMESTAMP NOT NULL
+)
+    ENGINE=InnoDB
+    CHARACTER SET 'utf8';
 

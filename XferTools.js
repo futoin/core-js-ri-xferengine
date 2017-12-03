@@ -211,7 +211,7 @@ class XferTools {
             as.add( ( as, res ) => {
                 currency_info = res;
 
-                if ( currency !== delta_currency ) {
+                if ( delta_currency && ( currency !== delta_currency ) ) {
                     // expect stats limits in "base currency"
                     currface.getExRate( as, currency, delta_currency );
 

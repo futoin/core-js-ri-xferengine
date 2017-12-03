@@ -47,6 +47,7 @@ module.exports = function( describe, it, vars ) {
     require( './currency_suite' )( describe, it, vars );
     require( './limits_suite' )( describe, it, vars );
     require( './accounts_suite' )( describe, it, vars );
+    require( './message_suite' )( describe, it, vars );
     require( './xfertools_suite' )( describe, it, vars );
     require( './deposits_suite' )( describe, it, vars );
     require( './payments_suite' )( describe, it, vars );

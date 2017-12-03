@@ -1,0 +1,58 @@
+{
+  "iface": "futoin.xfer.message",
+  "version": "1.0",
+  "ftn3rev": "1.7",
+  "imports": [
+    "futoin.ping:1.0",
+    "futoin.xfer.types:1.0"
+  ],
+  "types": {
+    "ExtMessageID": "XferExtID",
+    "MessageID": "XferID",
+    "MessageData": "map"
+  },
+  "funcs": {
+    "userSend": {
+      "params": {
+        "sender": "AccountHolderID",
+        "ext_id": "ExtMessageID",
+        "orig_ts": "XferTimestamp",
+        "data": "MessageData",
+        "rel_id": {
+          "type": "MessageID",
+          "default": null
+        }
+      },
+      "result": "MessageID",
+      "throws": [
+        "LimitReject",
+        "OriginalTooOld",
+        "OriginalMismatch",
+        "UnknownRelID"
+      ]
+    },
+    "systemSend": {
+      "params": {
+        "sender": "AccountHolderID",
+        "recipient": "AccountHolderID",
+        "ext_id": "ExtMessageID",
+        "orig_ts": "XferTimestamp",
+        "data": "MessageData",
+        "rel_id": {
+          "type": "MessageID",
+          "default": null
+        }
+      },
+      "result": "MessageID",
+      "throws": [
+        "LimitReject",
+        "OriginalTooOld",
+        "OriginalMismatch",
+        "UnknownRelID"
+      ]
+    }
+  },
+  "requires": [
+    "SecureChannel"
+  ]
+}

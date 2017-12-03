@@ -310,3 +310,14 @@ CREATE TABLE refunds (
     "refund_id" uuid_b64 NOT NULL REFERENCES xfers(uuidb64),
     PRIMARY KEY ("purchase_id", "refund_id")
 );
+    
+-- Messages
+CREATE TABLE messages (
+    "uuidb64" CHARACTER(22) NOT NULL PRIMARY KEY,
+    "ext_id" VARCHAR(128) NOT NULL UNIQUE,
+    "sender"  CHARACTER(22) NOT NULL REFERENCES account_holders(uuidb64),
+    "recipient"  CHARACTER(22) NULL REFERENCES account_holders(uuidb64),
+    "rel_uuidb64" CHARACTER(22) NULL REFERENCES messages(uuidb64),
+    "data" TEXT NOT NULL,
+    "created" TIMESTAMP NOT NULL
+);

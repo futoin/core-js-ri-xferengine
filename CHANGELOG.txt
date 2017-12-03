@@ -4,7 +4,8 @@ FIXED: xfer fee balance decrease time with WaitUser state
 FIXED: xfer fee processing on cancel
 NEW: full Retail domain support
 NEW: AmountTools.isLess()/isLessOrEqual()/isGreater()/isGreaterOrEqual()
-NEW: GenericFace/GenericService implementation
+NEW: futoin.xfer.generic implementation
+NEW: futoin.xfer.message face/service support
 
 === 0.8.1 (2017-11-29) ===
 FIXED: to add ACCT_BAL events for bonus-related operations
