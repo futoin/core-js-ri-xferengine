@@ -853,7 +853,8 @@ class XferTools {
         // Check if enough balance, if not Transit account
         if ( xfer.dst_info.acct_type !== this.ACCT_TRANSIT &&
                 xfer.dst_info.acct_type !== this.ACCT_SYSTEM &&
-                ( xfer.status !== this.ST_CANCELED )
+                ( xfer.status !== this.ST_CANCELED ) &&
+                ! xfer.force
         ) {
             let cancel_amt = xfer.dst_amount;
 

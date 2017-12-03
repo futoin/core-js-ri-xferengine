@@ -52,5 +52,6 @@ module.exports = function( describe, it, vars ) {
     require( './payments_suite' )( describe, it, vars );
     require( './gaming_suite' )( describe, it, vars );
     require( './retail_suite' )( describe, it, vars );
+    require( './generic_suite' )( describe, it, vars );
     require( './peerxfer_suite' )( describe, it, vars );
 };
