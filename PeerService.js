@@ -157,6 +157,8 @@ class PeerService extends BaseService {
         const xt = this._xferTools( reqinfo );
         const xfer = this._processParams( as, xt, reqinfo );
 
+        xfer.misc_data.cancel_reason = reqinfo.params().reason;
+
         xt.processCancel( as, xfer );
 
         as.add( ( as ) => reqinfo.result( true ) );

@@ -147,6 +147,18 @@ module.exports = function( describe, it, vars ) {
                         withdrawal_min_amt : "0.10",
                     }, false, false );
 
+                    xferlim.setLimits( as, 'PeerTest', 'Misc', 'I:EUR', {
+                        message_daily_cnt : 1000,
+                        failure_daily_cnt : 1000,
+                        limithit_daily_cnt : 1000,
+                        message_weekly_cnt : 1000,
+                        failure_weekly_cnt : 1000,
+                        limithit_weekly_cnt : 1000,
+                        message_monthly_cnt : 1000,
+                        failure_monthly_cnt : 1000,
+                        limithit_monthly_cnt : 1000,
+                    }, false, false );
+
                     xferlim.addLimitGroup( as, 'PeerUserTest' );
 
                     xferlim.setLimits( as, 'PeerUserTest', 'Payments', 'I:EUR', {

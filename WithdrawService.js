@@ -106,6 +106,7 @@ class WithdrawService extends BaseService {
         const xfer = this._params2xfer( xt, reqinfo );
 
         xfer.reject_mode = true;
+        xfer.misc_data.cancel_reason = 'Rejected by user';
 
         xt.processCancel( as, xfer );
         as.add( ( as ) => reqinfo.result( true ) );

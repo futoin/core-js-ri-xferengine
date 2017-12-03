@@ -1620,6 +1620,11 @@ class XferTools {
                 this._createXfer( as, dbxfer, xfer );
             } else {
                 this._checkCancel( as, xfer );
+
+                if ( xfer.status !== this.ST_CANCELED ) {
+                    // record cancel_reason
+                    this._updateMiscData( dbxfer, xfer );
+                }
             }
         } );
     }
@@ -2062,6 +2067,13 @@ class XferTools {
         };
     }
 
+    _peerXferCancelData( xfer, to_external ) {
+        return Object.assign(
+            this._peerXferData( xfer, to_external ),
+            { reason: xfer.misc_data.cancel_reason || "Unknown" }
+        );
+    }
+
     _rawExtIn( as, xfer ) {
         this._ccm.xferIface( as, 'futoin.xfer.peer', xfer.src_account );
         as.add( ( as, iface ) => iface.call( as, 'rawXfer', this._peerXferData( xfer, true ) ) );
@@ -2069,7 +2081,7 @@ class XferTools {
 
     _rawCancelExtIn( as, xfer ) {
         this._ccm.xferIface( as, 'futoin.xfer.peer', xfer.src_account );
-        as.add( ( as, iface ) => iface.call( as, 'cancelXfer', this._peerXferData( xfer, true ) ) );
+        as.add( ( as, iface ) => iface.call( as, 'cancelXfer', this._peerXferCancelData( xfer, true ) ) );
     }
 
     _rawExtOut( as, xfer ) {
@@ -2079,7 +2091,7 @@ class XferTools {
 
     _rawCancelExtOut( as, xfer ) {
         this._ccm.xferIface( as, 'futoin.xfer.peer', xfer.dst_account );
-        as.add( ( as, iface ) => iface.call( as, 'cancelXfer', this._peerXferData( xfer, false ) ) );
+        as.add( ( as, iface ) => iface.call( as, 'cancelXfer', this._peerXferCancelData( xfer, false ) ) );
     }
 
     _domainDbStep( as, _dbxfer, _xfer ) {

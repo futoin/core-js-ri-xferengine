@@ -253,7 +253,10 @@ module.exports = function( describe, it, vars ) {
                         user_account,
                         'I:EUR',
                         '10.00',
-                        moment.utc().format()
+                        moment.utc().format(),
+                        null,
+                        null,
+                        "Some reason"
                     );
                     checkBalanceAll( as, '9.00', '1.70', '-10.70' );
 
@@ -265,7 +268,10 @@ module.exports = function( describe, it, vars ) {
                         system_account,
                         'I:EUR',
                         '9.00',
-                        moment.utc().format()
+                        moment.utc().format(),
+                        null,
+                        null,
+                        "Some reason"
                     );
                     checkBalanceAll( as, '0.00', '1.70', '-1.70' );
 
@@ -277,7 +283,10 @@ module.exports = function( describe, it, vars ) {
                         fee_account,
                         'I:EUR',
                         '0.70',
-                        moment.utc().format()
+                        moment.utc().format(),
+                        null,
+                        null,
+                        "Some reason"
                     );
                     checkBalanceAll( as, '0.00', '1.00', '-1.00' );
 
@@ -289,7 +298,10 @@ module.exports = function( describe, it, vars ) {
                         fee_account,
                         'I:EUR',
                         '1.00',
-                        moment.utc().format()
+                        moment.utc().format(),
+                        null,
+                        null,
+                        "Some reason"
                     );
                     checkBalanceAll( as, '0.00', '0.00', '0.00' );
                 },

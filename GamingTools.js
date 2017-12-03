@@ -720,6 +720,7 @@ class GamingTools extends XferTools {
             round_id: xfer.misc_data.round_id,
             ext_info: xfer.misc_data.info,
             orig_ts: xfer.misc_data.orig_ts,
+            reason: xfer.misc_data.cancel_reason,
         } ) );
         as.add( ( as, { balance } ) => {
             // add local amounts

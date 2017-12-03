@@ -9,7 +9,27 @@
   "types": {
     "ExtMessageID": "XferExtID",
     "MessageID": "XferID",
-    "MessageData": "map"
+    "MessageSubject": {
+      "type": "string",
+      "minlen": 1,
+      "maxlen": 64
+    },
+    "MessageBody": {
+      "type": "string",
+      "minlen": 1,
+      "maxlen": 3000
+    },
+    "MessageData": {
+      "type": "map",
+      "fields": {
+        "subject": "MessageSubject",
+        "body": "MessageBody",
+        "other": {
+          "type": "map",
+          "optional": true
+        }
+      }
+    }
   },
   "funcs": {
     "userSend": {

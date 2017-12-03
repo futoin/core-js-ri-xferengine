@@ -114,6 +114,8 @@ class RetailService extends BaseService {
         const xt = this._xferTools( reqinfo );
         const xfer = this._params2xfer( xt, reqinfo );
 
+        xfer.misc_data.cancel_reason = reqinfo.params().reason;
+
         xt.processCancel( as, xfer );
         as.add( ( as ) => reqinfo.result( true ) );
     }
@@ -133,6 +135,7 @@ class RetailService extends BaseService {
         const xfer = this._params2xfer( xt, reqinfo );
 
         xfer.reject_mode = true;
+        xfer.misc_data.cancel_reason = 'Rejected by user';
 
         xt.processCancel( as, xfer );
         as.add( ( as ) => reqinfo.result( true ) );
@@ -214,6 +217,7 @@ class RetailService extends BaseService {
 
         xfer.preauth = true;
         xfer.reject_mode = true;
+        xfer.misc_data.cancel_reason = 'Rejected by user';
 
         xt.processCancel( as, xfer );
         as.add( ( as ) => reqinfo.result( true ) );

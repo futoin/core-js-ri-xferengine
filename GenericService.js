@@ -133,6 +133,9 @@ class GenericService extends BaseService {
             amount: p.amount,
             currency: p.currency,
             orig_ts: p.orig_ts,
+            misc_data: {
+                cancel_reason: p.reason,
+            },
             xfer_fee,
             extra_fee,
             force: true,

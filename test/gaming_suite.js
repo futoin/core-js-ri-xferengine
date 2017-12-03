@@ -196,6 +196,18 @@ module.exports = function( describe, it, vars ) {
                         bet_min_amt : "0.10",
                     }, false, false );
 
+                    xferlim.setLimits( as, 'GamingUserTest', 'Misc', 'I:EUR', {
+                        message_daily_cnt : 1000,
+                        failure_daily_cnt : 1000,
+                        limithit_daily_cnt : 1000,
+                        message_weekly_cnt : 1000,
+                        failure_weekly_cnt : 1000,
+                        limithit_weekly_cnt : 1000,
+                        message_monthly_cnt : 1000,
+                        failure_monthly_cnt : 1000,
+                        limithit_monthly_cnt : 1000,
+                    }, false, false );
+
                     xferlim.addLimitGroup( as, 'GamingSystemTest' );
 
                     xferlim.setLimits( as, 'GamingSystemTest', 'Payments', 'I:EUR', {
@@ -212,6 +224,18 @@ module.exports = function( describe, it, vars ) {
                         inbound_monthly_amt :"100000.00",
                         inbound_monthly_cnt : 1000,
                         outbound_min_amt : "0.01",
+                    }, false, false );
+
+                    xferlim.setLimits( as, 'GamingSystemTest', 'Misc', 'I:EUR', {
+                        message_daily_cnt : 1000,
+                        failure_daily_cnt : 1000,
+                        limithit_daily_cnt : 1000,
+                        message_weekly_cnt : 1000,
+                        failure_weekly_cnt : 1000,
+                        limithit_weekly_cnt : 1000,
+                        message_monthly_cnt : 1000,
+                        failure_monthly_cnt : 1000,
+                        limithit_monthly_cnt : 1000,
                     }, false, false );
 
 
@@ -570,7 +594,8 @@ module.exports = function( describe, it, vars ) {
                             'G1',
                             'B1',
                             {},
-                            moment.utc().format()
+                            moment.utc().format(),
+                            "Some reason"
                         );
                         as.add( ( as, { balance } ) => {
                             expect( balance ) .to.equal( i ? '53.40' : '48.40' );
@@ -722,7 +747,8 @@ module.exports = function( describe, it, vars ) {
                             'G1',
                             'B1',
                             {},
-                            moment.utc().format()
+                            moment.utc().format(),
+                            "Some reason"
                         );
                         as.add( ( as, { balance } ) => {
                             expect( balance ) .to.equal( i ? '53.40' : '48.40' );
@@ -930,7 +956,8 @@ module.exports = function( describe, it, vars ) {
                             'BG1',
                             'BB1',
                             {},
-                            moment.utc().format()
+                            moment.utc().format(),
+                            "Some reason"
                         );
                         as.add( ( as, { balance } ) => {
                             expect( balance ) .to.equal( i ? '7.60' : '2.60' );
@@ -1076,7 +1103,8 @@ module.exports = function( describe, it, vars ) {
                             'BG2',
                             'BB21',
                             {},
-                            moment.utc().format()
+                            moment.utc().format(),
+                            "Some reason"
                         );
                         as.add( ( as, { balance } ) => {
                             expect( balance ) .to.oneOf( i ? end_user_balance : post_cancel_balance );

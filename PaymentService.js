@@ -143,6 +143,7 @@ class PaymentService extends BaseService {
         const xfer = this._param2outbound( xt, reqinfo );
 
         xfer.reject_mode = true;
+        xfer.misc_data.cancel_reason = 'Rejected by user';
 
         xt.processCancel( as, xfer );
         as.add( ( as ) => reqinfo.result( true ) );

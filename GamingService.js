@@ -111,6 +111,7 @@ class GamingService extends BaseService {
                         p.ext_info
                     ),
                     orig_ts: p.orig_ts,
+                    cancel_reason: p.reason,
                 },
             };
 

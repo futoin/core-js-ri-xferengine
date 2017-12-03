@@ -462,7 +462,9 @@ module.exports = function( describe, it, vars ) {
                             '1.00',
                             'T1',
                             {},
-                            moment.utc().format()
+                            moment.utc().format(),
+                            null,
+                            "Some reason"
                         );
 
                         as.add( ( as ) => as.state.test_name = `Cancel purchase #2 ${i}` );
@@ -479,7 +481,8 @@ module.exports = function( describe, it, vars ) {
                                 currency: 'I:EUR',
                                 amount: '0.01',
                                 reason: 'System fee',
-                            }
+                            },
+                            "Some reason"
                         );
 
                         as.add( ( as ) => as.state.test_name = `Cancel purchase #3 ${i}` );
@@ -496,7 +499,8 @@ module.exports = function( describe, it, vars ) {
                                 currency: 'I:EUR',
                                 amount: '0.01',
                                 reason: 'System fee',
-                            }
+                            },
+                            "Some reason"
                         );
 
                         checkBalance( as, user_account, '300.00' );
@@ -826,7 +830,9 @@ module.exports = function( describe, it, vars ) {
                         '9.00',
                         'BL2',
                         {},
-                        moment.utc().format()
+                        moment.utc().format(),
+                        null,
+                        "Some reason"
                     );
 
                     checkBalance( as, user_account, '300.00', '0.00' );
@@ -941,7 +947,9 @@ module.exports = function( describe, it, vars ) {
                         '9.00',
                         'OL2',
                         {},
-                        moment.utc().format()
+                        moment.utc().format(),
+                        null,
+                        "Some reason"
                     );
 
                     checkBalance( as, user_account, '300.00', '0.00' );
@@ -1070,7 +1078,9 @@ module.exports = function( describe, it, vars ) {
                         '12.00',
                         'OLP2',
                         {},
-                        moment.utc().format()
+                        moment.utc().format(),
+                        null,
+                        "Some reason"
                     );
 
                     checkBalance( as, user_account, '300.00', '0.00' );
@@ -1240,7 +1250,9 @@ module.exports = function( describe, it, vars ) {
                                 '10.00',
                                 'RFD1',
                                 {},
-                                moment.utc().format()
+                                moment.utc().format(),
+                                null,
+                                "Some reason"
                             );
                             as.add( ( as ) => as.error( 'Fail' ) );
                         },
