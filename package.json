@@ -29,7 +29,7 @@
   },
   "devDependencies": {
     "chai": "^4.1.2",
-    "eslint": "^4.12.0",
+    "eslint": "^4.12.1",
     "futoin-asyncsteps": "^1.9.1",
     "futoin-database": "^1.7.1",
     "futoin-eventstream": "^0.9.8",
@@ -54,8 +54,8 @@
   "optionalDependencies": {},
   "peerDependencies": {
     "futoin-asyncsteps": "^1.9.1",
-    "futoin-database": "^1.7.0",
-    "futoin-eventstream": "^0.9.6",
+    "futoin-database": "^1.7.1",
+    "futoin-eventstream": "^0.9.8",
     "futoin-executor": "^1.5.8",
     "futoin-invoker": "^1.5.7"
   }
