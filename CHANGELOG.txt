@@ -1,5 +1,5 @@
 
-=== (next) ===
+=== 0.9.1 (2017-12-04) ===
 NEW: implemented XferCCM dynamic peer support
 
 === 0.9.0 (2017-12-03) ===
