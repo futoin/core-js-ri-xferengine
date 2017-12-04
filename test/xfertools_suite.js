@@ -1437,13 +1437,15 @@ module.exports = function( describe, it, vars ) {
 
                     tmpxt._domainDbStep();
 
+                    const fake_account = '0123456789012345678901';
+
                     as.add(
                         ( as ) => {
-                            tmpxt._domainExtIn( as, { in_xfer: {} } );
+                            tmpxt._domainExtIn( as, { in_xfer: { src_account: fake_account } } );
                             as.add( ( as ) => as.error( 'Fail' ) );
                         },
                         ( as, err ) => {
-                            if ( err === 'NotImplemented' ) {
+                            if ( err === 'UnknownAccountID' ) {
                                 as.success();
                             }
                         }
@@ -1451,11 +1453,11 @@ module.exports = function( describe, it, vars ) {
 
                     as.add(
                         ( as ) => {
-                            tmpxt._domainExtOut( as, { out_xfer: {} } );
+                            tmpxt._domainExtOut( as, { out_xfer: { dst_account: fake_account } } );
                             as.add( ( as ) => as.error( 'Fail' ) );
                         },
                         ( as, err ) => {
-                            if ( err === 'NotImplemented' ) {
+                            if ( err === 'UnknownAccountID' ) {
                                 as.success();
                             }
                         }
@@ -1463,11 +1465,11 @@ module.exports = function( describe, it, vars ) {
 
                     as.add(
                         ( as ) => {
-                            tmpxt._domainCancelExtIn( as, { in_xfer: {} } );
+                            tmpxt._domainCancelExtIn( as, { in_xfer: { src_account: fake_account } } );
                             as.add( ( as ) => as.error( 'Fail' ) );
                         },
                         ( as, err ) => {
-                            if ( err === 'NotImplemented' ) {
+                            if ( err === 'UnknownAccountID' ) {
                                 as.success();
                             }
                         }
@@ -1475,11 +1477,11 @@ module.exports = function( describe, it, vars ) {
 
                     as.add(
                         ( as ) => {
-                            tmpxt._domainCancelExtOut( as, { out_xfer: {} } );
+                            tmpxt._domainCancelExtOut( as, { out_xfer: { dst_account: fake_account } } );
                             as.add( ( as ) => as.error( 'Fail' ) );
                         },
                         ( as, err ) => {
-                            if ( err === 'NotImplemented' ) {
+                            if ( err === 'UnknownAccountID' ) {
                                 as.success();
                             }
                         }

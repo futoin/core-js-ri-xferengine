@@ -83,20 +83,44 @@ module.exports = function( describe, it, vars ) {
 
                     BasicAuthFace.register( as, ccm, executor );
 
-                    // mock
-                    ccm.xferIface = function( as, iface, rel_id ) {
-                        if ( peer_external ) {
-                            expect( rel_id ).to.equal( peer_external );
-                        }
 
-                        switch ( iface ) {
-                        case 'futoin.xfer.deposit': iface = 'xfer.deposits'; break;
-                        case 'futoin.xfer.withdraw': iface = 'xfer.withdrawals'; break;
-                        case 'futoin.xfer.peer': iface = 'xfer.peer1'; break;
+                    ccm.registerOnDemand(
+                        DepositFace.IFACE_NAME,
+                        'mock',
+                        ( as, ccm, alias, api ) => {
+                            DepositFace.register(
+                                as,
+                                ccm,
+                                alias,
+                                executor
+                            );
                         }
-
-                        as.add( ( as ) => as.success( this.iface( iface ) ) );
-                    };
+                    );
+                    ccm.registerOnDemand(
+                        PeerFace.IFACE_NAME,
+                        'mock',
+                        ( as, ccm, alias, api ) => {
+                            PeerFace.register(
+                                as,
+                                ccm,
+                                alias,
+                                executor,
+                                api.credentials
+                            );
+                        }
+                    );
+                    ccm.registerOnDemand(
+                        WithdrawFace.IFACE_NAME,
+                        'mock',
+                        ( as, ccm, alias, api ) => {
+                            WithdrawFace.register(
+                                as,
+                                ccm,
+                                alias,
+                                executor
+                            );
+                        }
+                    );
                 },
                 ( as, err ) => {
                     console.log( err );
@@ -251,7 +275,23 @@ module.exports = function( describe, it, vars ) {
 
                     //---
                     as.add( ( as ) => as.state.test_name = 'External accounts on peers' );
-                    xferacct.addAccountHolder( as, 'peer1', 'PeerTest', true, true, {}, {} );
+                    xferacct.addAccountHolder(
+                        as, 'peer1', 'PeerTest', true, true, {},
+                        {
+                            api: {
+                                'futoin.xfer.deposit': {
+                                    flavour: 'mock',
+                                },
+                                'futoin.xfer.withdraw': {
+                                    flavour: 'mock',
+                                },
+                                'futoin.xfer.peer': {
+                                    flavour: 'mock',
+                                    credentials: 'peer2:pwd',
+                                },
+                            },
+                        }
+                    );
                     as.add( ( as, holder ) => {
                         let first_id;
                         xt.pairPeer( as, holder, 'I:EUR' );

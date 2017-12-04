@@ -359,6 +359,7 @@ class AccountsService extends BaseService {
     _accountInfo( raw ) {
         return {
             id: raw.uuidb64,
+            holder: raw.holder,
             type: raw.acct_type,
             currency: raw.code,
             alias: raw.acct_alias,

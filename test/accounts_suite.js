@@ -644,6 +644,7 @@ module.exports = function( describe, it, vars ) {
                                 xferacct.getAccount( as, res[0].id );
                                 as.add( ( as, res ) => expect( res ).to.eql( {
                                     id: last_id,
+                                    holder,
                                     type: 'External',
                                     currency: 'I:EUR',
                                     alias: 'Buffer2',
@@ -710,6 +711,7 @@ module.exports = function( describe, it, vars ) {
                                 xferacct.getAccount( as, res[0].id );
                                 as.add( ( as, res ) => expect( res ).to.eql( {
                                     id: last_id,
+                                    holder,
                                     type: 'Regular',
                                     currency: 'I:EUR',
                                     alias: 'Overdraft',
@@ -739,6 +741,7 @@ module.exports = function( describe, it, vars ) {
                                 xferacct.getAccount( as, res[0].id );
                                 as.add( ( as, res ) => expect( res ).to.eql( {
                                     id: last_id,
+                                    holder,
                                     type: 'Regular',
                                     currency: 'I:EUR',
                                     alias: 'Overdraft',

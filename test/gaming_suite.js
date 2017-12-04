@@ -84,7 +84,6 @@ module.exports = function( describe, it, vars ) {
                     BonusFace.register( as, ccm, 'xfer.bonus', executor );
 
                     PeerService.register( as, executor );
-                    PeerFace.register( as, ccm, 'xfer.peer1', executor, 'game_peer2:pwd' );
 
                     //
                     const inner_executor = new Executor( ccm );
@@ -131,20 +130,32 @@ module.exports = function( describe, it, vars ) {
                     }
 
                     FakeGamingService.register( as, inner_executor );
-                    GamingFace.register( as, ccm, 'xfer.gaming2', inner_executor );
 
-                    ccm.xferIface = function( as, iface, rel_id ) {
-                        if ( peer1_external ) {
-                            expect( rel_id ).to.equal( peer1_external );
+                    ccm.registerOnDemand(
+                        GamingFace.IFACE_NAME,
+                        'mock',
+                        ( as, ccm, alias, api ) => {
+                            GamingFace.register(
+                                as,
+                                ccm,
+                                alias,
+                                inner_executor
+                            );
                         }
-
-                        switch ( iface ) {
-                        case 'futoin.xfer.gaming': iface = 'xfer.gaming2'; break;
-                        case 'futoin.xfer.peer': iface = 'xfer.peer1'; break;
+                    );
+                    ccm.registerOnDemand(
+                        PeerFace.IFACE_NAME,
+                        'mock',
+                        ( as, ccm, alias, api ) => {
+                            PeerFace.register(
+                                as,
+                                ccm,
+                                alias,
+                                executor,
+                                api.credentials
+                            );
                         }
-
-                        as.add( ( as ) => as.success( this.iface( iface ) ) );
-                    };
+                    );
                 },
                 ( as, err ) => {
                     console.log( err );
@@ -242,7 +253,20 @@ module.exports = function( describe, it, vars ) {
                     //--
                     const xferacct = ccm.iface( 'xfer.accounts' );
 
-                    xferacct.addAccountHolder( as, 'game_peer1', 'GamingSystemTest', true, true, {}, {} );
+                    xferacct.addAccountHolder(
+                        as, 'game_peer1', 'GamingSystemTest', true, true, {},
+                        {
+                            api: {
+                                'futoin.xfer.gaming': {
+                                    flavour: 'mock',
+                                },
+                                'futoin.xfer.peer': {
+                                    flavour: 'mock',
+                                    credentials: 'game_peer2:pwd',
+                                },
+                            },
+                        }
+                    );
                     as.add( ( as, holder ) => {
                         const xt = new XferTools( ccm, 'Payments' );
 

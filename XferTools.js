@@ -1809,6 +1809,8 @@ class XferTools {
 
         const error_info = as.state.error_info;
         const async_stack = as.state.async_stack;
+        as.state.orig_last_exception = as.state.last_exception;
+
         this._ccm.iface( EVTGEN_ALIAS ).addEvent(
             as,
             evt_type,

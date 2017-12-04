@@ -1,4 +1,7 @@
 
+=== (next) ===
+NEW: implemented XferCCM dynamic peer support
+
 === 0.9.0 (2017-12-03) ===
 BREAKING CHANGE: rejection reason support (cancel* interface change)
 BREAKING CHANGE: auto-disable of holder on "limithit" & "failure" limits hit (original design)
