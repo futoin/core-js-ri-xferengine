@@ -32,9 +32,9 @@
     "eslint": "^4.12.1",
     "futoin-asyncsteps": "^1.9.1",
     "futoin-database": "^1.7.1",
-    "futoin-eventstream": "^0.9.8",
-    "futoin-executor": "^1.5.8",
-    "futoin-invoker": "^1.5.7",
+    "futoin-eventstream": "^0.9.91",
+    "futoin-executor": "^1.6.1",
+    "futoin-invoker": "^1.6.0",
     "grunt": "^1.0.1",
     "grunt-eslint": "^20.1.0",
     "grunt-jsdoc-to-markdown": "^3.0.0",
@@ -55,8 +55,8 @@
   "peerDependencies": {
     "futoin-asyncsteps": "^1.9.1",
     "futoin-database": "^1.7.1",
-    "futoin-eventstream": "^0.9.8",
-    "futoin-executor": "^1.5.8",
-    "futoin-invoker": "^1.5.7"
+    "futoin-eventstream": "^0.9.91",
+    "futoin-executor": "^1.6.1",
+    "futoin-invoker": "^1.6.0"
   }
 }

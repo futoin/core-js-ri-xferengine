@@ -419,12 +419,12 @@ command-line-tool@^0.7.0:
     typical "^2.6.0"
 
 command-line-usage@^4.0.0:
-  version "4.0.1"
-  resolved "https://registry.yarnpkg.com/command-line-usage/-/command-line-usage-4.0.1.tgz#d89cf16c8ae71e8e8a6e6aabae1652af76ff644e"
+  version "4.0.2"
+  resolved "https://registry.yarnpkg.com/command-line-usage/-/command-line-usage-4.0.2.tgz#9ded6dd993187db02f4e3031e212d65fdb9e7127"
   dependencies:
     ansi-escape-sequences "^4.0.0"
     array-back "^2.0.0"
-    table-layout "^0.4.1"
+    table-layout "^0.4.2"
     typical "^2.6.1"
 
 commander@2.11.0:
@@ -920,15 +920,15 @@ futoin-database@^1.7.1:
     pg "^7.4.0"
     sqlite3 "^3.1.13"
 
-futoin-eventstream@^0.9.8:
-  version "0.9.8"
-  resolved "https://registry.yarnpkg.com/futoin-eventstream/-/futoin-eventstream-0.9.8.tgz#d38c7a04f68f07c1ea80e10ecde24b62def96f26"
+futoin-eventstream@^0.9.91:
+  version "0.9.91"
+  resolved "https://registry.yarnpkg.com/futoin-eventstream/-/futoin-eventstream-0.9.91.tgz#dca5068b7f122f9a661f995ef26280bf0692b848"
   dependencies:
     event-emitter "^0.3.5"
 
-futoin-executor@^1.5.8:
-  version "1.5.8"
-  resolved "https://registry.yarnpkg.com/futoin-executor/-/futoin-executor-1.5.8.tgz#faf18e45518957a5a879ec13361d46cc1ef9d746"
+futoin-executor@^1.6.1:
+  version "1.6.1"
+  resolved "https://registry.yarnpkg.com/futoin-executor/-/futoin-executor-1.6.1.tgz#bdf16d21259a77e9508e8c7e80e12d802efa9e1f"
   dependencies:
     cookies "^0.7.1"
     detect-node "^2.0.3"
@@ -937,9 +937,9 @@ futoin-executor@^1.5.8:
     lodash "^4.17.4"
     performance-now "^2.1.0"
 
-futoin-invoker@^1.5.7:
-  version "1.5.7"
-  resolved "https://registry.yarnpkg.com/futoin-invoker/-/futoin-invoker-1.5.7.tgz#06bb0db3abc54d7c67bce608982af7c5b6dfa81a"
+futoin-invoker@^1.6.0:
+  version "1.6.0"
+  resolved "https://registry.yarnpkg.com/futoin-invoker/-/futoin-invoker-1.6.0.tgz#01b64cef8e3c8216aa7758e6c5f7936b0bc91abd"
   dependencies:
     agentkeepalive "^3.3.0"
     detect-node "^2.0.3"
@@ -2361,7 +2361,7 @@ supports-color@^4.0.0:
   dependencies:
     has-flag "^2.0.0"
 
-table-layout@^0.4.1:
+table-layout@^0.4.2:
   version "0.4.2"
   resolved "https://registry.yarnpkg.com/table-layout/-/table-layout-0.4.2.tgz#10e9043c142a1e2d155da7257e478f0ef4981786"
   dependencies:
