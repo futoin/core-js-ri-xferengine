@@ -1,5 +1,5 @@
 
-=== (next) ===
+=== 0.9.3 (2017-12-15) ===
 FIXED: DB schema to be compatible with strict MySQL 5.7+
 
 === 0.9.2 (2017-12-15) ===
