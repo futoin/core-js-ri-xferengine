@@ -5,9 +5,6 @@ const expect = require( 'chai' ).expect;
 const moment = require( 'moment' );
 
 const Executor = require( 'futoin-executor/Executor' );
-const GenFace = require( 'futoin-eventstream/GenFace' );
-const DBGenFace = require( 'futoin-eventstream/DBGenFace' );
-const DBGenService = require( 'futoin-eventstream/DBGenService' );
 const SpecTools = require( 'futoin-invoker/SpecTools' );
 const $as = require( 'futoin-asyncsteps' );
 
@@ -23,30 +20,12 @@ module.exports = function( describe, it, vars ) {
     } );
 
     describe( 'XferTools', function() {
-        const LimitsFace = require( '../LimitsFace' );
-        const LimitsService = require( '../LimitsService' );
-        const CurrencyInfoFace = require( '../Currency/InfoFace' );
-        const CurrencyInfoService = require( '../Currency/InfoService' );
-        const CurrencyManageFace = require( '../Currency/ManageFace' );
-        const CurrencyManageService = require( '../Currency/ManageService' );
-
-        const AccountsFace = require( '../AccountsFace' );
-        const AccountsService = require( '../AccountsService' );
-
         beforeEach( 'xfertools', function() {
             as.add(
                 ( as ) => {
-                    CurrencyManageService.register( as, executor );
-                    CurrencyManageFace.register( as, ccm, 'currency.manage', executor );
-
-                    CurrencyInfoService.register( as, executor );
-                    CurrencyInfoFace.register( as, ccm, 'currency.info', executor );
-
-                    LimitsService.register( as, executor );
-                    LimitsFace.register( as, ccm, 'xfer.limits', executor );
-
-                    AccountsService.register( as, executor );
-                    AccountsFace.register( as, ccm, 'xfer.accounts', executor );
+                    ccm.unRegister( 'xfer.evtgen' );
+                    executor = new Executor( ccm );
+                    ccm.registerServices( as, executor );
                 },
                 ( as, err ) => {
                     console.log( err );

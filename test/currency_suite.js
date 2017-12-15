@@ -4,9 +4,6 @@ const expect = require( 'chai' ).expect;
 const moment = require( 'moment' );
 
 const Executor = require( 'futoin-executor/Executor' );
-const GenFace = require( 'futoin-eventstream/GenFace' );
-const DBGenFace = require( 'futoin-eventstream/DBGenFace' );
-const DBGenService = require( 'futoin-eventstream/DBGenService' );
 
 module.exports = function( describe, it, vars ) {
     let as;
@@ -20,18 +17,10 @@ module.exports = function( describe, it, vars ) {
     } );
 
     describe( 'Currency', function() {
-        const ManageFace = require( '../Currency/ManageFace' );
-        const InfoFace = require( '../Currency/InfoFace' );
-        const ManageService = require( '../Currency/ManageService' );
-        const InfoService = require( '../Currency/InfoService' );
-
         beforeEach( 'currency', function() {
             as.add(
                 ( as ) => {
-                    ManageService.register( as, executor );
-                    InfoService.register( as, executor );
-                    ManageFace.register( as, ccm, 'currency.manage', executor );
-                    InfoFace.register( as, ccm, 'currency.info', executor );
+                    ccm.registerCurrencyServices( as, executor );
                 },
                 ( as, err ) => {
                     console.log( err );
@@ -285,10 +274,19 @@ module.exports = function( describe, it, vars ) {
                     as.add(
                         ( as ) => {
                             as.state.test_name = 'DBGenFace';
-                            ccm.unRegister( 'xfer.evtgen' );
-                            const tmpexec = new Executor( ccm );
-                            GenFace.register( as, ccm, 'xfer.evtgen', executor );
-                            ManageService.register( as, tmpexec );
+
+                            const XferCCM = require( '../XferCCM' );
+                            const tmpccm = new XferCCM();
+                            const tmpexec = new Executor( tmpccm );
+
+                            const L2Face = require( 'futoin-database/L2Face' );
+                            L2Face.register( as, tmpccm, '#db.xfer',
+                                ccm._iface_info[ '#db.xfer' ].endpoint );
+
+                            const GenFace = require( 'futoin-eventstream/GenFace' );
+                            GenFace.register( as, tmpccm, 'xfer.evtgen', executor );
+
+                            tmpccm.registerCurrencyServices( as, tmpexec );
                             as.add( ( as ) => as.error( 'Fail' ) );
                         },
                         ( as, err ) => {

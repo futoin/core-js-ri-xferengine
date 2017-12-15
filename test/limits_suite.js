@@ -4,9 +4,6 @@ const expect = require( 'chai' ).expect;
 const moment = require( 'moment' );
 
 const Executor = require( 'futoin-executor/Executor' );
-const GenFace = require( 'futoin-eventstream/GenFace' );
-const DBGenFace = require( 'futoin-eventstream/DBGenFace' );
-const DBGenService = require( 'futoin-eventstream/DBGenService' );
 
 module.exports = function( describe, it, vars ) {
     let as;
@@ -22,14 +19,11 @@ module.exports = function( describe, it, vars ) {
     describe( 'Limits', function() {
         const LimitsFace = require( '../LimitsFace' );
         const LimitsService = require( '../LimitsService' );
-        const InfoFace = require( '../Currency/InfoFace' );
-        const InfoService = require( '../Currency/InfoService' );
 
         beforeEach( 'currency', function() {
             as.add(
                 ( as ) => {
-                    InfoService.register( as, executor );
-                    InfoFace.register( as, ccm, 'currency.info', executor );
+                    ccm.registerCurrencyServices( as, executor );
 
                     LimitsService.register( as, executor );
                     LimitsFace.register( as, ccm, 'xfer.limits', executor );

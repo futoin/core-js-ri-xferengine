@@ -774,6 +774,116 @@ Withdrawals Service
 Special CCM implementation for XferCore
 
 **Kind**: global class  
+
+* [XferCCM](#XferCCM)
+    * [.registerServices(as, executor)](#XferCCM+registerServices)
+    * [.registerEventServices(as, executor)](#XferCCM+registerEventServices)
+    * [.registerCurrencyServices(as, executor)](#XferCCM+registerCurrencyServices)
+    * [.registerLimitServices(as, executor)](#XferCCM+registerLimitServices)
+    * [.registerAccountServices(as, executor)](#XferCCM+registerAccountServices)
+    * [.makeManualAlias(iface, key)](#XferCCM+makeManualAlias) ⇒ <code>string</code>
+    * [.registerOnDemand(iface, flavour, callback)](#XferCCM+registerOnDemand)
+    * [.xferIface(as, iface, account)](#XferCCM+xferIface)
+
+<a name="XferCCM+registerServices"></a>
+
+### xferCCM.registerServices(as, executor)
+Register all services required for operation
+
+**Kind**: instance method of [<code>XferCCM</code>](#XferCCM)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| as | <code>AsyncSteps</code> | async step interface |
+| executor | <code>Executor</code> | internal protected executor |
+
+<a name="XferCCM+registerEventServices"></a>
+
+### xferCCM.registerEventServices(as, executor)
+Register event services required for operation
+
+**Kind**: instance method of [<code>XferCCM</code>](#XferCCM)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| as | <code>AsyncSteps</code> | async step interface |
+| executor | <code>Executor</code> | internal protected executor |
+
+<a name="XferCCM+registerCurrencyServices"></a>
+
+### xferCCM.registerCurrencyServices(as, executor)
+Register currency services required for operation
+
+**Kind**: instance method of [<code>XferCCM</code>](#XferCCM)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| as | <code>AsyncSteps</code> | async step interface |
+| executor | <code>Executor</code> | internal protected executor |
+
+<a name="XferCCM+registerLimitServices"></a>
+
+### xferCCM.registerLimitServices(as, executor)
+Register limit services required for operation
+
+**Kind**: instance method of [<code>XferCCM</code>](#XferCCM)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| as | <code>AsyncSteps</code> | async step interface |
+| executor | <code>Executor</code> | internal protected executor |
+
+<a name="XferCCM+registerAccountServices"></a>
+
+### xferCCM.registerAccountServices(as, executor)
+Register account services required for operation
+
+**Kind**: instance method of [<code>XferCCM</code>](#XferCCM)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| as | <code>AsyncSteps</code> | async step interface |
+| executor | <code>Executor</code> | internal protected executor |
+
+<a name="XferCCM+makeManualAlias"></a>
+
+### xferCCM.makeManualAlias(iface, key) ⇒ <code>string</code>
+Get manual alias for specific iface & key combination
+
+**Kind**: instance method of [<code>XferCCM</code>](#XferCCM)  
+**Returns**: <code>string</code> - - manual key to be used with registerOnDemand()  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| iface | <code>string</code> | interface identifier |
+| key | <code>string</code> | arbitrary key, typically account # |
+
+<a name="XferCCM+registerOnDemand"></a>
+
+### xferCCM.registerOnDemand(iface, flavour, callback)
+Register callback for on-demand interface creation
+
+**Kind**: instance method of [<code>XferCCM</code>](#XferCCM)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| iface | <code>string</code> | full iface identifier |
+| flavour | <code>string</code> | a type of interface implementation |
+| callback | <code>callable</code> | callback to register interface |
+
+<a name="XferCCM+xferIface"></a>
+
+### xferCCM.xferIface(as, iface, account)
+Get interface with on-demand logic
+
+**Kind**: instance method of [<code>XferCCM</code>](#XferCCM)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| as | <code>AsyncSteps</code> | async step interface |
+| iface | <code>string</code> | full iface identifier |
+| account | <code>string</code> | related account ID |
+
 <a name="CurrencyCacheInfoFace"></a>
 
 ## CurrencyCacheInfoFace

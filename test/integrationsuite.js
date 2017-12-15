@@ -5,9 +5,6 @@ const expect = require( 'chai' ).expect;
 const moment = require( 'moment' );
 
 const Executor = require( 'futoin-executor/Executor' );
-const GenFace = require( 'futoin-eventstream/GenFace' );
-const DBGenFace = require( 'futoin-eventstream/DBGenFace' );
-const DBGenService = require( 'futoin-eventstream/DBGenService' );
 
 module.exports = function( describe, it, vars ) {
     let as;
@@ -33,8 +30,7 @@ module.exports = function( describe, it, vars ) {
         as.add(
             ( as ) => {
                 ccm.alias( '#db.xfer', '#db.evt' );
-                DBGenService.register( as, executor );
-                DBGenFace.register( as, ccm, 'xfer.evtgen', executor );
+                ccm.registerEventServices( as, executor );
             },
             ( as, err ) => {
                 console.log( err );

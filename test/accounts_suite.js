@@ -4,9 +4,6 @@ const expect = require( 'chai' ).expect;
 const moment = require( 'moment' );
 
 const Executor = require( 'futoin-executor/Executor' );
-const GenFace = require( 'futoin-eventstream/GenFace' );
-const DBGenFace = require( 'futoin-eventstream/DBGenFace' );
-const DBGenService = require( 'futoin-eventstream/DBGenService' );
 
 module.exports = function( describe, it, vars ) {
     let as;
@@ -20,11 +17,6 @@ module.exports = function( describe, it, vars ) {
     } );
 
     describe( 'Accounts', function() {
-        const LimitsFace = require( '../LimitsFace' );
-        const LimitsService = require( '../LimitsService' );
-        const CurrencyInfoFace = require( '../Currency/InfoFace' );
-        const CurrencyInfoService = require( '../Currency/InfoService' );
-
         const AccountsFace = require( '../AccountsFace' );
         const AccountsService = require( '../AccountsService' );
 
@@ -40,11 +32,8 @@ module.exports = function( describe, it, vars ) {
         beforeEach( 'currency', function() {
             as.add(
                 ( as ) => {
-                    CurrencyInfoService.register( as, executor );
-                    CurrencyInfoFace.register( as, ccm, 'currency.info', executor );
-
-                    LimitsService.register( as, executor );
-                    LimitsFace.register( as, ccm, 'xfer.limits', executor );
+                    ccm.registerCurrencyServices( as, executor );
+                    ccm.registerLimitServices( as, executor );
 
                     MockAccountsService.register( as, executor );
                     AccountsFace.register( as, ccm, 'xfer.accounts', executor );
