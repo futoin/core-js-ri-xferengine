@@ -32,7 +32,7 @@
     "eslint": "^4.13.1",
     "futoin-asyncsteps": "^1.10.4",
     "futoin-database": "^1.7.1",
-    "futoin-eventstream": "^0.9.93",
+    "futoin-eventstream": "^0.9.94",
     "futoin-executor": "^1.7.2",
     "futoin-invoker": "^1.7.3",
     "grunt": "^1.0.1",
@@ -55,7 +55,7 @@
   "peerDependencies": {
     "futoin-asyncsteps": "^1.10.4",
     "futoin-database": "^1.7.1",
-    "futoin-eventstream": "^0.9.93",
+    "futoin-eventstream": "^0.9.94",
     "futoin-executor": "^1.7.2",
     "futoin-invoker": "^1.7.3"
   }

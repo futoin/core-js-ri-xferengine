@@ -17,7 +17,7 @@ CREATE TABLE currencies (
     name VARCHAR(64) NOT NULL UNIQUE,
     symbol VARCHAR(3) NOT NULL UNIQUE,
     enabled ENUM('N', 'Y') NOT NULL,
-    added TIMESTAMP NOT NULL
+    added DATETIME NOT NULL
 )
     ENGINE=InnoDB
     CHARACTER SET 'utf8';
@@ -27,7 +27,7 @@ CREATE TABLE exrates (
     foreign_id SMALLINT UNSIGNED NOT NULL REFERENCES currencies(id),
     rate DECIMAL(24, 12) NOT NULL,
     margin DECIMAL(24, 12) NOT NULL,
-    since TIMESTAMP NOT NULL,
+    since DATETIME NOT NULL,
     PRIMARY KEY (base_id, foreign_id)
 )
     ENGINE=InnoDB
@@ -71,8 +71,8 @@ CREATE TABLE account_holders (
     `kyc` ENUM('N', 'Y') NOT NULL,
     `data` TEXT NOT NULL,
     `internal` TEXT NOT NULL,
-    `created` TIMESTAMP NOT NULL,
-    `updated` TIMESTAMP NOT NULL
+    `created` DATETIME NOT NULL,
+    `updated` DATETIME NOT NULL
 )
     ENGINE=InnoDB
     CHARACTER SET 'utf8';
@@ -82,8 +82,8 @@ CREATE TABLE accounts (
     `uuidb64` CHARACTER(22) NOT NULL UNIQUE,
     `holder` CHARACTER(22) NOT NULL REFERENCES account_holders(uuidb64),
     `currency_id` SMALLINT UNSIGNED NOT NULL REFERENCES currencies(id),
-    `created` TIMESTAMP NOT NULL,
-    `updated` TIMESTAMP NOT NULL,
+    `created` DATETIME NOT NULL,
+    `updated` DATETIME NOT NULL,
     `balance` DECIMAL(22, 0) NOT NULL,
     `reserved` DECIMAL(22, 0) NOT NULL,
     `enabled` ENUM('N', 'Y') NOT NULL,
@@ -254,8 +254,8 @@ CREATE TABLE xfers (
     `dst` CHARACTER(22) NOT NULL REFERENCES accounts(uuidb64),
     `dst_currency_id` SMALLINT UNSIGNED NOT NULL REFERENCES currencies(id),
     `dst_amount` DECIMAL(22, 0) NOT NULL,
-    `created` TIMESTAMP NOT NULL,
-    `updated` TIMESTAMP NOT NULL,
+    `created` DATETIME NOT NULL,
+    `updated` DATETIME NOT NULL,
     `xfer_type` ENUM(
         -- Deposits
         'Deposit',
@@ -301,8 +301,8 @@ CREATE TABLE reservations (
     `account` CHARACTER(22) NOT NULL REFERENCES accounts(uuidb64),
     `currency_id` SMALLINT UNSIGNED NOT NULL REFERENCES currencies(id),
     `amount` DECIMAL(22, 0) NOT NULL,
-    `created` TIMESTAMP NOT NULL,
-    `cleared` TIMESTAMP NULL,
+    `created` DATETIME NOT NULL,
+    `cleared` DATETIME NULL,
     UNIQUE `src_ext_id` (`ext_id`, `account`)
 )
     ENGINE=InnoDB
@@ -345,7 +345,7 @@ CREATE TABLE messages (
     `recipient`  CHARACTER(22) NULL REFERENCES account_holders(uuidb64),
     `rel_uuidb64` CHARACTER(22) NULL REFERENCES messages(uuidb64),
     `data` TEXT NOT NULL,
-    `created` TIMESTAMP NOT NULL
+    `created` DATETIME NOT NULL
 )
     ENGINE=InnoDB
     CHARACTER SET 'utf8';
