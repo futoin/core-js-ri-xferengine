@@ -1,4 +1,7 @@
 
+=== (next) ===
+FIXED: to remove SUPER privilege requirement for MySQL @changesets
+
 === 0.9.1 (2017-12-04) ===
 NEW: implemented XferCCM dynamic peer support
 
