@@ -1,6 +1,7 @@
 
 === (next) ===
 CHANGE: updated to FTN19 with large amount of crypto-currencies in mind (breaking change for schema)
+NEW: ISO & Crypto currency list population helpers under install/currencies.js
 
 === 0.9.3 (2017-12-15) ===
 FIXED: DB schema to be compatible with strict MySQL 5.7+

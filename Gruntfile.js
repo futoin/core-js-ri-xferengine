@@ -8,13 +8,13 @@ module.exports = function( grunt ) {
 
         eslint: {
             options: { fix: true, ignore: false },
-            target: [ '*.js', 'Currency/*.js', 'test/**/*.js' ],
+            target: [ '*.js', 'Currency/*.js', 'install/**/*.js', 'test/**/*.js' ],
         },
         mocha_istanbul: { coverage: { src: [ 'test/*test.js' ] } },
         istanbul_check_coverage: {},
         jsdoc2md: {
             README: {
-                src: [ '*.js', 'Currency/*.js' ],
+                src: [ '*.js', 'Currency/*.js', 'install/*.js' ],
                 dest: "README.md",
                 options: { template: fs.readFileSync( 'misc/README.hbs', 'utf8' ) },
             },
