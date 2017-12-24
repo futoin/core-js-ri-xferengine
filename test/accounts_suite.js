@@ -800,7 +800,7 @@ module.exports = function( describe, it, vars ) {
                                     as,
                                     holder,
                                     'External',
-                                    'I:MISS',
+                                    'L:MISS',
                                     'Buffer'
                                 );
                             } );
@@ -928,7 +928,7 @@ module.exports = function( describe, it, vars ) {
                             xferacct.convertAccount(
                                 as,
                                 '1234567890123456789012',
-                                'I:MISS'
+                                'L:MISS'
                             );
                             as.add( ( as ) => as.error( 'Fail' ) );
                         },

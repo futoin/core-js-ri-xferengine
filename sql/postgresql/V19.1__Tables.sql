@@ -12,7 +12,7 @@ CREATE TABLE uuid_history (
 
 -- Currencies
 
-CREATE DOMAIN currency_code AS VARCHAR(10);
+CREATE DOMAIN currency_code AS VARCHAR(18);
 CREATE DOMAIN currency_dec_places AS SMALLINT
     CHECK( VALUE >= 0 AND VALUE <= 12 );
 CREATE DOMAIN currency_id AS INT;
@@ -22,7 +22,7 @@ CREATE TABLE currencies (
     "code" currency_code NOT NULL UNIQUE,
     "dec_places" currency_dec_places NOT NULL,
     "name" VARCHAR(64) NOT NULL UNIQUE,
-    "symbol" VARCHAR(3) NOT NULL UNIQUE,
+    "symbol" VARCHAR(18) NOT NULL UNIQUE,
     "enabled" enabled_enum NOT NULL,
     "added" TIMESTAMP NOT NULL
 );

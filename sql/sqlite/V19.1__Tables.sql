@@ -8,10 +8,10 @@ CREATE TABLE uuid_history (
 
 CREATE TABLE currencies (
     "id" INTEGER NOT NULL PRIMARY KEY autoincrement,
-    "code" VARCHAR(10) NOT NULL UNIQUE,
+    "code" VARCHAR(18) NOT NULL UNIQUE,
     "dec_places" TINYINT NOT NULL,
     "name" VARCHAR(64) NOT NULL UNIQUE,
-    "symbol" VARCHAR(3) NOT NULL UNIQUE,
+    "symbol" VARCHAR(18) NOT NULL UNIQUE,
     "enabled" CHARACTER(1) NOT NULL,
     "added" TIMESTAMP NOT NULL
 );

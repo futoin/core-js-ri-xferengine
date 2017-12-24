@@ -25,6 +25,7 @@ const AmountTools = require( '../AmountTools' );
 const { DB_CURRENCY_TABLE, DB_EXRATE_TABLE } = require( '../main' );
 
 const SYM_LIST = Symbol( 'listCurrencies' );
+const SYM_ENABLED_LIST = Symbol( 'listEnabledCurrencies' );
 const SYM_GET = Symbol( 'getCurrency' );
 const SYM_GETRATE = Symbol( 'getExRate' );
 
@@ -39,13 +40,29 @@ class InfoService extends BaseService {
 
     listCurrencies( as, reqinfo ) {
         const db = reqinfo.executor().ccm().db( 'xfer' );
+        const p = reqinfo.params();
+        let pq;
 
-        const pq = db.getPrepared( SYM_LIST, () =>
-            db.select( DB_CURRENCY_TABLE )
-                .get( [ 'code', 'dec_places', 'name', 'symbol', 'enabled' ] )
-                .prepare()
-        );
-        pq.executeAssoc( as );
+        if ( p.only_enabled ) {
+            pq = db.getPrepared( SYM_ENABLED_LIST, () => {
+                const qb = db.select( DB_CURRENCY_TABLE );
+                qb.get( [ 'code', 'dec_places', 'name', 'symbol', 'enabled' ] );
+                qb.where( 'enabled', 'Y' );
+                qb.order( 'id' );
+                qb.limit( 1000, qb.param( 'from' ) );
+                return qb.prepare();
+            } );
+        } else {
+            pq = db.getPrepared( SYM_LIST, () => {
+                const qb = db.select( DB_CURRENCY_TABLE );
+                qb.get( [ 'code', 'dec_places', 'name', 'symbol', 'enabled' ] );
+                qb.order( 'id' );
+                qb.limit( 1000, qb.param( 'from' ) );
+                return qb.prepare();
+            } );
+        }
+
+        pq.executeAssoc( as, { from: p.from } );
 
         as.add( ( as, res ) => {
             res.forEach( ( v ) => {

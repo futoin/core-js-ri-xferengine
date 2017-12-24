@@ -12,10 +12,10 @@ CREATE TABLE uuid_history (
 
 CREATE TABLE currencies (
     id SMALLINT UNSIGNED NOT NULL auto_increment PRIMARY KEY,
-    code VARCHAR(10) NOT NULL UNIQUE,
+    code VARCHAR(18) NOT NULL UNIQUE,
     dec_places TINYINT UNSIGNED NOT NULL,
     name VARCHAR(64) NOT NULL UNIQUE,
-    symbol VARCHAR(3) NOT NULL UNIQUE,
+    symbol VARCHAR(18) NOT NULL UNIQUE,
     enabled ENUM('N', 'Y') NOT NULL,
     added DATETIME NOT NULL
 )

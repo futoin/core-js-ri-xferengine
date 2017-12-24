@@ -49,6 +49,13 @@ module.exports = function( describe, it, vars ) {
                         ] );
                     } );
 
+                    currinfo.listCurrencies( as, 2 );
+                    as.add( ( as, currencies ) => {
+                        expect( currencies ).to.eql( [
+                            { code: 'I:YEN', dec_places: 0, name: 'Disabled Yen', symbol: '-', enabled: false },
+                        ] );
+                    } );
+
                     currinfo.getCurrency( as, 'I:EUR' );
                     as.add( ( as, currency ) => {
                         expect( currency ).to.eql(
@@ -136,7 +143,7 @@ module.exports = function( describe, it, vars ) {
                     as.add(
                         ( as ) => {
                             as.state.test_name = 'Missing currency';
-                            currinfo.getCurrency( as, 'I:MISS' );
+                            currinfo.getCurrency( as, 'L:MISS' );
                             as.add( ( as ) => as.error( 'Fail' ) );
                         },
                         ( as, err ) => {
@@ -162,7 +169,7 @@ module.exports = function( describe, it, vars ) {
                     as.add(
                         ( as ) => {
                             as.state.test_name = 'Missing currency for exrate';
-                            currinfo.getExRate( as, 'I:EUR', 'I:UNKNOWN' );
+                            currinfo.getExRate( as, 'I:EUR', 'L:UNKNOWN' );
                             as.add( ( as ) => as.error( 'Fail' ) );
                         },
                         ( as, err ) => {
@@ -190,7 +197,7 @@ module.exports = function( describe, it, vars ) {
                     as.add(
                         ( as ) => {
                             as.state.test_name = 'Dup name @ insert';
-                            currmng.setCurrency( as, 'I:EURA', 2, 'Euro', '€a', true );
+                            currmng.setCurrency( as, 'L:EURA', 2, 'Euro', '€a', true );
                             as.add( ( as ) => as.error( 'Fail' ) );
                         },
                         ( as, err ) => {
@@ -203,7 +210,7 @@ module.exports = function( describe, it, vars ) {
                     as.add(
                         ( as ) => {
                             as.state.test_name = 'Dup symbol @ insert';
-                            currmng.setCurrency( as, 'I:EURA', 2, 'Euro2', '€', true );
+                            currmng.setCurrency( as, 'L:EURA', 2, 'Euro2', '€', true );
                             as.add( ( as ) => as.error( 'Fail' ) );
                         },
                         ( as, err ) => {
@@ -215,12 +222,12 @@ module.exports = function( describe, it, vars ) {
 
 
                     //---
-                    currmng.setCurrency( as, 'I:EURA', 2, 'EuroB', '€b', true );
+                    currmng.setCurrency( as, 'L:EURA', 2, 'EuroB', '€b', true );
 
                     as.add(
                         ( as ) => {
                             as.state.test_name = 'Dup name @ update';
-                            currmng.setCurrency( as, 'I:EURA', 2, 'Euro', '€a', true );
+                            currmng.setCurrency( as, 'L:EURA', 2, 'Euro', '€a', true );
                             as.add( ( as ) => as.error( 'Fail' ) );
                         },
                         ( as, err ) => {
@@ -233,7 +240,7 @@ module.exports = function( describe, it, vars ) {
                     as.add(
                         ( as ) => {
                             as.state.test_name = 'Dup symbol @ update';
-                            currmng.setCurrency( as, 'I:EURA', 2, 'Euro2', '€', true );
+                            currmng.setCurrency( as, 'L:EURA', 2, 'Euro2', '€', true );
                             as.add( ( as ) => as.error( 'Fail' ) );
                         },
                         ( as, err ) => {
@@ -247,7 +254,7 @@ module.exports = function( describe, it, vars ) {
                     as.add(
                         ( as ) => {
                             as.state.test_name = 'Unknown foreign';
-                            currmng.setExRate( as, 'I:EUR', 'I:UNKNOWN', '1.199234', '0.002' );
+                            currmng.setExRate( as, 'I:EUR', 'L:UNKNOWN', '1.199234', '0.002' );
                             as.add( ( as ) => as.error( 'Fail' ) );
                         },
                         ( as, err ) => {
@@ -260,7 +267,7 @@ module.exports = function( describe, it, vars ) {
                     as.add(
                         ( as ) => {
                             as.state.test_name = 'Unknown base';
-                            currmng.setExRate( as, 'I:UNKNOWN', 'I:USD', '1.199234', '0.002' );
+                            currmng.setExRate( as, 'L:UNKNOWN', 'I:USD', '1.199234', '0.002' );
                             as.add( ( as ) => as.error( 'Fail' ) );
                         },
                         ( as, err ) => {

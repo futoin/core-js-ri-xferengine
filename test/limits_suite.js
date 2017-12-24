@@ -446,7 +446,7 @@ module.exports = function( describe, it, vars ) {
                     //--
                     as.add(
                         ( as ) => {
-                            xferlim.setLimits( as, 'UnknowGroup', 'Misc', 'I:EUREKA', {
+                            xferlim.setLimits( as, 'UnknowGroup', 'Misc', 'L:EUREKA', {
                                 message_daily_cnt : 1,
                                 failure_daily_cnt : 1,
                                 limithit_daily_cnt : 1,
@@ -469,7 +469,7 @@ module.exports = function( describe, it, vars ) {
                     //--
                     as.add(
                         ( as ) => {
-                            xferlim.setLimits( as, 'default', 'Misc', 'I:EUREKA', {
+                            xferlim.setLimits( as, 'default', 'Misc', 'L:EUREKA', {
                                 message_daily_cnt : 1,
                                 failure_daily_cnt : 1,
                                 limithit_daily_cnt : 1,
