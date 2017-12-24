@@ -1,5 +1,5 @@
 
-=== (next) ===
+=== 0.9.4 (2017-12-24) ===
 CHANGE: updated to FTN19 with large amount of crypto-currencies in mind (breaking change for schema)
 NEW: ISO & Crypto currency list population helpers under install/currencies.js
 
