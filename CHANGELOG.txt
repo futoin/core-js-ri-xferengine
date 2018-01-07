@@ -1,5 +1,5 @@
 
-=== (next) ===
+=== 0.9.5 (2018-01-07) ===
 CHANGED: updated FTN19 specs (just use of FTN3.1)
 CHANGED: to use futoin-uuid package
 
