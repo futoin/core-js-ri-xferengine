@@ -19,32 +19,14 @@
  * limitations under the License.
  */
 
-const uuidv4 = require( 'uuid/v4' );
+const UUIDToolBase = require( 'futoin-uuid' );
 const { DB_UUID_HISTORY_TABLE } = require( './main' );
 
 /**
- * Common tool for UUID generation and use in transactions
+ * Extended UUIDTool with focus on collision safety in whole history
+ * of particular instance.
  */
-class UUIDTool {
-    /**
-     * Generate UUID v4
-     *
-     * @returns {Buffer} buffer of 16 items
-     */
-    static genBin() {
-        const bin_uuid = Buffer.alloc( 16 );
-        return uuidv4( null, bin_uuid, 0 );
-    }
-
-    /**
-     * Generate UUID v4 encoded in Base64 without padding
-     *
-     * @returns {string} 22 characters
-     */
-    static genB64() {
-        return this.genBin().toString( 'base64' ).substr( 0, 22 );
-    }
-
+class UUIDTool extends UUIDToolBase {
     /**
      * Call on xfer to ensure whole history uniqueness (just in case)
      *

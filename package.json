@@ -50,7 +50,7 @@
   "dependencies": {
     "event-emitter": "^0.3.5",
     "futoin-request": "^1.0.1",
-    "uuid": "^3.1.0"
+    "futoin-uuid": "^1.0.0"
   },
   "optionalDependencies": {},
   "peerDependencies": {

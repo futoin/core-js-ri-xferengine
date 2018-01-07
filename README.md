@@ -178,7 +178,8 @@ The concept is described in FutoIn specification: [FTN19: FutoIn Interface - Tra
 <dd><p>XferTools with focus on Retail use case</p>
 </dd>
 <dt><a href="#UUIDTool">UUIDTool</a></dt>
-<dd><p>Common tool for UUID generation and use in transactions</p>
+<dd><p>Extended UUIDTool with focus on collision safety in whole history
+of particular instance.</p>
 </dd>
 <dt><a href="#WithdrawFace">WithdrawFace</a></dt>
 <dd><p>Witdrawals Face</p>
@@ -691,30 +692,15 @@ XferTools with focus on Retail use case
 <a name="UUIDTool"></a>
 
 ## UUIDTool
-Common tool for UUID generation and use in transactions
+Extended UUIDTool with focus on collision safety in whole history
+of particular instance.
 
 **Kind**: global class  
 
 * [UUIDTool](#UUIDTool)
-    * [.genBin()](#UUIDTool.genBin) ⇒ <code>Buffer</code>
-    * [.genB64()](#UUIDTool.genB64) ⇒ <code>string</code>
     * [.addXfer(xfer, val)](#UUIDTool.addXfer)
     * [.genXfer(xfer)](#UUIDTool.genXfer) ⇒ <code>string</code>
 
-<a name="UUIDTool.genBin"></a>
-
-### UUIDTool.genBin() ⇒ <code>Buffer</code>
-Generate UUID v4
-
-**Kind**: static method of [<code>UUIDTool</code>](#UUIDTool)  
-**Returns**: <code>Buffer</code> - buffer of 16 items  
-<a name="UUIDTool.genB64"></a>
-
-### UUIDTool.genB64() ⇒ <code>string</code>
-Generate UUID v4 encoded in Base64 without padding
-
-**Kind**: static method of [<code>UUIDTool</code>](#UUIDTool)  
-**Returns**: <code>string</code> - 22 characters  
 <a name="UUIDTool.addXfer"></a>
 
 ### UUIDTool.addXfer(xfer, val)
