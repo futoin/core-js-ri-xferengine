@@ -215,43 +215,12 @@ Listens on related event stream for changes as LIVE component.</p>
 Accounts Face
 
 **Kind**: global class  
-<a name="AccountsFace.register"></a>
-
-### AccountsFace.register(as, ccm, name, endpoint, [credentials], [options])
-CCM registration helper
-
-**Kind**: static method of [<code>AccountsFace</code>](#AccountsFace)  
-
-| Param | Type | Default | Description |
-| --- | --- | --- | --- |
-| as | <code>AsyncSteps</code> |  | steps interface |
-| ccm | <code>AdvancedCCM</code> |  | CCM instance |
-| name | <code>string</code> |  | CCM registration name |
-| endpoint | <code>\*</code> |  | see AdvancedCCM#register |
-| [credentials] | <code>\*</code> | <code></code> | see AdvancedCCM#register |
-| [options] | <code>object</code> | <code>{}</code> | interface options |
-| [options.version] | <code>string</code> | <code>&quot;&lt;latest&gt;&quot;</code> | interface version to use |
-
 <a name="AccountsService"></a>
 
 ## AccountsService
 Accounts Service
 
 **Kind**: global class  
-<a name="AccountsService.register"></a>
-
-### AccountsService.register(as, executor, options) ⇒ [<code>AccountsService</code>](#AccountsService)
-Register futoin.xfer.accounts interface with Executor
-
-**Kind**: static method of [<code>AccountsService</code>](#AccountsService)  
-**Returns**: [<code>AccountsService</code>](#AccountsService) - instance  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| as | <code>AsyncSteps</code> | steps interface |
-| executor | <code>Executor</code> | executor instance |
-| options | <code>object</code> | implementation defined options |
-
 <a name="BaseFace"></a>
 
 ## BaseFace
@@ -340,23 +309,6 @@ Register futoin.xfers.limits interface with Executor
 Bonus Face
 
 **Kind**: global class  
-<a name="BonusFace.register"></a>
-
-### BonusFace.register(as, ccm, name, endpoint, [credentials], [options])
-CCM registration helper
-
-**Kind**: static method of [<code>BonusFace</code>](#BonusFace)  
-
-| Param | Type | Default | Description |
-| --- | --- | --- | --- |
-| as | <code>AsyncSteps</code> |  | steps interface |
-| ccm | <code>AdvancedCCM</code> |  | CCM instance |
-| name | <code>string</code> |  | CCM registration name |
-| endpoint | <code>\*</code> |  | see AdvancedCCM#register |
-| [credentials] | <code>\*</code> | <code></code> | see AdvancedCCM#register |
-| [options] | <code>object</code> | <code>{}</code> | interface options |
-| [options.version] | <code>string</code> | <code>&quot;&lt;latest&gt;&quot;</code> | interface version to use |
-
 <a name="BonusService"></a>
 
 ## BonusService
@@ -419,23 +371,6 @@ CCM registration helper
 Deposits Face
 
 **Kind**: global class  
-<a name="DepositFace.register"></a>
-
-### DepositFace.register(as, ccm, name, endpoint, [credentials], [options])
-CCM registration helper
-
-**Kind**: static method of [<code>DepositFace</code>](#DepositFace)  
-
-| Param | Type | Default | Description |
-| --- | --- | --- | --- |
-| as | <code>AsyncSteps</code> |  | steps interface |
-| ccm | <code>AdvancedCCM</code> |  | CCM instance |
-| name | <code>string</code> |  | CCM registration name |
-| endpoint | <code>\*</code> |  | see AdvancedCCM#register |
-| [credentials] | <code>\*</code> | <code></code> | see AdvancedCCM#register |
-| [options] | <code>object</code> | <code>{}</code> | interface options |
-| [options.version] | <code>string</code> | <code>&quot;&lt;latest&gt;&quot;</code> | interface version to use |
-
 <a name="DepositService"></a>
 
 ## DepositService
@@ -454,23 +389,6 @@ XferTools with focus on Deposits use case
 Gaming Face
 
 **Kind**: global class  
-<a name="GamingFace.register"></a>
-
-### GamingFace.register(as, ccm, name, endpoint, [credentials], [options])
-CCM registration helper
-
-**Kind**: static method of [<code>GamingFace</code>](#GamingFace)  
-
-| Param | Type | Default | Description |
-| --- | --- | --- | --- |
-| as | <code>AsyncSteps</code> |  | steps interface |
-| ccm | <code>AdvancedCCM</code> |  | CCM instance |
-| name | <code>string</code> |  | CCM registration name |
-| endpoint | <code>\*</code> |  | see AdvancedCCM#register |
-| [credentials] | <code>\*</code> | <code></code> | see AdvancedCCM#register |
-| [options] | <code>object</code> | <code>{}</code> | interface options |
-| [options.version] | <code>string</code> | <code>&quot;&lt;latest&gt;&quot;</code> | interface version to use |
-
 <a name="GamingService"></a>
 
 ## GamingService
@@ -489,23 +407,6 @@ XferTools with focus on Gaming use case
 Generic Face
 
 **Kind**: global class  
-<a name="GenericFace.register"></a>
-
-### GenericFace.register(as, ccm, name, endpoint, [credentials], [options])
-CCM registration helper
-
-**Kind**: static method of [<code>GenericFace</code>](#GenericFace)  
-
-| Param | Type | Default | Description |
-| --- | --- | --- | --- |
-| as | <code>AsyncSteps</code> |  | steps interface |
-| ccm | <code>AdvancedCCM</code> |  | CCM instance |
-| name | <code>string</code> |  | CCM registration name |
-| endpoint | <code>\*</code> |  | see AdvancedCCM#register |
-| [credentials] | <code>\*</code> | <code></code> | see AdvancedCCM#register |
-| [options] | <code>object</code> | <code>{}</code> | interface options |
-| [options.version] | <code>string</code> | <code>&quot;&lt;latest&gt;&quot;</code> | interface version to use |
-
 <a name="GenericService"></a>
 
 ## GenericService
@@ -518,66 +419,18 @@ Generic Service
 Limits Face
 
 **Kind**: global class  
-<a name="LimitsFace.register"></a>
-
-### LimitsFace.register(as, ccm, name, endpoint, [credentials], [options])
-CCM registration helper
-
-**Kind**: static method of [<code>LimitsFace</code>](#LimitsFace)  
-
-| Param | Type | Default | Description |
-| --- | --- | --- | --- |
-| as | <code>AsyncSteps</code> |  | steps interface |
-| ccm | <code>AdvancedCCM</code> |  | CCM instance |
-| name | <code>string</code> |  | CCM registration name |
-| endpoint | <code>\*</code> |  | see AdvancedCCM#register |
-| [credentials] | <code>\*</code> | <code></code> | see AdvancedCCM#register |
-| [options] | <code>object</code> | <code>{}</code> | interface options |
-| [options.version] | <code>string</code> | <code>&quot;&lt;latest&gt;&quot;</code> | interface version to use |
-
 <a name="LimitsService"></a>
 
 ## LimitsService
 Limits Service
 
 **Kind**: global class  
-<a name="LimitsService.register"></a>
-
-### LimitsService.register(as, executor, options) ⇒ [<code>LimitsService</code>](#LimitsService)
-Register futoin.xfers.limits interface with Executor
-
-**Kind**: static method of [<code>LimitsService</code>](#LimitsService)  
-**Returns**: [<code>LimitsService</code>](#LimitsService) - instance  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| as | <code>AsyncSteps</code> | steps interface |
-| executor | <code>Executor</code> | executor instance |
-| options | <code>object</code> | implementation defined options |
-
 <a name="MessageFace"></a>
 
 ## MessageFace
 Message Face
 
 **Kind**: global class  
-<a name="MessageFace.register"></a>
-
-### MessageFace.register(as, ccm, name, endpoint, [credentials], [options])
-CCM registration helper
-
-**Kind**: static method of [<code>MessageFace</code>](#MessageFace)  
-
-| Param | Type | Default | Description |
-| --- | --- | --- | --- |
-| as | <code>AsyncSteps</code> |  | steps interface |
-| ccm | <code>AdvancedCCM</code> |  | CCM instance |
-| name | <code>string</code> |  | CCM registration name |
-| endpoint | <code>\*</code> |  | see AdvancedCCM#register |
-| [credentials] | <code>\*</code> | <code></code> | see AdvancedCCM#register |
-| [options] | <code>object</code> | <code>{}</code> | interface options |
-| [options.version] | <code>string</code> | <code>&quot;&lt;latest&gt;&quot;</code> | interface version to use |
-
 <a name="MessageService"></a>
 
 ## MessageService
@@ -596,23 +449,6 @@ XferTools with focus on Message processing
 Payments Face
 
 **Kind**: global class  
-<a name="PaymentFace.register"></a>
-
-### PaymentFace.register(as, ccm, name, endpoint, [credentials], [options])
-CCM registration helper
-
-**Kind**: static method of [<code>PaymentFace</code>](#PaymentFace)  
-
-| Param | Type | Default | Description |
-| --- | --- | --- | --- |
-| as | <code>AsyncSteps</code> |  | steps interface |
-| ccm | <code>AdvancedCCM</code> |  | CCM instance |
-| name | <code>string</code> |  | CCM registration name |
-| endpoint | <code>\*</code> |  | see AdvancedCCM#register |
-| [credentials] | <code>\*</code> | <code></code> | see AdvancedCCM#register |
-| [options] | <code>object</code> | <code>{}</code> | interface options |
-| [options.version] | <code>string</code> | <code>&quot;&lt;latest&gt;&quot;</code> | interface version to use |
-
 <a name="PaymentService"></a>
 
 ## PaymentService
@@ -631,23 +467,6 @@ XferTools with focus on Payments use case
 Peer Face
 
 **Kind**: global class  
-<a name="PeerFace.register"></a>
-
-### PeerFace.register(as, ccm, name, endpoint, [credentials], [options])
-CCM registration helper
-
-**Kind**: static method of [<code>PeerFace</code>](#PeerFace)  
-
-| Param | Type | Default | Description |
-| --- | --- | --- | --- |
-| as | <code>AsyncSteps</code> |  | steps interface |
-| ccm | <code>AdvancedCCM</code> |  | CCM instance |
-| name | <code>string</code> |  | CCM registration name |
-| endpoint | <code>\*</code> |  | see AdvancedCCM#register |
-| [credentials] | <code>\*</code> | <code></code> | see AdvancedCCM#register |
-| [options] | <code>object</code> | <code>{}</code> | interface options |
-| [options.version] | <code>string</code> | <code>&quot;&lt;latest&gt;&quot;</code> | interface version to use |
-
 <a name="PeerService"></a>
 
 ## PeerService
@@ -660,23 +479,6 @@ Peer Service
 Payments Face
 
 **Kind**: global class  
-<a name="RetailFace.register"></a>
-
-### RetailFace.register(as, ccm, name, endpoint, [credentials], [options])
-CCM registration helper
-
-**Kind**: static method of [<code>RetailFace</code>](#RetailFace)  
-
-| Param | Type | Default | Description |
-| --- | --- | --- | --- |
-| as | <code>AsyncSteps</code> |  | steps interface |
-| ccm | <code>AdvancedCCM</code> |  | CCM instance |
-| name | <code>string</code> |  | CCM registration name |
-| endpoint | <code>\*</code> |  | see AdvancedCCM#register |
-| [credentials] | <code>\*</code> | <code></code> | see AdvancedCCM#register |
-| [options] | <code>object</code> | <code>{}</code> | interface options |
-| [options.version] | <code>string</code> | <code>&quot;&lt;latest&gt;&quot;</code> | interface version to use |
-
 <a name="RetailService"></a>
 
 ## RetailService
@@ -731,23 +533,6 @@ Generate UUID v4 in scope of transaction
 Witdrawals Face
 
 **Kind**: global class  
-<a name="WithdrawFace.register"></a>
-
-### WithdrawFace.register(as, ccm, name, endpoint, [credentials], [options])
-CCM registration helper
-
-**Kind**: static method of [<code>WithdrawFace</code>](#WithdrawFace)  
-
-| Param | Type | Default | Description |
-| --- | --- | --- | --- |
-| as | <code>AsyncSteps</code> |  | steps interface |
-| ccm | <code>AdvancedCCM</code> |  | CCM instance |
-| name | <code>string</code> |  | CCM registration name |
-| endpoint | <code>\*</code> |  | see AdvancedCCM#register |
-| [credentials] | <code>\*</code> | <code></code> | see AdvancedCCM#register |
-| [options] | <code>object</code> | <code>{}</code> | interface options |
-| [options.version] | <code>string</code> | <code>&quot;&lt;latest&gt;&quot;</code> | interface version to use |
-
 <a name="WithdrawService"></a>
 
 ## WithdrawService
@@ -902,86 +687,24 @@ CCM registration helper
 Currency Information Face
 
 **Kind**: global class  
-<a name="CurrencyInfoFace.register"></a>
-
-### CurrencyInfoFace.register(as, ccm, name, endpoint, [credentials], [options])
-CCM registration helper
-
-**Kind**: static method of [<code>CurrencyInfoFace</code>](#CurrencyInfoFace)  
-
-| Param | Type | Default | Description |
-| --- | --- | --- | --- |
-| as | <code>AsyncSteps</code> |  | steps interface |
-| ccm | <code>AdvancedCCM</code> |  | CCM instance |
-| name | <code>string</code> |  | CCM registration name |
-| endpoint | <code>\*</code> |  | see AdvancedCCM#register |
-| [credentials] | <code>\*</code> | <code></code> | see AdvancedCCM#register |
-| [options] | <code>object</code> | <code>{}</code> | interface options |
-| [options.version] | <code>string</code> | <code>&quot;&lt;latest&gt;&quot;</code> | interface version to use |
-
 <a name="CurrencyInfoService"></a>
 
 ## CurrencyInfoService
 Currency Manage Service
 
 **Kind**: global class  
-<a name="CurrencyInfoService.register"></a>
-
-### CurrencyInfoService.register(as, executor, options) ⇒ <code>ManageService</code>
-Register futoin.currency.manage interface with Executor
-
-**Kind**: static method of [<code>CurrencyInfoService</code>](#CurrencyInfoService)  
-**Returns**: <code>ManageService</code> - instance  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| as | <code>AsyncSteps</code> | steps interface |
-| executor | <code>Executor</code> | executor instance |
-| options | <code>object</code> | implementation defined options |
-
 <a name="CurrencyManageFace"></a>
 
 ## CurrencyManageFace
 Currency Management Face
 
 **Kind**: global class  
-<a name="CurrencyManageFace.register"></a>
-
-### CurrencyManageFace.register(as, ccm, name, endpoint, [credentials], [options])
-CCM registration helper
-
-**Kind**: static method of [<code>CurrencyManageFace</code>](#CurrencyManageFace)  
-
-| Param | Type | Default | Description |
-| --- | --- | --- | --- |
-| as | <code>AsyncSteps</code> |  | steps interface |
-| ccm | <code>AdvancedCCM</code> |  | CCM instance |
-| name | <code>string</code> |  | CCM registration name |
-| endpoint | <code>\*</code> |  | see AdvancedCCM#register |
-| [credentials] | <code>\*</code> | <code></code> | see AdvancedCCM#register |
-| [options] | <code>object</code> | <code>{}</code> | interface options |
-| [options.version] | <code>string</code> | <code>&quot;&lt;latest&gt;&quot;</code> | interface version to use |
-
 <a name="CurrencyManageService"></a>
 
 ## CurrencyManageService
 Currency Manage Service
 
 **Kind**: global class  
-<a name="CurrencyManageService.register"></a>
-
-### CurrencyManageService.register(as, executor, options) ⇒ <code>ManageService</code>
-Register futoin.currency.manage interface with Executor
-
-**Kind**: static method of [<code>CurrencyManageService</code>](#CurrencyManageService)  
-**Returns**: <code>ManageService</code> - instance  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| as | <code>AsyncSteps</code> | steps interface |
-| executor | <code>Executor</code> | executor instance |
-| options | <code>object</code> | implementation defined options |
-
 
 
 *documented by [jsdoc-to-markdown](https://github.com/75lb/jsdoc-to-markdown)*.
