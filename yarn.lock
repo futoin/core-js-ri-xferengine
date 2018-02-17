@@ -924,9 +924,9 @@ futoin-database@^1.7.3:
     sqlite3 "^3.1.13"
     sqlstring "^2.3.0"
 
-futoin-eventstream@^0.9.95:
-  version "0.9.95"
-  resolved "https://registry.yarnpkg.com/futoin-eventstream/-/futoin-eventstream-0.9.95.tgz#062a3d958a31ebb31d821c1b88b3c9feb4126987"
+futoin-eventstream@^0.9.96:
+  version "0.9.96"
+  resolved "https://registry.yarnpkg.com/futoin-eventstream/-/futoin-eventstream-0.9.96.tgz#89c53b76831129a1285d62a36269e72c41ae033a"
   dependencies:
     futoin-asyncevent "^1.0.0"
 
