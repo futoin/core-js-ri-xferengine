@@ -20,7 +20,6 @@
  */
 
 const PingService = require( 'futoin-executor/PingService' );
-const PingFace = require( 'futoin-invoker/PingFace' );
 const SpecTools = require( 'futoin-invoker/SpecTools' );
 
 const DBGenFace = require( 'futoin-eventstream/DBGenFace' );
@@ -49,7 +48,7 @@ class BaseService extends PingService {
         const ver = Face.LATEST_VERSION;
         const ifacever = `${ifacename}:${ver}`;
         const impl = new this( options );
-        const spec_dirs = [ Face.spec(), PingFace.spec( Face.PING_VERSION ) ];
+        const spec_dirs = Face.spec();
 
         executor.register( as, ifacever, impl, spec_dirs );
 

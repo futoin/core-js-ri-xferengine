@@ -21,6 +21,7 @@
 
 const _defaults = require( 'lodash/defaults' );
 const PingFace = require( 'futoin-invoker/PingFace' );
+const invokerSpecDirs = require( 'futoin-invoker' ).specDirs;
 
 const { FTN19_VERSION, PING_VERSION, specDirs } = require( './main' );
 
@@ -67,7 +68,7 @@ class BaseFace extends PingFace {
 
         _defaults( options, {
             nativeImpl: this,
-            specDirs: [ this.spec(), PingFace.spec( this.PING_VERSION ) ],
+            specDirs: this.spec(),
             sendOnBehalfOf: false,
         } );
 
@@ -82,7 +83,11 @@ class BaseFace extends PingFace {
     }
 
     static spec() {
-        return specDirs;
+        return [
+            specDirs,
+            invokerSpecDirs,
+            PingFace.spec( this.PING_VERSION ),
+        ];
     }
 }
 
