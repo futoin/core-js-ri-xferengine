@@ -6,7 +6,13 @@
 
   [![NPM](https://nodei.co/npm/futoin-xferengine.png?downloads=true&downloadRank=true&stars=true)](https://nodei.co/npm/futoin-xferengine/)
 
-# FutoIn reference implementation
+# About
+
+**Work in progress. Technology preview, even though partially used in production.**
+
+Universal cluster focused transaction engine concept implementation.
+
+**Documentation** --> [FutoIn Guide](https://futoin.org/docs/xferengine/)
 
 Reference implementation of:
  
@@ -14,14 +20,6 @@ Reference implementation of:
     Version: 1.0
     
 * Spec: [FTN19: FutoIn Interface - Transaction Engine v1.x](http://specs.futoin.org/draft/preview/ftn19_if_xfer_engine-1.html)
-
-[Web Site](http://futoin.org/)
-
-# About
-
-**Work in progress. Technology preview, even though partially used in production.**
-
-Universal cluster focused transaction engine concept implementation.
 
 ## Features:
 
