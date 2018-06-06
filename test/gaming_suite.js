@@ -29,10 +29,7 @@ module.exports = function( describe, it, vars ) {
         const AccountsService = require( '../AccountsService' );
         const PeerFace = require( '../PeerFace' );
         const PeerService = require( '../PeerService' );
-        const BasicAuthFace = require( 'futoin-executor/BasicAuthFace' );
-        const BasicAuthService = require( 'futoin-executor/BasicAuthService' );
         const XferTools = require( '../XferTools' );
-
         const PaymentFace = require( '../PaymentFace' );
         const PaymentService = require( '../PaymentService' );
         const GamingFace = require( '../GamingFace' );
@@ -86,18 +83,17 @@ module.exports = function( describe, it, vars ) {
                     PeerService.register( as, executor );
 
                     //
-                    const inner_executor = new Executor( ccm );
+                    const secprov = vars.secprov;
+                    const inner_executor = new Executor( ccm, { securityProvider: secprov } );
                     inner_executor.on( 'notExpected', function() {
                         console.log( arguments );
                     } );
 
-                    const basvc = BasicAuthService.register( as, inner_executor );
+                    const basvc = secprov._auth_svc;
                     basvc.addUser( 'game_peer1', 'pwd', null, true );
                     basvc._user_ids[ 1 ].info.global_id = 'game_peer1';
                     basvc.addUser( 'game_peer2', 'pwd', null, true );
                     basvc._user_ids[ 2 ].info.global_id = 'game_peer2';
-
-                    BasicAuthFace.register( as, ccm, inner_executor );
 
                     // mock
 

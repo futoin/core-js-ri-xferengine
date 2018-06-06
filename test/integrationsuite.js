@@ -4,17 +4,20 @@ const util = require( 'util' );
 const expect = require( 'chai' ).expect;
 const moment = require( 'moment' );
 
+const LegacySecurityProvider = require( 'futoin-executor/LegacySecurityProvider' );
 const Executor = require( 'futoin-executor/Executor' );
 
 module.exports = function( describe, it, vars ) {
     let as;
     let ccm;
+    let secprov;
     let executor;
 
     beforeEach( 'common', function() {
         ccm = vars.ccm;
         as = vars.as;
-        executor = vars.executor = new Executor( ccm );
+        secprov = vars.secprov = new LegacySecurityProvider( as, ccm );
+        executor = vars.executor = new Executor( ccm, { securityProvider : secprov } );
 
         executor.on( 'notExpected', function() {
             console.dir( arguments );

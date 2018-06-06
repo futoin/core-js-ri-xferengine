@@ -34,8 +34,6 @@ module.exports = function( describe, it, vars ) {
         const PaymentService = require( '../PaymentService' );
         const PeerFace = require( '../PeerFace' );
         const PeerService = require( '../PeerService' );
-        const BasicAuthFace = require( 'futoin-executor/BasicAuthFace' );
-        const BasicAuthService = require( 'futoin-executor/BasicAuthService' );
 
         const XferTools = require( '../XferTools' );
 
@@ -75,13 +73,11 @@ module.exports = function( describe, it, vars ) {
                     PeerService.register( as, executor );
                     PeerFace.register( as, ccm, 'xfer.peer1', executor, 'peer2:pwd' );
 
-                    const basvc = BasicAuthService.register( as, executor );
+                    const basvc = vars.secprov._auth_svc;
                     basvc.addUser( 'peer1', 'pwd', null, true );
                     basvc._user_ids[ 1 ].info.global_id = 'peer1';
                     basvc.addUser( 'peer2', 'pwd', null, true );
                     basvc._user_ids[ 2 ].info.global_id = 'peer2';
-
-                    BasicAuthFace.register( as, ccm, executor );
 
 
                     ccm.registerOnDemand(
