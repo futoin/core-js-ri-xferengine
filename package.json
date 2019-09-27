@@ -1,6 +1,6 @@
 {
   "name": "futoin-xferengine",
-  "version": "0.9.7",
+  "version": "0.9.8",
   "description": "Neutral clustered multi-currency transaction engine with limits",
   "main": "main.js",
   "engines": {
