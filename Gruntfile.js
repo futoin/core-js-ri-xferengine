@@ -10,8 +10,6 @@ module.exports = function( grunt ) {
             options: { fix: true, ignore: false },
             target: [ '*.js', 'Currency/*.js', 'install/**/*.js', 'test/**/*.js' ],
         },
-        mocha_istanbul: { coverage: { src: [ 'test/*test.js' ] } },
-        istanbul_check_coverage: {},
         jsdoc2md: {
             README: {
                 src: [ '*.js', 'Currency/*.js', 'install/*.js' ],
@@ -31,14 +29,41 @@ module.exports = function( grunt ) {
                 ],
             },
         },
+        nyc: {
+            cover: {
+                options: {
+                    cwd: '.',
+                    exclude: [
+                        'coverage/**',
+                        'dist/**',
+                        'es5/**',
+                        'examples/**',
+                        'test/**',
+                        '.eslintrc.js',
+                        'Gruntfile.js',
+                        'webpack.*.js',
+                    ],
+                    reporter: [ 'lcov', 'text-summary' ],
+                    reportDir: 'coverage',
+                    all: true,
+                },
+                cmd: false,
+                args: [ 'mocha', 'test/*test.js' ],
+            },
+            report: {
+                options: {
+                    reporter: 'text-summary',
+                },
+            },
+        },
     } );
 
     grunt.loadNpmTasks( 'grunt-eslint' );
-    grunt.loadNpmTasks( 'grunt-mocha-istanbul' );
+    grunt.loadNpmTasks( 'grunt-simple-nyc' );
 
     grunt.registerTask( 'check', [ 'eslint' ] );
 
-    grunt.registerTask( 'node', [ 'mocha_istanbul' ] );
+    grunt.registerTask( 'node', [ 'nyc' ] );
     grunt.registerTask( 'test', [
         'check',
         'node',

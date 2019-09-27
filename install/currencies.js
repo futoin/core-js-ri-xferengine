@@ -82,7 +82,7 @@ module.exports = new class {
                     ),
                     ( as, err ) => {
                         if ( err === 'InvokerError' ) {
-                            console.log(`Skipping ${info.name}`);
+                            console.log( `Skipping ${info.name}` );
                             as.success();
                         }
                     }
