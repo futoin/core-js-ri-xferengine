@@ -56,7 +56,7 @@ module.exports = new class {
      * @alias install.Crypto
      */
     Crypto( as, ccm ) {
-        const src_url = 'https://min-api.cryptocompare.com/data/all/coinlist';
+        const src_url = 'https://api.coingecko.com/api/v3/coins/list';
         as.add(
             ( as ) => install_request( as, src_url ),
             ( as, err ) => {
@@ -68,18 +68,24 @@ module.exports = new class {
                 data = JSON.parse( data );
             }
 
-            data = data.Data;
-
             const currmng = ccm.iface( 'currency.manage' );
 
-            as.forEach( data, ( as, code, info ) =>
-                currmng.setCurrency(
-                    as,
-                    `C:${code}`,
-                    8, // TODO
-                    info.FullName,
-                    `C:${info.Symbol}`,
-                    true
+            as.forEach( data, ( as, _, info ) =>
+                as.add(
+                    ( as ) => currmng.setCurrency(
+                        as,
+                        `C:${info.symbol}`,
+                        18, // TODO
+                        info.name,
+                        `C:${info.symbol}`,
+                        true
+                    ),
+                    ( as, err ) => {
+                        if ( err === 'InvokerError' ) {
+                            console.log(`Skipping ${info.name}`);
+                            as.success();
+                        }
+                    }
                 )
             );
         } );

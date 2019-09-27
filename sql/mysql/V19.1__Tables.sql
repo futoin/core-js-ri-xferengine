@@ -14,8 +14,8 @@ CREATE TABLE currencies (
     id SMALLINT UNSIGNED NOT NULL auto_increment PRIMARY KEY,
     code VARCHAR(18) NOT NULL UNIQUE,
     dec_places TINYINT UNSIGNED NOT NULL,
-    name VARCHAR(64) NOT NULL UNIQUE,
-    symbol VARCHAR(18) NOT NULL UNIQUE,
+    name VARCHAR(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL UNIQUE,
+    symbol VARCHAR(18) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL UNIQUE,
     enabled ENUM('N', 'Y') NOT NULL,
     added DATETIME NOT NULL
 )
