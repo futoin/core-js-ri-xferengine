@@ -234,13 +234,13 @@ Base Face with neutral common registration functionality
 
 <a name="BaseFace.LATEST_VERSION"></a>
 
-### BaseFace.LATEST_VERSION
+### BaseFace.LATEST\_VERSION
 Latest supported FTN17 version
 
 **Kind**: static property of [<code>BaseFace</code>](#BaseFace)  
 <a name="BaseFace.PING_VERSION"></a>
 
-### BaseFace.PING_VERSION
+### BaseFace.PING\_VERSION
 Latest supported FTN4 version
 
 **Kind**: static property of [<code>BaseFace</code>](#BaseFace)  
@@ -276,7 +276,7 @@ Base Service with common registration logic
 
 <a name="BaseService+_checkType"></a>
 
-### baseService._checkType(type, val) ⇒ <code>boolean</code>
+### baseService.\_checkType(type, val) ⇒ <code>boolean</code>
 Check value against type in spec of implemented interface
 
 **Kind**: instance method of [<code>BaseService</code>](#BaseService)  

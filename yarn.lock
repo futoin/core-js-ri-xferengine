@@ -1478,103 +1478,103 @@ functional-red-black-tree@^1.0.1:
   resolved "https://registry.yarnpkg.com/functional-red-black-tree/-/functional-red-black-tree-1.0.1.tgz#1b0ab3bd553b2a0d6399d29c0e3ea0b252078327"
   integrity sha1-GwqzvVU7Kg1jmdKcDj6gslIHgyc=
 
-futoin-asyncevent@^2.3.0:
-  version "2.3.0"
-  resolved "https://registry.yarnpkg.com/futoin-asyncevent/-/futoin-asyncevent-2.3.0.tgz#23b7ca1f4564acddc79466c72f562f6d3c0a6bc5"
-  integrity sha512-AdxYPlwVUMY+Y+MhbMM8Czj8WYhMAL4/woweyRpjBqBx7lThz0a65yjpbcuk8pBwK8V4Ba++TRvdwnCeoxNHVg==
+futoin-asyncevent@^2.3.1:
+  version "2.3.1"
+  resolved "https://registry.yarnpkg.com/futoin-asyncevent/-/futoin-asyncevent-2.3.1.tgz#395810df4976f743cb859ec14c1aee7bfac15537"
+  integrity sha512-HqtYXTLCeoHrg1aCOUfBcy+DwVnQEEtSiDvaooDhfgtb+PMhszM/ODZ/9T8sIPFXr5oUxsRJDBhEa5pRz24UGA==
   dependencies:
     grunt-karma "^3.0.2"
     grunt-simple-nyc "^3.0.0"
-    karma "^4.2.0"
-    karma-firefox-launcher "^1.1.0"
+    karma "^4.3.0"
+    karma-firefox-launcher "^1.2.0"
     karma-mocha "^1.3.0"
     karma-mocha-reporter "^2.2.5"
 
-futoin-asyncsteps@^2.4.1:
-  version "2.4.1"
-  resolved "https://registry.yarnpkg.com/futoin-asyncsteps/-/futoin-asyncsteps-2.4.1.tgz#c01296a57d917efb7a7da071dece7622d64bd923"
-  integrity sha512-7szvqsvx1yOF71bPL68z/TNi1Q1Revksdcv15E5H8RoN/QN1796azgWJqbuBzljyXzlD0TaU6nTnvHfgoR6sVA==
+futoin-asyncsteps@^2.4.2:
+  version "2.4.2"
+  resolved "https://registry.yarnpkg.com/futoin-asyncsteps/-/futoin-asyncsteps-2.4.2.tgz#7e756444993ae34c9686e49c54eb37be5bb0250e"
+  integrity sha512-WNvYXkByX/iD5RPv8lsvHOK+6uyC9J729Fmj3m5Er9/aDljDolLdyYE7aPkQTQBpu5AAn8RS/fRGOtEKGgO7JA==
   dependencies:
     performance-now "^2.1.0"
 
-futoin-database@^1.9.3:
-  version "1.9.3"
-  resolved "https://registry.yarnpkg.com/futoin-database/-/futoin-database-1.9.3.tgz#567846d839690bcc2500e8dad85d9cdf72cadf0a"
-  integrity sha512-jcH24GJvk5huZq2ZiakXe3eadDu9ASy8m7sixm7OLsnuSSbAv0sF6pdowGKJvL081OtU9NKlNGeUWLwpn4sLvw==
+futoin-database@^1.9.4:
+  version "1.9.4"
+  resolved "https://registry.yarnpkg.com/futoin-database/-/futoin-database-1.9.4.tgz#72b1e5d06e8db75fb3318c59e5002bd02b21f16d"
+  integrity sha512-7isXkFHZtly5gejw5hJK45SQZ0uxGVZxHNJmvdU6Vpj54XghLh+TyOyQ6rtcXCzusnhSqxGEMxqW8bP2K/oLkw==
   dependencies:
-    futoin-asyncevent "^2.3.0"
-    lodash "^4.17.14"
+    futoin-asyncevent "^2.3.1"
+    lodash "^4.17.15"
     moment "^2.24.0"
   optionalDependencies:
     mysql "^2.17.1"
-    pg "^7.11.0"
-    sqlite3 "^4.0.9"
+    pg "^7.12.1"
+    sqlite3 "^4.1.0"
     sqlstring "^2.3.1"
 
-futoin-eventstream@^1.3.2:
-  version "1.3.2"
-  resolved "https://registry.yarnpkg.com/futoin-eventstream/-/futoin-eventstream-1.3.2.tgz#fab91f5be52ebb5d4e7cc4489cad5317d5e1c4e8"
-  integrity sha512-O1PchlOCM1Y1hEdUH6G+ooQ7UIcOPSZnG3q877o6IYTYl639Suuqq1wqKaW6nqb4BRsUc12vuDwjExraIhtyCA==
+futoin-eventstream@^1.3.3:
+  version "1.3.3"
+  resolved "https://registry.yarnpkg.com/futoin-eventstream/-/futoin-eventstream-1.3.3.tgz#2cbc7439527a637dcd6fbba0c0c110d6d810c80d"
+  integrity sha512-Y57ddlIWHjtEwVYx90G+fukjl+8tryqOkcwlYJICgY0sbSwZY5Nu0pbJL2PGrFLNpPi8NCbYwzfU9GOWXLRnfg==
   dependencies:
-    futoin-asyncevent "^2.3.0"
+    futoin-asyncevent "^2.3.1"
 
-futoin-executor@^2.3.0:
-  version "2.3.0"
-  resolved "https://registry.yarnpkg.com/futoin-executor/-/futoin-executor-2.3.0.tgz#319b6cff0dcb21640a04e731c4e1a71918278edd"
-  integrity sha512-hunCuMUO5hoMYHU45bh/bP3QI9HuD0PEQ2GNjSJnyKUDfr40QZjcfiCSnRlmqLkJl3QtrcsEIJZRkgi/6Tetgg==
+futoin-executor@^2.3.1:
+  version "2.3.1"
+  resolved "https://registry.yarnpkg.com/futoin-executor/-/futoin-executor-2.3.1.tgz#7b6b7685c85c97439c62c338c72b0185394439e3"
+  integrity sha512-CweZd0QieZASZUXnRGINqq7FLq7T4uiEqV3/bRoQPj/PTcwnHU1QZuY91BhLEYIlWtCkictrALP13UdiIAoxfA==
   dependencies:
     cookie "^0.4.0"
     detect-node "^2.0.4"
-    futoin-asyncevent "^2.3.0"
-    futoin-ipset "^1.3.3"
-    lodash "^4.17.14"
+    futoin-asyncevent "^2.3.1"
+    futoin-ipset "^1.3.4"
+    lodash "^4.17.15"
     lru-cache "^5.1.1"
     performance-now "^2.1.0"
-    ws "^7.1.0"
+    ws "^7.1.2"
   optionalDependencies:
     bufferutil "^4.0.1"
     posix "^4.1.2"
     utf-8-validate "^5.0.2"
 
-futoin-invoker@^2.3.0:
-  version "2.3.0"
-  resolved "https://registry.yarnpkg.com/futoin-invoker/-/futoin-invoker-2.3.0.tgz#6bbf2524cd12fafd409d3b54c7856f279ffee1b2"
-  integrity sha512-30OChhSF1CZz8hnWhtXtGH4vic0uRWOwQsUDghE60ZU3RUIAs6+S8H5KodkmX+gRZj5swOq/MoqUPB5rZ61zkA==
+futoin-invoker@^2.3.1:
+  version "2.3.1"
+  resolved "https://registry.yarnpkg.com/futoin-invoker/-/futoin-invoker-2.3.1.tgz#e7324d4d9dfe343c23d9de5714bb05cac8be7ec9"
+  integrity sha512-riZfA+g+8gK8M49He0BuZvhRhSdCtXynW4vuaBevAOm7MLLqsttLEF5C7g/KAEwf8igIqgv7IoU1I/xqp2nxPA==
   dependencies:
     agentkeepalive "^4.0.2"
     detect-node "^2.0.4"
-    futoin-asyncevent "^2.3.0"
-    futoin-request "^2.1.0"
-    lodash "^4.17.14"
+    futoin-asyncevent "^2.3.1"
+    futoin-request "^2.1.1"
+    lodash "^4.17.15"
     msgpack-lite "^0.1.26"
     performance-now "^2.1.0"
-    ws "^7.1.0"
+    ws "^7.1.2"
   optionalDependencies:
     ajv "^6.10.2"
     borc "^2.1.1"
     bufferutil "^4.0.1"
     utf-8-validate "^5.0.2"
 
-futoin-ipset@^1.3.3:
-  version "1.3.3"
-  resolved "https://registry.yarnpkg.com/futoin-ipset/-/futoin-ipset-1.3.3.tgz#0e7ad33f35a942d8ed943828ef58b502e2639bf7"
-  integrity sha512-5er7oY+Fr/QTKYjuYLfxXKE1RQeDs46Nw9HJwfcOVrCJ5P5+tO1TOtj52MmGTG1Ut9v5qLyfRLNvqFmFFxLBjw==
+futoin-ipset@^1.3.4:
+  version "1.3.4"
+  resolved "https://registry.yarnpkg.com/futoin-ipset/-/futoin-ipset-1.3.4.tgz#8e38c47abf2f7651f3401db8f8ae8109d3706a95"
+  integrity sha512-CQ8HKrLGpYrVgU2cwgqKSaY+PJtncp30pSFvA7cup0HvbcetN9QEjh24H3+U72Km8xgFSyn9TVWVBRYF7ryG7Q==
   dependencies:
     "@futoin/ip-address" "^5.9.3"
 
-futoin-request@^2.1.0:
-  version "2.1.0"
-  resolved "https://registry.yarnpkg.com/futoin-request/-/futoin-request-2.1.0.tgz#8d40a8d968668cfcb5cd20a9505ce76d6ade095f"
-  integrity sha512-2qQiWRIcgv7vZAh/dykELTsW0CAns7EeP8bUXMm6y7Y+UUwvNMX9+szL27qJu8hT/7Ka5OVLXkp6iMDvZhSZwQ==
+futoin-request@^2.1.1:
+  version "2.1.1"
+  resolved "https://registry.yarnpkg.com/futoin-request/-/futoin-request-2.1.1.tgz#367cd54fe18b17122f2fdbd31780a23af49852fe"
+  integrity sha512-IgBg0YVvLiqxU6R2++lAd7kIAheR7YtUmHGyE/iwkpRP9jp2Qh9qFF3VM9yEqtGlagQfZL2dj0pj8Lm1IijJwA==
   dependencies:
     request "^2.88.0"
 
-futoin-uuid@^1.0.3:
-  version "1.0.3"
-  resolved "https://registry.yarnpkg.com/futoin-uuid/-/futoin-uuid-1.0.3.tgz#9f8c04c3778cd3bf97ed1724e7a0a82924725771"
-  integrity sha512-GulRtE7pMvAxbBzE4Zt/fsPuYzxoU+S6Ok1EmUuRDapXeQrDZ0PIYV73aqEl4x0kS1+oa7qyUHq9FbOD6IIQQQ==
+futoin-uuid@^1.0.4:
+  version "1.0.4"
+  resolved "https://registry.yarnpkg.com/futoin-uuid/-/futoin-uuid-1.0.4.tgz#48e051222490f6d34046b29ab01bea8736220b2b"
+  integrity sha512-sn/Z7/HtbCSsCfePk7q4MROJeq3dX0JEGJbwn0xE/d36wG23gsv6wgMsXZmrFf0nqBNBN7bU4BQN3z/rzygY1g==
   dependencies:
-    uuid "^3.3.2"
+    uuid "^3.3.3"
 
 gauge@~2.7.3:
   version "2.7.4"
@@ -1803,9 +1803,9 @@ grunt@^1.0.4:
     rimraf "~2.6.2"
 
 handlebars@^4.0.1, handlebars@^4.0.11, handlebars@^4.1.2:
-  version "4.3.1"
-  resolved "https://registry.yarnpkg.com/handlebars/-/handlebars-4.3.1.tgz#6febc1890851f62a8932d495cc88d29390fa850d"
-  integrity sha512-c0HoNHzDiHpBt4Kqe99N8tdLPKAnGCQ73gYMPWtAYM4PwGnf7xl8PBUHJqh9ijlzt2uQKaSRxbXRt+rZ7M2/kA==
+  version "4.3.2"
+  resolved "https://registry.yarnpkg.com/handlebars/-/handlebars-4.3.2.tgz#c10366a4300f708f78a421472c5d7851dbe886ab"
+  integrity sha512-LuccMnDrKB72bbClEIucoBNAIMpqmWvIGSKNEngDcYFT6hlCq7ZoCWc26ZT9mr6tfWTJeTswSldoI5LOeezzDQ==
   dependencies:
     neo-async "^2.6.0"
     optimist "^0.6.1"
@@ -2367,7 +2367,7 @@ jsprim@^1.2.2:
     json-schema "0.2.3"
     verror "1.10.0"
 
-karma-firefox-launcher@^1.1.0:
+karma-firefox-launcher@^1.2.0:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/karma-firefox-launcher/-/karma-firefox-launcher-1.2.0.tgz#64fe03dd10300f9754d48f9ebfbf31f6c94a200c"
   integrity sha512-j9Zp8M8+VLq1nI/5xZGfzeaEPtGQ/vk3G+Y8vpmFWLvKLNZ2TDjD6cu2dUu7lDbu1HXNgatsAX4jgCZTkR9qhQ==
@@ -2390,7 +2390,7 @@ karma-mocha@^1.3.0:
   dependencies:
     minimist "1.2.0"
 
-karma@^4.2.0:
+karma@^4.3.0:
   version "4.3.0"
   resolved "https://registry.yarnpkg.com/karma/-/karma-4.3.0.tgz#e14471ea090a952265a42ebb442b1a3c09832559"
   integrity sha512-NSPViHOt+RW38oJklvYxQC4BSQsv737oQlr/r06pCM+slDOr4myuI1ivkRmp+3dVpJDfZt2DmaPJ2wkx+ZZuMQ==
@@ -2661,7 +2661,7 @@ minimist@~0.0.1:
   resolved "https://registry.yarnpkg.com/minimist/-/minimist-0.0.10.tgz#de3f98543dbf96082be48ad1a0c7cda836301dcf"
   integrity sha1-3j+YVD2/lggr5IrRoMfNqDYwHc8=
 
-minipass@^2.2.1, minipass@^2.6.0, minipass@^2.8.6:
+minipass@^2.6.0, minipass@^2.8.6:
   version "2.8.6"
   resolved "https://registry.yarnpkg.com/minipass/-/minipass-2.8.6.tgz#620d889ace26356391d010ecb9458749df9b6db5"
   integrity sha512-lFG7d6g3+/UaFDCOtqPiKAC9zngWWsQZl1g5q6gaONqrjq61SX2xFqXMleQiFVyDpYwa018E9hmlAFY22PCb+A==
@@ -2669,12 +2669,20 @@ minipass@^2.2.1, minipass@^2.6.0, minipass@^2.8.6:
     safe-buffer "^5.1.2"
     yallist "^3.0.0"
 
-minizlib@^1.2.1:
-  version "1.2.2"
-  resolved "https://registry.yarnpkg.com/minizlib/-/minizlib-1.2.2.tgz#6f0ccc82fa53e1bf2ff145f220d2da9fa6e3a166"
-  integrity sha512-hR3At21uSrsjjDTWrbu0IMLTpnkpv8IIMFDFaoz43Tmu4LkmAXfH44vNNzpTnf+OAQQCHrb91y/wc2J4x5XgSQ==
+minipass@^2.9.0:
+  version "2.9.0"
+  resolved "https://registry.yarnpkg.com/minipass/-/minipass-2.9.0.tgz#e713762e7d3e32fed803115cf93e04bca9fcc9a6"
+  integrity sha512-wxfUjg9WebH+CUDX/CdbRlh5SmfZiy/hpkxaRI16Y9W56Pa75sWgd/rvFilSgrauD9NyFymP/+JFV3KwzIsJeg==
   dependencies:
-    minipass "^2.2.1"
+    safe-buffer "^5.1.2"
+    yallist "^3.0.0"
+
+minizlib@^1.2.1:
+  version "1.3.2"
+  resolved "https://registry.yarnpkg.com/minizlib/-/minizlib-1.3.2.tgz#5d24764998f98112586f7e566bd4c0999769dad4"
+  integrity sha512-lsNFqSHdJ21EwKzCp12HHJGxSMtHkCW1EMA9cceG3MkMNARjuWotZnMe3NKNshAvFXpm4loZqmYsCmRwhS2JMw==
+  dependencies:
+    minipass "^2.9.0"
 
 mkdirp2@^1.0.3:
   version "1.0.4"
@@ -3228,7 +3236,7 @@ pg-types@^2.1.0:
     postgres-date "~1.0.4"
     postgres-interval "^1.1.0"
 
-pg@^7.11.0:
+pg@^7.12.1:
   version "7.12.1"
   resolved "https://registry.yarnpkg.com/pg/-/pg-7.12.1.tgz#880636d46d2efbe0968e64e9fe0eeece8ef72a7e"
   integrity sha512-l1UuyfEvoswYfcUe6k+JaxiN+5vkOgYcVSbSuw3FvdLqDbaoa2RJo1zfJKfPsSYPFVERd4GHvX3s2PjG1asSDA==
@@ -3825,7 +3833,7 @@ sprintf-js@~1.0.2:
   resolved "https://registry.yarnpkg.com/sprintf-js/-/sprintf-js-1.0.3.tgz#04e6926f662895354f3dd015203633b857297e2c"
   integrity sha1-BOaSb2YolTVPPdAVIDYzuFcpfiw=
 
-sqlite3@^4.0.9:
+sqlite3@^4.1.0:
   version "4.1.0"
   resolved "https://registry.yarnpkg.com/sqlite3/-/sqlite3-4.1.0.tgz#e051fb9c133be15726322a69e2e37ec560368380"
   integrity sha512-RvqoKxq+8pDHsJo7aXxsFR18i+dU2Wp5o12qAJOV5LNcDt+fgJsc2QKKg3sIRfXrN9ZjzY1T7SNe/DFVqAXjaw==
@@ -4259,7 +4267,7 @@ utils-merge@1.0.1:
   resolved "https://registry.yarnpkg.com/utils-merge/-/utils-merge-1.0.1.tgz#9f95710f50a267947b2ccc124741c1028427e713"
   integrity sha1-n5VxD1CiZ5R7LMwSR0HBAoQn5xM=
 
-uuid@^3.3.2:
+uuid@^3.3.2, uuid@^3.3.3:
   version "3.3.3"
   resolved "https://registry.yarnpkg.com/uuid/-/uuid-3.3.3.tgz#4568f0216e78760ee1dbf3a4d2cf53e224112866"
   integrity sha512-pW0No1RGHgzlpHJO1nsVrHKpOEIxkGg1xB+v0ZmdNH5OAeAwzAVrCnI2/6Mtx+Uys6iaylxa+D3g4j63IKKjSQ==
@@ -4376,7 +4384,7 @@ write@1.0.3:
   dependencies:
     mkdirp "^0.5.1"
 
-ws@^7.1.0:
+ws@^7.1.2:
   version "7.1.2"
   resolved "https://registry.yarnpkg.com/ws/-/ws-7.1.2.tgz#c672d1629de8bb27a9699eb599be47aeeedd8f73"
   integrity sha512-gftXq3XI81cJCgkUiAVixA0raD9IVmXqsylCrjRygw4+UOOGzPoxnQ6r/CnVL9i+mDncJo94tSkyrtuuQVBmrg==
@@ -4418,9 +4426,9 @@ yallist@^2.1.2:
   integrity sha1-HBH5IY8HYImkfdUS+TxmmaaoHVI=
 
 yallist@^3.0.0, yallist@^3.0.2, yallist@^3.0.3:
-  version "3.0.3"
-  resolved "https://registry.yarnpkg.com/yallist/-/yallist-3.0.3.tgz#b4b049e314be545e3ce802236d6cd22cd91c3de9"
-  integrity sha512-S+Zk8DEWE6oKpV+vI3qWkaK+jSbIK86pCwe2IF/xwIpQ8jEuxpw9NyaGjmp9+BoJv5FV2piqCDcoCtStppiq2A==
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/yallist/-/yallist-3.1.0.tgz#906cc2100972dc2625ae78f566a2577230a1d6f7"
+  integrity sha512-6gpP93MR+VOOehKbCPchro3wFZNSNmek8A2kbkOAZLIZAYx1KP/zAqwO0sOHi3xJEb+UBz8NaYt/17UNit1Q9w==
 
 yargs-parser@13.0.0:
   version "13.0.0"
