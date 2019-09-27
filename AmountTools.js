@@ -23,23 +23,15 @@ const BigNumber = require( 'bignumber.js' );
 const { ROUND_UP, ROUND_DOWN, ROUND_HALF_UP } = BigNumber;
 
 const MAX_DIGITS = 22;
+const MAX_PRECISSION = 39;
 const RATE_PRECISSION = 12;
 //const ZERO_AMT = '0'.repeat(MAX_DIGITS);
-const PLACES_TO_DIV = [
-    1,
-    10,
-    100,
-    1000,
-    10000,
-    100000,
-    1000000,
-    10000000,
-    100000000,
-    1000000000,
-    10000000000,
-    100000000000,
-    1000000000000,
-];
+const PLACES_TO_DIV = [];
+
+for ( let i = 0, c = 1; i <= MAX_PRECISSION; ++i ) {
+    PLACES_TO_DIV.push( c );
+    c *= 10;
+}
 
 class AmountTools {
     static get MAX_DIGITS() {

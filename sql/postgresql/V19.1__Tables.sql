@@ -14,7 +14,7 @@ CREATE TABLE uuid_history (
 
 CREATE DOMAIN currency_code AS VARCHAR(18);
 CREATE DOMAIN currency_dec_places AS SMALLINT
-    CHECK( VALUE >= 0 AND VALUE <= 12 );
+    CHECK( VALUE >= 0 AND VALUE <= 39 );
 CREATE DOMAIN currency_id AS INT;
 
 CREATE TABLE currencies (
