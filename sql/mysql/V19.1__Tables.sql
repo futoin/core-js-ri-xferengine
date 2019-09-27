@@ -7,7 +7,7 @@ CREATE TABLE uuid_history (
     `uuidb64` CHARACTER(22) NOT NULL UNIQUE
 )
     ENGINE=InnoDB
-    CHARACTER SET 'utf8';
+    CHARACTER SET 'latin1';
 -- Currencies
 
 CREATE TABLE currencies (
@@ -20,8 +20,8 @@ CREATE TABLE currencies (
     added DATETIME NOT NULL
 )
     ENGINE=InnoDB
-    CHARACTER SET 'utf8';
-    
+    CHARACTER SET 'latin1';
+
 CREATE TABLE exrates (
     base_id SMALLINT UNSIGNED NOT NULL REFERENCES currencies(id),
     foreign_id SMALLINT UNSIGNED NOT NULL REFERENCES currencies(id),
@@ -31,7 +31,7 @@ CREATE TABLE exrates (
     PRIMARY KEY (base_id, foreign_id)
 )
     ENGINE=InnoDB
-    CHARACTER SET 'utf8';
+    CHARACTER SET 'latin1';
 
 
 -- Limits
@@ -40,7 +40,7 @@ CREATE TABLE limit_groups (
     `group_name` VARCHAR(32) NOT NULL UNIQUE
 )
     ENGINE=InnoDB
-    CHARACTER SET 'utf8';
+    CHARACTER SET 'latin1';
 
 CREATE TABLE domain_limits (
     `lim_id` SMALLINT UNSIGNED NOT NULL REFERENCES limit_groups(`id`),
@@ -59,7 +59,7 @@ CREATE TABLE domain_limits (
     PRIMARY KEY(`lim_id`, `lim_domain`)
 )
     ENGINE=InnoDB
-    CHARACTER SET 'utf8';
+    CHARACTER SET 'latin1';
 
 -- Accounts
 CREATE TABLE account_holders (
@@ -69,13 +69,13 @@ CREATE TABLE account_holders (
     `group_id` SMALLINT UNSIGNED NOT NULL REFERENCES limit_groups(id),
     `enabled` ENUM('N', 'Y') NOT NULL,
     `kyc` ENUM('N', 'Y') NOT NULL,
-    `data` TEXT NOT NULL,
-    `internal` TEXT NOT NULL,
+    `data` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    `internal` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
     `created` DATETIME NOT NULL,
     `updated` DATETIME NOT NULL
 )
     ENGINE=InnoDB
-    CHARACTER SET 'utf8';
+    CHARACTER SET 'latin1';
 
 CREATE TABLE accounts (
     `_id` INT UNSIGNED NOT NULL auto_increment PRIMARY KEY,
@@ -102,8 +102,8 @@ CREATE TABLE accounts (
     UNIQUE `holder_ext_acct_id` (`holder`, `ext_acct_id`)
 )
     ENGINE=InnoDB
-    CHARACTER SET 'utf8';
-    
+    CHARACTER SET 'latin1';
+
 CREATE VIEW v_accounts AS
     SELECT A.uuidb64, A.holder, A.currency_id, A.balance,
            A.reserved, A.acct_type, rel_uuidb64, A.ext_acct_id,
@@ -116,7 +116,7 @@ CREATE VIEW v_accounts AS
       FROM accounts A
       JOIN account_holders H ON (H.uuidb64 = A.holder)
       JOIN currencies C ON (C.id = A.currency_id);
-    
+
 -- Account limit stats
 
 CREATE TABLE limit_retail_stats (
@@ -138,7 +138,7 @@ CREATE TABLE limit_retail_stats (
     `preauth_monthly_cnt` MEDIUMINT UNSIGNED NOT NULL DEFAULT 0
 )
     ENGINE=InnoDB
-    CHARACTER SET 'utf8';
+    CHARACTER SET 'latin1';
 
 CREATE TABLE limit_deposits_stats (
     `_id` INT UNSIGNED NOT NULL auto_increment PRIMARY KEY,
@@ -159,8 +159,8 @@ CREATE TABLE limit_deposits_stats (
     `withdrawal_monthly_cnt` MEDIUMINT UNSIGNED NOT NULL DEFAULT 0
 )
     ENGINE=InnoDB
-    CHARACTER SET 'utf8';
-    
+    CHARACTER SET 'latin1';
+
 CREATE TABLE limit_payments_stats (
     `_id` INT UNSIGNED NOT NULL auto_increment PRIMARY KEY,
     `holder` CHARACTER(22) NOT NULL UNIQUE REFERENCES account_holders(uuidb64),
@@ -180,7 +180,7 @@ CREATE TABLE limit_payments_stats (
     `inbound_monthly_cnt` MEDIUMINT UNSIGNED NOT NULL DEFAULT 0
 )
     ENGINE=InnoDB
-    CHARACTER SET 'utf8';
+    CHARACTER SET 'latin1';
 
 CREATE TABLE limit_gaming_stats (
     `_id` INT UNSIGNED NOT NULL auto_increment PRIMARY KEY,
@@ -204,7 +204,7 @@ CREATE TABLE limit_gaming_stats (
     `profit_monthly_amt` DECIMAL(22, 0) NOT NULL DEFAULT '0'
 )
     ENGINE=InnoDB
-    CHARACTER SET 'utf8';
+    CHARACTER SET 'latin1';
 
 CREATE TABLE limit_misc_stats (
     `_id` INT UNSIGNED NOT NULL auto_increment PRIMARY KEY,
@@ -222,7 +222,7 @@ CREATE TABLE limit_misc_stats (
     `limithit_monthly_cnt` MEDIUMINT UNSIGNED NOT NULL DEFAULT 0
 )
     ENGINE=InnoDB
-    CHARACTER SET 'utf8';
+    CHARACTER SET 'latin1';
 
 CREATE TABLE limit_personnel_stats (
     `_id` INT UNSIGNED NOT NULL auto_increment PRIMARY KEY,
@@ -240,9 +240,9 @@ CREATE TABLE limit_personnel_stats (
     `manual_monthly_cnt` MEDIUMINT UNSIGNED NOT NULL DEFAULT 0
 )
     ENGINE=InnoDB
-    CHARACTER SET 'utf8';
+    CHARACTER SET 'latin1';
 
-    
+
 -- Xfers
 
 CREATE TABLE xfers (
@@ -290,10 +290,10 @@ CREATE TABLE xfers (
     `xfer_fee_id` CHARACTER(22) NULL REFERENCES xfers(uuidb64),
     -- Should be "real ext id : rel_account_id" - in that order
     `ext_id` VARCHAR(128) NULL UNIQUE,
-    `misc_data` TEXT NULL
+    `misc_data` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL
 )
     ENGINE=InnoDB
-    CHARACTER SET 'utf8';
+    CHARACTER SET 'latin1';
 
 CREATE TABLE reservations (
     `_id` BIGINT UNSIGNED NOT NULL auto_increment PRIMARY KEY,
@@ -306,7 +306,7 @@ CREATE TABLE reservations (
     UNIQUE `src_ext_id` (`ext_id`, `account`)
 )
     ENGINE=InnoDB
-    CHARACTER SET 'utf8';
+    CHARACTER SET 'latin1';
 
 -- Gaming
 CREATE TABLE rounds (
@@ -315,7 +315,7 @@ CREATE TABLE rounds (
     `ext_round_id` VARCHAR(128) NOT NULL UNIQUE
 )
     ENGINE=InnoDB
-    CHARACTER SET 'utf8';
+    CHARACTER SET 'latin1';
 
 CREATE TABLE round_xfers (
     `_id` BIGINT UNSIGNED NOT NULL auto_increment PRIMARY KEY,
@@ -324,8 +324,8 @@ CREATE TABLE round_xfers (
     UNIQUE `round_xfer` (`round_id`, `ext_id`)
 )
     ENGINE=InnoDB
-    CHARACTER SET 'utf8';
-    
+    CHARACTER SET 'latin1';
+
 -- Retail
 CREATE TABLE refunds (
     `_id` BIGINT UNSIGNED NOT NULL auto_increment PRIMARY KEY,
@@ -334,8 +334,8 @@ CREATE TABLE refunds (
     UNIQUE purchase_refund (`purchase_id`, `refund_id`)
 )
     ENGINE=InnoDB
-    CHARACTER SET 'utf8';
-    
+    CHARACTER SET 'latin1';
+
 -- Messages
 CREATE TABLE messages (
     `_id` BIGINT UNSIGNED NOT NULL auto_increment PRIMARY KEY,
@@ -344,9 +344,9 @@ CREATE TABLE messages (
     `sender`  CHARACTER(22) NOT NULL REFERENCES account_holders(uuidb64),
     `recipient`  CHARACTER(22) NULL REFERENCES account_holders(uuidb64),
     `rel_uuidb64` CHARACTER(22) NULL REFERENCES messages(uuidb64),
-    `data` TEXT NOT NULL,
+    `data` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
     `created` DATETIME NOT NULL
 )
     ENGINE=InnoDB
-    CHARACTER SET 'utf8';
+    CHARACTER SET 'latin1';
 

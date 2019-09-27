@@ -76,7 +76,7 @@ class BaseService extends PingService {
      * @returns {boolean} result of check
      */
     _checkType( type, val ) {
-        return SpecTools.checkType( this._iface_info, type, val );
+        return SpecTools.checkCompiledType( null, this._iface_info, type, val );
     }
 }
 

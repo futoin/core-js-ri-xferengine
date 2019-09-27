@@ -1,3 +1,7 @@
+
+=== (next) ===
+CHANGED: major dependency maintenance
+
 === 0.9.7 (2018-06-06) ===
 CHANGED: minor refactoring for specDirs handling
 CHANGED: to use performance-enhanced futoin-asyncsteps v2

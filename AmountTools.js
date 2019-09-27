@@ -59,13 +59,13 @@ class AmountTools {
     }
 
     static fromStorage( amt, places ) {
-        BigNumber.config( places, ROUND_DOWN );
+        BigNumber.config( { DECIMAL_PLACES: places, ROUNDING_MODE: ROUND_DOWN } );
         const res = new BigNumber( amt, 10 );
         return res.dividedBy( this.place2div( places ) ).toFixed( places );
     }
 
     static toStorage( amt, places ) {
-        BigNumber.config( places, ROUND_DOWN );
+        BigNumber.config( { DECIMAL_PLACES: places, ROUNDING_MODE: ROUND_DOWN } );
         const res = new BigNumber( amt, 10 );
         return res.times( this.place2div( places ) ).toFixed( 0 );
     }
@@ -79,25 +79,25 @@ class AmountTools {
     }
 
     static sellRate( rate, margin ) {
-        BigNumber.config( RATE_PRECISSION, ROUND_HALF_UP );
+        BigNumber.config( { DECIMAL_PLACES: RATE_PRECISSION, ROUNDING_MODE: ROUND_HALF_UP } );
         const res = new BigNumber( rate, 10 );
         return res.minus( margin, 10 ).toString();
     }
 
     static buyRate( rate, margin ) {
-        BigNumber.config( RATE_PRECISSION, ROUND_HALF_UP );
+        BigNumber.config( { DECIMAL_PLACES: RATE_PRECISSION, ROUNDING_MODE: ROUND_HALF_UP } );
         const res = new BigNumber( rate, 10 );
         return res.plus( margin, 10 ).toString();
     }
 
     static backRate( rate ) {
-        BigNumber.config( RATE_PRECISSION, ROUND_HALF_UP );
+        BigNumber.config( { DECIMAL_PLACES: RATE_PRECISSION, ROUNDING_MODE: ROUND_HALF_UP } );
         const res = new BigNumber( '1', 10 );
         return res.dividedBy( rate, 10 ).toString();
     }
 
     static backMargin( margin, rate ) {
-        BigNumber.config( RATE_PRECISSION, ROUND_UP );
+        BigNumber.config( { DECIMAL_PLACES: RATE_PRECISSION, ROUNDING_MODE: ROUND_UP } );
         const res = new BigNumber( margin, 10 );
         const rn = new BigNumber( rate, 10 );
         return res.dividedBy( rn ).dividedBy( rn ).toString();
@@ -105,9 +105,9 @@ class AmountTools {
 
     static convAmount( amt, rate, dec_places, round_up=false ) {
         if ( round_up ) {
-            BigNumber.config( RATE_PRECISSION, ROUND_UP );
+            BigNumber.config( { DECIMAL_PLACES: RATE_PRECISSION, ROUNDING_MODE: ROUND_UP } );
         } else {
-            BigNumber.config( RATE_PRECISSION, ROUND_DOWN );
+            BigNumber.config( { DECIMAL_PLACES: RATE_PRECISSION, ROUNDING_MODE: ROUND_DOWN } );
         }
 
         const res = new BigNumber( amt, 10 );
@@ -115,13 +115,13 @@ class AmountTools {
     }
 
     static add( a, b, dec_places ) {
-        BigNumber.config( dec_places );
+        BigNumber.config( { DECIMAL_PLACES: dec_places } );
         const res = new BigNumber( a, 10 );
         return res.plus( b, 10 ).toFixed( dec_places );
     }
 
     static subtract( a, b, dec_places ) {
-        BigNumber.config( dec_places );
+        BigNumber.config( { DECIMAL_PLACES: dec_places } );
         const res = new BigNumber( a, 10 );
         return res.minus( b, 10 ).toFixed( dec_places );
     }
@@ -177,10 +177,10 @@ class AmountTools {
                 sv = new BigNumber( sv, 10 );
 
                 if ( field.endsWith( '_min_amt' ) ) {
-                    if ( sv.lessThan( lv, 10 ) ) {
+                    if ( sv.isLessThan( lv, 10 ) ) {
                         return false;
                     }
-                } else if ( sv.greaterThan( lv, 10 ) ) {
+                } else if ( sv.isGreaterThan( lv, 10 ) ) {
                     return false;
                 }
             } else if ( sv > lv ) {
@@ -194,7 +194,7 @@ class AmountTools {
     static checkXferAmount( amt, { balance, reserved, overdraft }, preauth=null ) {
         amt = new BigNumber( amt, 10 );
 
-        if ( amt.lessThanOrEqualTo( 0 ) ) {
+        if ( amt.isLessThanOrEqualTo( 0 ) ) {
             return false;
         }
 
@@ -205,7 +205,7 @@ class AmountTools {
             balance = balance.plus( preauth, 10 );
         }
 
-        return balance.greaterThanOrEqualTo( amt );
+        return balance.isGreaterThanOrEqualTo( amt );
     }
 
     static availableBalance( { balance, reserved, overdraft }, dec_places ) {
@@ -218,7 +218,7 @@ class AmountTools {
 
     static compare( a, b ) {
         a = new BigNumber( a, 10 );
-        return a.cmp( b, 10 );
+        return a.comparedTo( b, 10 );
     }
 
     static isEqual( a, b ) {
@@ -246,7 +246,7 @@ class AmountTools {
     }
 
     static distributeWin( contributions, amount, dec_places ) {
-        BigNumber.config( dec_places, ROUND_DOWN );
+        BigNumber.config( { DECIMAL_PLACES: dec_places, ROUNDING_MODE: ROUND_DOWN } );
 
         let total_contrib = new BigNumber( 0 );
         let cnt = 0;

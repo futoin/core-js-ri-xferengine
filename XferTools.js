@@ -21,7 +21,8 @@
 
 const assert = require( 'assert' );
 const moment = require( 'moment' );
-const SpecTools = require( 'futoin-invoker/SpecTools' );
+const { SpecTools } = require( 'futoin-invoker' );
+const { Mutex } = require( 'futoin-asyncsteps' );
 
 const AmountTools = require( './AmountTools' );
 const UUIDTool = require( './UUIDTool' );
@@ -36,7 +37,13 @@ const {
     historyTimeBarrier,
 } = require( './main' );
 
-const TypeSpec = {
+const g_xfer_types = {
+    iface : 'xfertools.types',
+    version : '1.0',
+};
+
+const TypeSpec = Object.assign( {
+    ftn3rev: '1.9',
     types: {
         AccountID: 'string',
         Fee: {
@@ -129,7 +136,8 @@ const TypeSpec = {
             },
         },
     },
-};
+}, g_xfer_types );
+const g_load_mutex = new Mutex();
 
 const BY_EXT_ID = Symbol( 'by-ext-id' );
 const BY_FEE_ID = Symbol( 'by-fee-id' );
@@ -1853,10 +1861,12 @@ class XferTools {
     }
 
     processXfer( as, xfer ) {
+        this._load_local_face( as, g_xfer_types, TypeSpec );
+
         as.add( ( as ) => {
             // check data for consistency
             // TODO; disable for production
-            if ( !SpecTools.checkType( TypeSpec, 'XferInfo', xfer ) ) {
+            if ( !SpecTools.checkCompiledType( as, g_xfer_types, 'XferInfo', xfer ) ) {
                 as.error( 'XferError', 'Invalid xfer data' );
             }
         } );
@@ -1945,10 +1955,14 @@ class XferTools {
     }
 
     processCancel( as, xfer ) {
+        if ( !g_xfer_types.types ) {
+            SpecTools.loadIface( as, g_xfer_types, [ TypeSpec ] );
+        }
+
         as.add( ( as ) => {
             // check data for consistency
             // TODO; disable for production
-            if ( !SpecTools.checkType( TypeSpec, 'XferInfo', xfer ) ) {
+            if ( !SpecTools.checkCompiledType( as, g_xfer_types, 'XferInfo', xfer ) ) {
                 as.error( 'XferError', 'Invalid xfer data' );
             }
 
@@ -2205,6 +2219,16 @@ class XferTools {
             .where( 'uuidb64', rel_account )
             .where( 'acct_type IN', [ this.ACCT_EXTERNAL, this.ACCT_REGULAR ] );
         dbxfer.execute( as );
+    }
+
+    _load_local_face( as, iface, spec ) {
+        if ( !iface.types ) {
+            as.sync( g_load_mutex, ( as ) => {
+                if ( !iface.types ) {
+                    SpecTools.loadIface( as, iface, [ spec ] );
+                }
+            } );
+        }
     }
 }
 

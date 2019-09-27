@@ -30,7 +30,13 @@ const {
 } = require( './main' );
 
 
-const TypeSpec = {
+const g_msgtools_types = {
+    iface : 'messagetools.types',
+    version : '1.0',
+};
+
+const TypeSpec = Object.assign( {
+    ftn3rev: '1.9',
     types: {
         HolderID: "string",
         MessageInfo : {
@@ -51,7 +57,7 @@ const TypeSpec = {
             },
         },
     },
-};
+}, g_msgtools_types );
 
 /**
  * XferTools with focus on Message processing
@@ -59,6 +65,7 @@ const TypeSpec = {
 class MessageTools extends XferTools {
     constructor( ccm ) {
         super( ccm, 'Payments' );
+        this._msg_types = null;
     }
 
     _checkExistingMessage( as, msg ) {
@@ -162,10 +169,12 @@ class MessageTools extends XferTools {
     }
 
     processMessage( as, msg ) {
+        this._load_local_face( as, g_msgtools_types, TypeSpec );
+
         as.add( ( as ) => {
             // check data for consistency
             // TODO; disable for production
-            if ( !SpecTools.checkType( TypeSpec, 'MessageInfo', msg ) ) {
+            if ( !SpecTools.checkCompiledType( as, g_msgtools_types, 'MessageInfo', msg ) ) {
                 as.error( 'XferError', 'Invalid message data' );
             }
         } );

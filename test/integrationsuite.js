@@ -22,12 +22,12 @@ module.exports = function( describe, it, vars ) {
         executor.on( 'notExpected', function() {
             console.dir( arguments );
 
-            if ( arguments[3] ) {
+            /*if ( arguments[3] ) {
                 for ( var f of arguments[3] ) {
                     console.log( '================================' );
                     console.log( f.toString() );
                 }
-            }
+            }*/
         } );
 
         as.add(

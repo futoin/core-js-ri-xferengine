@@ -20,7 +20,6 @@
  */
 
 const AdvancedCCM = require( 'futoin-invoker/AdvancedCCM' );
-const moment = require( 'moment' );
 
 const DepositFace = require( './DepositFace' );
 const WithdrawFace = require( './WithdrawFace' );
@@ -216,7 +215,7 @@ class XferCCM extends AdvancedCCM {
 
         try {
             const iface_obj = this.iface( alias );
-            iface_obj._xfer_last_used = moment.utc();
+            this._touch( alias, iface_obj );
             as.add( ( as ) => as.success( iface_obj ) );
             return;
         } catch ( _ ) {
@@ -253,8 +252,18 @@ class XferCCM extends AdvancedCCM {
             api.holder_info = holder_info;
 
             cb( as, this, alias, api );
-            as.add( ( as ) => as.success( this.iface( alias ) ) );
+            as.add( ( as ) => {
+                const iface_obj = this.iface( alias );
+                this._touch( alias, iface_obj );
+                as.success( iface_obj );
+            } );
         } );
+    }
+
+    _touch( alias, iface ) {
+        void alias;
+        void iface;
+        // no real use case yet
     }
 
     _cleanup() {
