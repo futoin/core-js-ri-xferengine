@@ -277,7 +277,7 @@ describe( 'AmountTools', function() {
     } );
 
     it( 'should process misc', function() {
-        expect( AmountTools.MAX_DIGITS ).to.equal( 22 );
+        expect( AmountTools.MAX_DIGITS ).to.equal( 63 );
         expect( AmountTools.RATE_PRECISSION ).to.equal( 12 );
     } );
 

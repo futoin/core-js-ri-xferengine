@@ -1,7 +1,7 @@
 
 -- Common
 CREATE TYPE enabled_enum AS ENUM('N', 'Y');
-CREATE DOMAIN amount AS DECIMAL(22, 0);
+CREATE DOMAIN amount AS DECIMAL(63, 0);
 
 -- Yes, PostgreSQL does have UUID type
 CREATE DOMAIN uuid_b64 AS CHARACTER(22);

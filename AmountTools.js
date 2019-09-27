@@ -22,7 +22,7 @@
 const BigNumber = require( 'bignumber.js' );
 const { ROUND_UP, ROUND_DOWN, ROUND_HALF_UP } = BigNumber;
 
-const MAX_DIGITS = 22;
+const MAX_DIGITS = 63;
 const MAX_PRECISSION = 39;
 const RATE_PRECISSION = 12;
 //const ZERO_AMT = '0'.repeat(MAX_DIGITS);

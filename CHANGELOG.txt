@@ -3,6 +3,7 @@
 CHANGED: major dependency maintenance
 CHANGED: updated with spec changes for larger crypto values
 CHANGED: to use CoinGecko for crypto coin install
+CHANGED: to use up to 63 digit storage amounts in database
 
 === 0.9.7 (2018-06-06) ===
 CHANGED: minor refactoring for specDirs handling
