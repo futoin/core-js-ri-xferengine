@@ -1,3 +1,5 @@
+=== (next) ===
+CHANGED: dependency maintenance
 
 === 0.9.8 (2019-09-27) ===
 CHANGED: major dependency maintenance
