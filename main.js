@@ -19,11 +19,10 @@
  * limitations under the License.
  */
 
-const path = require( 'path' );
 const moment = require( 'moment' );
 
 const main = {
-    specDirs : path.resolve( __dirname, 'specs' ),
+    specDirs : require( '@futoin/specs' ).SPEC_DIRS,
     PING_VERSION : '1.0',
     FTN19_VERSION : '1.0',
 
