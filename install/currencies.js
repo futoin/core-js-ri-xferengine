@@ -1,12 +1,12 @@
 'use strict';
 
-const $as_request = require( 'futoin-request' );
+const tinyJsonHttp = require( 'tiny-json-http' );
 
 const install_request = ( as, url ) => {
     if ( process.env.INSTALL_FALLBACK == 'Y' ) {
         as.error( 'Fallback' );
     } else {
-        $as_request( as, url );
+        as.await( tinyJsonHttp.get( { url } ) );
     }
 };
 
@@ -24,17 +24,13 @@ module.exports = new class {
         as.add(
             ( as ) => install_request( as, src_url ),
             ( as, err ) => {
-                as.success( null, require( './fallback_currencies_iso' ) );
+                as.success( { body: require( './fallback_currencies_iso' ) } );
             }
         );
-        as.add( ( as, _, data ) => {
-            if ( typeof data === 'string' ) {
-                data = JSON.parse( data );
-            }
-
+        as.add( ( as, { body } ) => {
             const currmng = ccm.iface( 'currency.manage' );
 
-            as.forEach( data, ( as, code, info ) =>
+            as.forEach( body, ( as, code, info ) =>
                 currmng.setCurrency(
                     as,
                     `I:${code}`,
@@ -60,17 +56,13 @@ module.exports = new class {
         as.add(
             ( as ) => install_request( as, src_url ),
             ( as, err ) => {
-                as.success( null, require( './fallback_currencies_crypto' ) );
+                as.success( { body: require( './fallback_currencies_crypto' ) } );
             }
         );
-        as.add( ( as, _, data ) => {
-            if ( typeof data === 'string' ) {
-                data = JSON.parse( data );
-            }
-
+        as.add( ( as, { body } ) => {
             const currmng = ccm.iface( 'currency.manage' );
 
-            as.forEach( data, ( as, _, info ) =>
+            as.forEach( body, ( as, _, info ) =>
                 as.add(
                     ( as ) => currmng.setCurrency(
                         as,

@@ -286,8 +286,8 @@ CREATE TABLE xfers (
     ) NOT NULL,
     `src_post_balance` DECIMAL(63, 0) NULL,
     `dst_post_balance` DECIMAL(63, 0) NULL,
-    `extra_fee_id` CHARACTER(22) NULL REFERENCES xfers(uuidb64),
-    `xfer_fee_id` CHARACTER(22) NULL REFERENCES xfers(uuidb64),
+    `extra_fee_id` CHARACTER(22) NULL, -- REFERENCES xfers(uuidb64),
+    `xfer_fee_id` CHARACTER(22) NULL, -- REFERENCES xfers(uuidb64),
     -- Should be "real ext id : rel_account_id" - in that order
     `ext_id` VARCHAR(128) NULL UNIQUE,
     `misc_data` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL

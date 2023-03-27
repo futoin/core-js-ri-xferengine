@@ -9,7 +9,7 @@ const integration_suite = require( './integrationsuite' );
 
 const XferCCM = require( '../XferCCM' );
 
-const DB_PORT = process.env.POSTGRESQL_PORT || '5434';
+const DB_PORT = process.env.POSTGRESQL_PORT || '5432';
 
 describe( 'PostgreSQL', function() {
     before( function( done ) {
